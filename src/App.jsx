@@ -15,8 +15,7 @@ export default function App() {
   }, []);
 
   async function handleSave(entry) {
-    await saveEntry(entry);
-    const updated = await getEntries();
+    const updated = await saveEntry(entry);
     setEntries(updated);
   }
 

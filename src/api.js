@@ -1,19 +1,14 @@
-const BASE = 'http://localhost:3001/api';
+// Communicatie via Electron IPC (geen HTTP server nodig)
+const api = window.electronAPI;
 
 export async function getEntries() {
-  const res = await fetch(`${BASE}/entries`);
-  return res.json();
+  return api.getEntries();
 }
 
 export async function saveEntry(entry) {
-  const res = await fetch(`${BASE}/entries`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry),
-  });
-  return res.json();
+  return api.saveEntry(entry);
 }
 
 export async function deleteEntry(month) {
-  await fetch(`${BASE}/entries/${month}`, { method: 'DELETE' });
+  return api.deleteEntry(month);
 }
