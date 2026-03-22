@@ -1,0 +1,241 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f1f5f9;
+  color: #1e293b;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.app-header nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.app-header nav button {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid #cbd5e1;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #475569;
+  transition: all 0.15s;
+}
+
+.app-header nav button:hover { background: #f8fafc; }
+.app-header nav button.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* Summary cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  border-top: 4px solid #ccc;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+.summary-card.large {
+  border-top-width: 5px;
+}
+
+.card-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Charts */
+.charts { margin-bottom: 2.5rem; }
+
+.charts h2, .table-wrapper h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1.25rem;
+  color: #1e293b;
+}
+
+.chart-block {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+.chart-block h3 {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+/* Table */
+.table-wrapper { margin-bottom: 2rem; }
+
+.table-scroll { overflow-x: auto; }
+
+.overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  font-size: 0.9rem;
+}
+
+.overview-table th,
+.overview-table td {
+  padding: 0.75rem 1rem;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.overview-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.overview-table .label-col {
+  text-align: left;
+  color: #64748b;
+  font-size: 0.85rem;
+  min-width: 180px;
+}
+
+.totaal-row td {
+  font-weight: 700;
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+}
+
+.diff-row td {
+  font-size: 0.85rem;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.diff-row td.pos { color: #16a34a; font-weight: 600; }
+.diff-row td.neg { color: #dc2626; font-weight: 600; }
+
+/* Input form */
+.invoer {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.input-form {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+.input-form h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.form-group input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.input-form button[type="submit"] {
+  width: 100%;
+  padding: 0.75rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.15s;
+}
+
+.input-form button[type="submit"]:hover { background: #1d4ed8; }
+
+.saved-msg {
+  display: block;
+  text-align: center;
+  color: #16a34a;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #64748b;
+}
