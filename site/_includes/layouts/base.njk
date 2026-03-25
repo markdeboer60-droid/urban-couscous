@@ -10,6 +10,8 @@
   <!-- Canonical -->
   <link rel="canonical" href="{{ site.url }}{{ page.url }}">
 
+  {% if noindex %}<meta name="robots" content="noindex, follow">{% endif %}
+
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:locale" content="nl_NL">
