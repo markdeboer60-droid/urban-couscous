@@ -1,0 +1,63 @@
+---
+permalink: /sitemap.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>https://www.ottovisseraccountants.nl/</loc>
+    <priority>1.0</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <!-- Diensten hub -->
+  <url>
+    <loc>https://www.ottovisseraccountants.nl/diensten/</loc>
+    <priority>0.9</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <!-- Servicepagina's -->
+  {% for dienst in site.diensten %}
+  <url>
+    <loc>https://www.ottovisseraccountants.nl/diensten/{{ dienst.slug }}/</loc>
+    <priority>0.9</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  {% endfor %}
+  <!-- Lokale landingspagina's -->
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-friesland/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-leeuwarden/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-heerenveen/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-bolsward/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-workum/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-lemmer/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/accountant-joure/</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+  <!-- Over ons & Contact -->
+  <url><loc>https://www.ottovisseraccountants.nl/over-ons/</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/contact/</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <!-- Nieuws overzicht -->
+  <url><loc>https://www.ottovisseraccountants.nl/nieuws/</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/columns/</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <!-- Nieuwsberichten -->
+  {% for artikel in collections.nieuws %}
+  <url>
+    <loc>https://www.ottovisseraccountants.nl{{ artikel.url }}</loc>
+    <lastmod>{{ artikel.data.dateModified | isoDate if artikel.data.dateModified else artikel.date | isoDate }}</lastmod>
+    <priority>0.8</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+  {% endfor %}
+  <!-- Columns -->
+  {% for artikel in collections.columns %}
+  <url>
+    <loc>https://www.ottovisseraccountants.nl{{ artikel.url }}</loc>
+    <lastmod>{{ artikel.data.dateModified | isoDate if artikel.data.dateModified else artikel.date | isoDate }}</lastmod>
+    <priority>0.8</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+  {% endfor %}
+  <!-- Legal -->
+  <url><loc>https://www.ottovisseraccountants.nl/privacy/</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/disclaimer/</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://www.ottovisseraccountants.nl/klachtenregeling/</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+</urlset>

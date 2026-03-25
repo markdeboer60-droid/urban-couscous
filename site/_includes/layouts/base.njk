@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{ title if title else site.name + " | Accountant Sneek" }}</title>
+  <meta name="description" content="{{ description if description else 'Otto Visser & Partners is een persoonlijk accountantskantoor in Sneek. Praktische aanpak, nuchtere stijl. Bel 0515 740 810.' }}">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:site_name" content="{{ site.name }}">
+  <meta property="og:title" content="{{ title if title else site.name }}">
+  <meta property="og:description" content="{{ description if description else 'Accountantskantoor in Sneek. Praktische aanpak, nuchtere stijl.' }}">
+  <meta property="og:url" content="{{ site.url }}{{ page.url }}">
+  <meta property="og:image" content="{{ site.url }}{{ ogImage if ogImage else site.ogImage }}">
+
+  <!-- Google Search Console verificatie -->
+  <!-- <meta name="google-site-verification" content="VOEG_CODE_HIER_IN"> -->
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Fira+Sans+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Kritieke CSS inline -->
+  <style>
+    :root {
+      --brightblue: #2ca7e0;
+      --mediumblue: #0283c4;
+      --darkblue: #135d9e;
+      --ink: #0b1220;
+      --muted: #5b6474;
+      --line: #e7ebf2;
+      --lb1: #ecf7fc;
+      --green: #19c359;
+      --white: #ffffff;
+      --radius: 8px;
+      --radius-lg: 16px;
+      --shadow: 0 2px 12px rgba(11,18,32,0.08);
+      --shadow-lg: 0 8px 32px rgba(11,18,32,0.12);
+      --max-width: 1160px;
+      --section-pad: clamp(3rem, 6vw, 6rem);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Fira Sans', system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--white);
+      line-height: 1.65;
+      font-size: 1rem;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1,h2,h3,h4,h5 {
+      font-family: 'Fira Sans Condensed', 'Fira Sans', sans-serif;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--ink);
+    }
+    h1 { font-size: clamp(2rem, 4.5vw, 3.25rem); }
+    h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); }
+    h3 { font-size: clamp(1.15rem, 2vw, 1.5rem); }
+    p { margin-bottom: 1rem; }
+    a { color: var(--mediumblue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; height: auto; display: block; }
+    .container { max-width: var(--max-width); margin-inline: auto; padding-inline: clamp(1rem, 4vw, 2rem); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.5rem; border-radius: var(--radius);
+      font-family: inherit; font-size: 1rem; font-weight: 600;
+      cursor: pointer; border: 2px solid transparent;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+    .btn-primary { background: var(--mediumblue); color: var(--white); }
+    .btn-primary:hover { background: var(--darkblue); }
+    .btn-outline { background: transparent; color: var(--mediumblue); border-color: var(--mediumblue); }
+    .btn-outline:hover { background: var(--lb1); }
+    .btn-white { background: var(--white); color: var(--darkblue); }
+    .btn-white:hover { background: var(--lb1); }
+    .skip-link { position: absolute; left: -9999px; top: 1rem; z-index: 9999; }
+    .skip-link:focus { left: 1rem; background: var(--mediumblue); color: white; padding: 0.5rem 1rem; border-radius: 4px; }
+    /* Header kritiek */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--white);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 1px 4px rgba(11,18,32,0.06);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; height: 72px;
+    }
+    .site-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--ink); }
+    .site-logo img { height: 44px; width: auto; }
+    .site-logo:hover { text-decoration: none; }
+    .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; color: var(--ink); }
+    @media (max-width: 900px) {
+      .nav-toggle { display: flex; flex-direction: column; gap: 5px; }
+      .nav-toggle span { display: block; width: 24px; height: 2px; background: currentColor; transition: all 0.3s; border-radius: 2px; }
+    }
+  </style>
+
+  <!-- Google Analytics GA4 -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script> -->
+
+  <!-- Hoofd-CSS -->
+  <link rel="stylesheet" href="/assets/css/main.css">
+
+  <!-- Schema.org JSON-LD -->
+  {% block schema %}{% endblock %}
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Ga naar inhoud</a>
+
+  {% include "partials/header.njk" %}
+
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/footer.njk" %}
+
+  <script src="/assets/js/main.js" defer></script>
+</body>
+</html>

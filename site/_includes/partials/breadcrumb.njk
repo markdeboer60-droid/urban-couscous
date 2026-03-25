@@ -1,0 +1,21 @@
+{% if breadcrumbs %}
+<nav class="breadcrumb" aria-label="Kruimelpad">
+  <ol class="breadcrumb-list" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="/" itemprop="item"><span itemprop="name">Home</span></a>
+      <meta itemprop="position" content="1">
+    </li>
+    {% for crumb in breadcrumbs %}
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <span aria-hidden="true">›</span>
+      {% if crumb.url %}
+      <a href="{{ crumb.url }}" itemprop="item"><span itemprop="name">{{ crumb.name }}</span></a>
+      {% else %}
+      <span itemprop="name" aria-current="page">{{ crumb.name }}</span>
+      {% endif %}
+      <meta itemprop="position" content="{{ loop.index + 1 }}">
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
+{% endif %}

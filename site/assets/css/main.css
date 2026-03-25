@@ -1,0 +1,425 @@
+/* ============================================
+   Otto Visser & Partners – Main Stylesheet
+   ============================================ */
+
+/* Utility */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+.text-center { text-align: center; }
+.text-muted { color: var(--muted); }
+.btn-sm { padding: 0.5rem 1rem; font-size: 0.9rem; }
+
+/* ── HEADER ── */
+.logo-text { display: flex; flex-direction: column; line-height: 1.15; }
+.logo-name { font-size: 0.95rem; color: var(--ink); }
+.logo-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+.site-nav { display: flex; align-items: center; }
+.nav-list { list-style: none; display: flex; align-items: center; gap: 0.25rem; }
+.nav-link {
+  display: flex; align-items: center; gap: 0.25rem;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius);
+  color: var(--ink); font-weight: 500; font-size: 0.95rem;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.nav-link:hover, .nav-link--active { background: var(--lb1); color: var(--mediumblue); text-decoration: none; }
+.nav-arrow { font-size: 0.7rem; transition: transform 0.2s; }
+
+/* Dropdown */
+.has-dropdown { position: relative; }
+.nav-dropdown {
+  display: none; position: absolute; top: calc(100% + 8px); left: 0;
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  list-style: none; min-width: 220px; padding: 0.5rem;
+  z-index: 200;
+}
+.has-dropdown:hover .nav-dropdown,
+.has-dropdown:focus-within .nav-dropdown { display: block; }
+.has-dropdown:hover .nav-arrow { transform: rotate(180deg); }
+.dropdown-link {
+  display: block; padding: 0.5rem 0.75rem;
+  color: var(--ink); font-size: 0.9rem; border-radius: 6px;
+  transition: background 0.15s;
+}
+.dropdown-link:hover, .dropdown-link--active {
+  background: var(--lb1); color: var(--mediumblue); text-decoration: none;
+}
+
+/* Mobile nav */
+@media (max-width: 900px) {
+  .site-nav {
+    display: none; position: fixed; inset: 72px 0 0;
+    background: var(--white); padding: 1.5rem;
+    overflow-y: auto; flex-direction: column; align-items: flex-start;
+    border-top: 1px solid var(--line);
+    z-index: 99;
+  }
+  .site-nav.nav-open { display: flex; }
+  .nav-list { flex-direction: column; align-items: flex-start; gap: 0; width: 100%; }
+  .nav-item { width: 100%; }
+  .nav-link { width: 100%; padding: 0.85rem 0.75rem; font-size: 1.05rem; }
+  .has-dropdown .nav-dropdown {
+    display: block; position: static; box-shadow: none;
+    border: none; background: var(--lb1); border-radius: var(--radius);
+    margin-top: 0.25rem; margin-bottom: 0.5rem; padding: 0.25rem 0.5rem;
+  }
+  .nav-item--cta { margin-top: 1rem; }
+  .nav-item--cta .btn { width: 100%; justify-content: center; }
+}
+
+/* ── BREADCRUMB ── */
+.breadcrumb { padding: 0.75rem 0; border-bottom: 1px solid var(--line); background: var(--lb1); }
+.breadcrumb-list {
+  list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem;
+  font-size: 0.85rem; color: var(--muted);
+  max-width: var(--max-width); margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+.breadcrumb-list li { display: flex; align-items: center; gap: 0.5rem; }
+.breadcrumb-list a { color: var(--mediumblue); }
+
+/* ── HERO (Homepage) ── */
+.hero {
+  position: relative; min-height: 85vh;
+  display: flex; align-items: flex-end;
+  overflow: hidden; background: var(--ink);
+}
+.hero-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 20%;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(11,18,32,0.85) 0%, rgba(11,18,32,0.4) 60%, rgba(11,18,32,0.15) 100%);
+}
+.hero-content {
+  position: relative; z-index: 1;
+  padding: 3rem 0 4rem;
+  max-width: 780px;
+}
+.hero-content h1 { color: var(--white); font-size: clamp(2.25rem, 5vw, 3.75rem); margin-bottom: 1rem; }
+.hero-tagline { color: rgba(255,255,255,0.88); font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem; }
+.hero-quote { color: rgba(255,255,255,0.7); font-style: italic; font-size: 0.95rem; margin-bottom: 2rem; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 1rem; }
+
+/* ── SECTION BASICS ── */
+.section { padding: var(--section-pad) 0; }
+.section--light { background: var(--lb1); }
+.section--dark { background: var(--ink); color: var(--white); }
+.section--dark h2, .section--dark h3 { color: var(--white); }
+.section--grey { background: #f4f6fa; }
+.section-header { text-align: center; margin-bottom: 3rem; }
+.section-header h2 { margin-bottom: 0.75rem; }
+.section-header p { color: var(--muted); max-width: 640px; margin-inline: auto; font-size: 1.05rem; }
+.section-intro { max-width: 720px; margin-bottom: 2.5rem; color: var(--muted); font-size: 1.05rem; }
+
+/* ── DIENSTEN KAARTEN ── */
+.diensten-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+.dienst-card {
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 1.75rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  text-decoration: none; color: var(--ink);
+}
+.dienst-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); text-decoration: none; color: var(--ink); }
+.dienst-icon { font-size: 2rem; line-height: 1; }
+.dienst-card h3 { color: var(--darkblue); font-size: 1.15rem; }
+.dienst-card p { color: var(--muted); font-size: 0.9rem; flex: 1; }
+.dienst-card .card-link { color: var(--mediumblue); font-weight: 600; font-size: 0.9rem; }
+
+/* ── VOORDELEN / ICONEN ── */
+.voordelen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+.voordeel {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem;
+  padding: 1.5rem; background: var(--white);
+  border-radius: var(--radius-lg); border: 1px solid var(--line);
+}
+.voordeel-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: var(--lb1); display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+}
+.voordeel h3 { font-size: 1rem; }
+.voordeel p { font-size: 0.875rem; color: var(--muted); margin: 0; }
+
+/* ── WERKWIJZE STAPPEN ── */
+.stappen { display: flex; flex-direction: column; gap: 1.5rem; max-width: 720px; }
+.stap { display: flex; gap: 1.5rem; }
+.stap-nr {
+  flex-shrink: 0; width: 40px; height: 40px;
+  background: var(--mediumblue); color: var(--white);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.95rem;
+}
+.stap-body h3 { margin-bottom: 0.25rem; }
+.stap-body p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+
+/* ── FAQ ── */
+.faq { max-width: 760px; }
+.faq-item { border-bottom: 1px solid var(--line); }
+.faq-question {
+  width: 100%; text-align: left; padding: 1rem 0;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 1rem; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  color: var(--ink);
+}
+.faq-question:hover { color: var(--mediumblue); }
+.faq-icon { font-size: 1.2rem; color: var(--mediumblue); transition: transform 0.25s; flex-shrink: 0; }
+.faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+.faq-answer-inner { padding-bottom: 1rem; color: var(--muted); font-size: 0.95rem; }
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+.faq-item.open .faq-answer { max-height: 400px; }
+
+/* ── REVIEW / QUOTE ── */
+.review-block {
+  background: var(--white); border-left: 4px solid var(--brightblue);
+  border-radius: var(--radius); padding: 1.5rem 2rem;
+  max-width: 680px;
+}
+.review-text { font-size: 1.1rem; font-style: italic; color: var(--ink); margin-bottom: 1rem; }
+.review-author { font-size: 0.875rem; color: var(--muted); font-weight: 600; }
+
+/* ── CTA BANNER ── */
+.cta-banner {
+  background: linear-gradient(135deg, var(--mediumblue) 0%, var(--darkblue) 100%);
+  color: var(--white); border-radius: var(--radius-lg);
+  padding: 3rem; text-align: center;
+}
+.cta-banner h2 { color: var(--white); margin-bottom: 0.75rem; }
+.cta-banner p { color: rgba(255,255,255,0.85); margin-bottom: 1.75rem; font-size: 1.05rem; }
+.cta-banner .cta-actions { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+
+/* ── NIEUWS KAARTEN ── */
+.nieuws-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+.nieuws-card {
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.nieuws-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.nieuws-card-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.nieuws-meta { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.75rem; align-items: center; }
+.nieuws-tag {
+  background: var(--lb1); color: var(--mediumblue);
+  padding: 0.15rem 0.5rem; border-radius: 4px;
+  font-size: 0.75rem; font-weight: 600;
+}
+.nieuws-card h3 { font-size: 1.05rem; margin-bottom: 0.25rem; }
+.nieuws-card h3 a { color: var(--ink); }
+.nieuws-card h3 a:hover { color: var(--mediumblue); text-decoration: none; }
+.nieuws-card p { color: var(--muted); font-size: 0.9rem; flex: 1; margin: 0; }
+.nieuws-card .read-more { color: var(--mediumblue); font-weight: 600; font-size: 0.875rem; margin-top: 1rem; }
+
+/* ── ARTIKEL DETAILPAGINA ── */
+.artikel-hero { background: var(--lb1); padding: 3rem 0; }
+.artikel-hero .artikel-meta { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.75rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.artikel-hero h1 { margin-bottom: 0.75rem; }
+.artikel-hero .artikel-excerpt { font-size: 1.1rem; color: var(--muted); }
+.artikel-body { max-width: 720px; }
+.artikel-body h2 { margin-top: 2rem; margin-bottom: 0.75rem; }
+.artikel-body h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.artikel-body p { margin-bottom: 1rem; }
+.artikel-body ul, .artikel-body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.artikel-body li { margin-bottom: 0.35rem; }
+.dienst-teaser {
+  background: var(--lb1); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 1.5rem; margin-top: 2rem;
+}
+.dienst-teaser h3 { color: var(--darkblue); margin-bottom: 0.5rem; }
+
+/* ── OVER ONS ── */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+.team-card {
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 2rem; text-align: center;
+}
+.team-avatar {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: var(--lb1); margin: 0 auto 1rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; overflow: hidden;
+}
+.team-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.team-card h3 { color: var(--darkblue); margin-bottom: 0.25rem; }
+.team-card .team-titel { color: var(--mediumblue); font-size: 0.875rem; font-weight: 600; }
+.team-card .team-rol { color: var(--muted); font-size: 0.875rem; }
+
+/* ── CONTACT ── */
+.contact-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+@media (max-width: 700px) { .contact-grid { grid-template-columns: 1fr; } }
+.contact-info h2 { margin-bottom: 1rem; }
+.contact-info p { color: var(--muted); }
+.contact-detail { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem; }
+.contact-detail-icon { color: var(--mediumblue); flex-shrink: 0; margin-top: 2px; }
+
+/* Contactformulier */
+.form-group { margin-bottom: 1.25rem; }
+.form-group label { display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.95rem; }
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%; padding: 0.75rem 1rem;
+  border: 1.5px solid var(--line); border-radius: var(--radius);
+  font-family: inherit; font-size: 1rem; color: var(--ink);
+  background: var(--white);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--mediumblue);
+  box-shadow: 0 0 0 3px rgba(2,131,196,0.12);
+}
+.form-group textarea { min-height: 140px; resize: vertical; }
+.form-error { color: #d32f2f; font-size: 0.85rem; margin-top: 0.3rem; display: none; }
+.form-group.has-error input,
+.form-group.has-error textarea { border-color: #d32f2f; }
+.form-group.has-error .form-error { display: block; }
+.form-success {
+  background: #e8f5e9; border: 1px solid #a5d6a7;
+  border-radius: var(--radius); padding: 1rem 1.25rem;
+  color: #2e7d32; display: none; margin-bottom: 1rem;
+}
+
+/* Maps embed */
+.maps-embed { border-radius: var(--radius-lg); overflow: hidden; margin-top: 2rem; aspect-ratio: 16/9; }
+.maps-embed iframe { width: 100%; height: 100%; border: 0; }
+
+/* ── LOKALE PAGINA'S ── */
+.lokaal-intro { font-size: 1.1rem; color: var(--muted); max-width: 720px; margin-bottom: 2rem; }
+
+/* ── PAGINA HEADER (subpagina's) ── */
+.page-hero { background: var(--lb1); padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--line); }
+.page-hero h1 { margin-bottom: 0.75rem; }
+.page-hero .page-intro { color: var(--muted); font-size: 1.05rem; max-width: 640px; }
+
+/* Servicepagina hero */
+.dienst-hero { background: linear-gradient(135deg, var(--darkblue) 0%, var(--mediumblue) 100%); color: white; padding: 4rem 0 3rem; }
+.dienst-hero h1 { color: white; margin-bottom: 0.75rem; }
+.dienst-hero .hero-sub { color: rgba(255,255,255,0.85); font-size: 1.1rem; margin-bottom: 2rem; max-width: 620px; }
+.dienst-hero .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+/* ── SOFTWARE BADGE ── */
+.software-list { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+.software-badge {
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 0.5rem 1rem;
+  font-size: 0.875rem; font-weight: 500; color: var(--ink);
+}
+
+/* ── PAGINATION ── */
+.pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 3rem; flex-wrap: wrap; }
+.page-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 40px; height: 40px; padding: 0 0.75rem;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--ink); font-size: 0.9rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.page-link:hover { background: var(--lb1); border-color: var(--brightblue); text-decoration: none; }
+.page-link.active { background: var(--mediumblue); color: white; border-color: var(--mediumblue); }
+
+/* ── RELATED DIENSTEN ── */
+.related-diensten { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.related-card {
+  border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  text-decoration: none; color: var(--ink);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.related-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); text-decoration: none; color: var(--ink); }
+.related-card h4 { color: var(--darkblue); margin: 0; }
+.related-card p { color: var(--muted); font-size: 0.875rem; margin: 0; }
+
+/* ── STATS ROW ── */
+.stats-row { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
+.stat-item { text-align: center; }
+.stat-number { font-size: 2.5rem; font-weight: 800; color: var(--brightblue); font-family: 'Fira Sans Condensed', sans-serif; line-height: 1; }
+.stat-label { color: rgba(255,255,255,0.75); font-size: 0.875rem; margin-top: 0.25rem; }
+.section--dark .stat-label { color: rgba(255,255,255,0.75); }
+
+/* ── 404 ── */
+.page-404 { text-align: center; padding: 6rem 0; }
+.page-404 .error-code { font-size: 8rem; font-weight: 800; color: var(--brightblue); line-height: 1; font-family: 'Fira Sans Condensed', sans-serif; }
+.page-404 h1 { margin-bottom: 1rem; }
+.page-404 p { color: var(--muted); margin-bottom: 2rem; }
+
+/* ── LEGAL PAGINA'S ── */
+.legal-content { max-width: 760px; }
+.legal-content h2 { margin-top: 2rem; margin-bottom: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.legal-content h2:first-child { border-top: none; padding-top: 0; }
+.legal-content ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+.legal-content li { margin-bottom: 0.35rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .diensten-grid { grid-template-columns: 1fr; }
+  .voordelen-grid { grid-template-columns: 1fr 1fr; }
+  .hero-content h1 { font-size: 2rem; }
+  .cta-banner { padding: 2rem 1.5rem; }
+}
+@media (max-width: 500px) {
+  .voordelen-grid { grid-template-columns: 1fr; }
+  .stats-row { gap: 1.5rem; }
+}
+
+/* ── FOOTER ── */
+.site-footer { background: var(--ink); color: rgba(255,255,255,0.85); padding: 4rem 0 0; margin-top: 0; }
+.footer-inner {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 3rem; padding-bottom: 3rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+@media (max-width: 900px) { .footer-inner { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+@media (max-width: 500px) { .footer-inner { grid-template-columns: 1fr; } }
+
+.footer-logo { display: flex; align-items: center; gap: 0.75rem; color: white; font-size: 0.95rem; margin-bottom: 1.25rem; }
+.footer-logo:hover { text-decoration: none; }
+.footer-nap { font-style: normal; font-size: 0.875rem; line-height: 1.8; }
+.footer-nap a { color: rgba(255,255,255,0.7); }
+.footer-nap a:hover { color: var(--brightblue); }
+.footer-nba { font-size: 0.8rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+.footer-nba svg { color: var(--green); flex-shrink: 0; }
+.footer-nav h3 { color: white; font-size: 0.875rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1rem; }
+.footer-nav ul { list-style: none; }
+.footer-nav li { margin-bottom: 0.5rem; }
+.footer-nav a { color: rgba(255,255,255,0.65); font-size: 0.875rem; transition: color 0.15s; }
+.footer-nav a:hover { color: var(--brightblue); text-decoration: none; }
+.footer-bottom { padding: 1.25rem 0; }
+.footer-bottom-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: rgba(255,255,255,0.45); }
+.footer-legal-links a { color: rgba(255,255,255,0.45); margin: 0 0.35rem; }
+.footer-legal-links a:hover { color: var(--brightblue); }
+
+/* ── OVER ONS SPECIFIEK ── */
+.waarom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 1.5rem; }
+.waarom-item { display: flex; gap: 1rem; padding: 1.25rem; background: var(--white); border-radius: var(--radius); border: 1px solid var(--line); }
+.waarom-item svg { flex-shrink: 0; color: var(--mediumblue); margin-top: 2px; }
+.waarom-item h4 { margin-bottom: 0.25rem; }
+.waarom-item p { color: var(--muted); font-size: 0.875rem; margin: 0; }

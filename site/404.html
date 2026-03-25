@@ -1,0 +1,35 @@
+---
+layout: base
+title: "Pagina niet gevonden | Otto Visser & Partners"
+description: "Deze pagina bestaat niet. Ga terug naar de homepage van Otto Visser & Partners."
+permalink: /404.html
+eleventyExcludeFromCollections: true
+---
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="page-404">
+      <div class="error-code" aria-hidden="true">404</div>
+      <h1>Pagina niet gevonden</h1>
+      <p>De pagina die je zoekt bestaat niet (meer) of is verplaatst.<br>
+      Misschien kan je vinden wat je zoekt via de links hieronder.</p>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:3rem">
+        <a href="/" class="btn btn-primary">Terug naar home</a>
+        <a href="/diensten/" class="btn btn-outline">Onze diensten</a>
+        <a href="/contact/" class="btn btn-outline">Contact</a>
+      </div>
+      <div style="max-width:600px; margin:0 auto">
+        <h2 style="font-size:1.2rem; margin-bottom:1rem">Of ga direct naar een dienst:</h2>
+        <div style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center">
+          <a href="/diensten/jaarrekening/" class="btn btn-outline btn-sm">Jaarrekening</a>
+          <a href="/diensten/belastingaangifte/" class="btn btn-outline btn-sm">Belastingaangifte</a>
+          <a href="/diensten/loonadministratie/" class="btn btn-outline btn-sm">Loonadministratie</a>
+          <a href="/diensten/fiscaal-advies/" class="btn btn-outline btn-sm">Fiscaal advies</a>
+          <a href="/diensten/administratie/" class="btn btn-outline btn-sm">Administratie</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+---
+permalink: /feed.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Otto Visser &amp; Partners – Nieuws</title>
+  <subtitle>Fiscaal nieuws en ondernemersupdates voor MKB in Friesland</subtitle>
+  <link href="https://www.ottovisseraccountants.nl/feed.xml" rel="self"/>
+  <link href="https://www.ottovisseraccountants.nl/"/>
+  <updated>{{ collections.nieuws[0].date | isoDate if collections.nieuws.length > 0 else "2026-01-01T00:00:00Z" }}</updated>
+  <id>https://www.ottovisseraccountants.nl/</id>
+  <author>
+    <name>Otto Visser &amp; Partners</name>
+    <email>info@ottovisserpartners.nl</email>
+  </author>
+  {% for artikel in collections.nieuws %}
+  <entry>
+    <title>{{ artikel.data.title }}</title>
+    <link href="https://www.ottovisseraccountants.nl{{ artikel.url }}"/>
+    <updated>{{ artikel.date | isoDate }}</updated>
+    <id>https://www.ottovisseraccountants.nl{{ artikel.url }}</id>
+    <summary>{{ artikel.data.excerpt }}</summary>
+  </entry>
+  {% endfor %}
+</feed>

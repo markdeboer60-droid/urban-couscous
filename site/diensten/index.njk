@@ -1,0 +1,134 @@
+---
+layout: base
+title: "Onze diensten | Accountant & adviseur in Sneek | Otto Visser & Partners"
+description: "Van jaarrekening tot bedrijfsoverdracht – Otto Visser & Partners biedt alle accountancy- en adviesdiensten voor MKB-ondernemers in Sneek en Friesland."
+permalink: /diensten/
+---
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Otto Visser & Partners",
+  "url": "https://www.ottovisseraccountants.nl",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Accountancy- en adviesdiensten",
+    "itemListElement": [
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Jaarrekening", "url": "https://www.ottovisseraccountants.nl/diensten/jaarrekening/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Belastingaangifte", "url": "https://www.ottovisseraccountants.nl/diensten/belastingaangifte/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Loonadministratie", "url": "https://www.ottovisseraccountants.nl/diensten/loonadministratie/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Fiscaal advies", "url": "https://www.ottovisseraccountants.nl/diensten/fiscaal-advies/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Bedrijfsoverdracht", "url": "https://www.ottovisseraccountants.nl/diensten/bedrijfsoverdracht/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Administratie", "url": "https://www.ottovisseraccountants.nl/diensten/administratie/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Financieringsadvies", "url": "https://www.ottovisseraccountants.nl/diensten/financieringsadvies/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Startersbegeleiding", "url": "https://www.ottovisseraccountants.nl/diensten/startersbegeleiding/" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Erf- en schenkbelasting", "url": "https://www.ottovisseraccountants.nl/diensten/erf-en-schenkbelasting/" } }
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ottovisseraccountants.nl/" },
+    { "@type": "ListItem", "position": 2, "name": "Diensten", "item": "https://www.ottovisseraccountants.nl/diensten/" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% set breadcrumbs = [{ "name": "Diensten" }] %}
+{% include "partials/breadcrumb.njk" %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Wat wij doen voor ondernemers in Sneek en Friesland</h1>
+    <p class="page-intro">Als persoonlijk accountantskantoor in Sneek bieden wij een compleet pakket aan diensten voor MKB-ondernemers, vrije beroepen en non-profit. NBA-gecertificeerd, meer dan 8 jaar ervaring.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <p style="max-width:720px; color:var(--muted); font-size:1.05rem; margin-bottom:2.5rem">
+      Bij Otto Visser &amp; Partners krijg je geen groot onpersoonlijk kantoor, maar een vaste adviseur die jou en je bedrijf echt kent. Wij combineren accountancy met praktisch ondernemersadvies – altijd gericht op jouw specifieke situatie in Friesland.
+    </p>
+
+    <div class="diensten-grid">
+      <a href="/diensten/jaarrekening/" class="dienst-card">
+        <div class="dienst-icon">📊</div>
+        <h3>Jaarrekening opstellen</h3>
+        <p>Correcte jaarrekening conform wet- en regelgeving, in begrijpelijke taal toegelicht. Voor eenmanszaak tot BV.</p>
+        <span class="card-link">Meer over jaarrekening →</span>
+      </a>
+      <a href="/diensten/belastingaangifte/" class="dienst-card">
+        <div class="dienst-icon">🧾</div>
+        <h3>Belastingaangifte</h3>
+        <p>IB-aangifte voor ondernemers en VPB-aangifte voor BV's. Wij zorgen dat je nooit te veel betaalt en altijd op tijd indient.</p>
+        <span class="card-link">Meer over belastingaangifte →</span>
+      </a>
+      <a href="/diensten/loonadministratie/" class="dienst-card">
+        <div class="dienst-icon">👥</div>
+        <h3>Loonadministratie</h3>
+        <p>Complete salarisadministratie, loonaangiften en afdrachten. Tijdig, foutloos en volledig ontzorgd.</p>
+        <span class="card-link">Meer over loonadministratie →</span>
+      </a>
+      <a href="/diensten/fiscaal-advies/" class="dienst-card">
+        <div class="dienst-icon">💡</div>
+        <h3>Fiscaal advies</h3>
+        <p>Proactief advies over je belastingpositie, DGA-advies, BV-structuur en fiscale optimalisatie voor MKB.</p>
+        <span class="card-link">Meer over fiscaal advies →</span>
+      </a>
+      <a href="/diensten/bedrijfsoverdracht/" class="dienst-card">
+        <div class="dienst-icon">🤝</div>
+        <h3>Bedrijfsoverdracht</h3>
+        <p>Bedrijfswaardering, due diligence en begeleiding bij koop, verkoop of overname van een bedrijf in Friesland.</p>
+        <span class="card-link">Meer over bedrijfsoverdracht →</span>
+      </a>
+      <a href="/diensten/administratie/" class="dienst-card">
+        <div class="dienst-icon">📁</div>
+        <h3>Administratie</h3>
+        <p>Boekhouding uitbesteden of samen bijhouden. Real-time inzicht via jouw boekhoudprogramma.</p>
+        <span class="card-link">Meer over administratie →</span>
+      </a>
+      <a href="/diensten/financieringsadvies/" class="dienst-card">
+        <div class="dienst-icon">🏦</div>
+        <h3>Financieringsadvies</h3>
+        <p>Bedrijfsplan, bankgesprek, investering. Wij helpen je bij het aantrekken van de juiste financiering.</p>
+        <span class="card-link">Meer over financieringsadvies →</span>
+      </a>
+      <a href="/diensten/startersbegeleiding/" class="dienst-card">
+        <div class="dienst-icon">🚀</div>
+        <h3>Startersbegeleiding</h3>
+        <p>Als starter in Friesland krijg je begeleiding op maat. Van rechtsvorm kiezen tot je eerste aangifte.</p>
+        <span class="card-link">Meer over startersbegeleiding →</span>
+      </a>
+      <a href="/diensten/erf-en-schenkbelasting/" class="dienst-card">
+        <div class="dienst-icon">⚖️</div>
+        <h3>Erf- en schenkbelasting</h3>
+        <p>Vermogen slim overdragen aan de volgende generatie met zo min mogelijk belasting. Deskundig advies.</p>
+        <span class="card-link">Meer over erf- en schenkbelasting →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section section--light">
+  <div class="container">
+    <div class="cta-banner">
+      <h2>Niet zeker welke dienst je nodig hebt?</h2>
+      <p>Geen probleem. In een kennismakingsgesprek kijken we samen wat jouw onderneming nodig heeft. Vrijblijvend en zonder kosten.</p>
+      <div class="cta-actions">
+        <a href="/contact/" class="btn btn-white">Plan een gesprek</a>
+        <a href="tel:+31515740810" class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.5)">Bel 0515 740 810</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

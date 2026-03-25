@@ -1,0 +1,208 @@
+---
+layout: base
+---
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "{{ title }}",
+  "provider": {
+    "@type": "AccountingService",
+    "name": "Otto Visser & Partners",
+    "url": "https://www.ottovisseraccountants.nl",
+    "telephone": "+31515740810",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Prinses Julianapark 7",
+      "postalCode": "8601 GJ",
+      "addressLocality": "Sneek",
+      "addressCountry": "NL"
+    }
+  },
+  "areaServed": ["Sneek","Leeuwarden","Heerenveen","Friesland"],
+  "url": "https://www.ottovisseraccountants.nl{{ page.url }}"
+}
+</script>
+{% if faq %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for item in faq %}
+    {
+      "@type": "Question",
+      "name": "{{ item.q }}",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ item.a }}"
+      }
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ottovisseraccountants.nl/" },
+    { "@type": "ListItem", "position": 2, "name": "Diensten", "item": "https://www.ottovisseraccountants.nl/diensten/" },
+    { "@type": "ListItem", "position": 3, "name": "{{ h1 }}", "item": "https://www.ottovisseraccountants.nl{{ page.url }}" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% set breadcrumbs = [{ "name": "Diensten", "url": "/diensten/" }, { "name": h1 }] %}
+{% include "partials/breadcrumb.njk" %}
+
+<!-- HERO -->
+<section class="dienst-hero" aria-labelledby="dienst-h1">
+  <div class="container">
+    <h1 id="dienst-h1">{{ h1 }}</h1>
+    <p class="hero-sub">{{ heroSub }}</p>
+    <div class="hero-actions">
+      <a href="/contact/" class="btn btn-white">Plan een gesprek</a>
+      <a href="tel:+31515740810" class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.5)">Bel 0515 740 810</a>
+    </div>
+  </div>
+</section>
+
+<!-- NBA badge -->
+<div style="background:var(--lb1); padding:0.75rem 0; border-bottom:1px solid var(--line);">
+  <div class="container" style="display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:var(--muted);">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    NBA-lid | Partners Mark de Boer MSc AA en Marco Wijnia MSc AA | Opgericht 2016
+  </div>
+</div>
+
+<!-- INTRO -->
+<section class="section" aria-labelledby="intro-heading">
+  <div class="container">
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 3rem; align-items:start;">
+      <div>
+        <h2 id="intro-heading">Waarom {{ dienstLabel | lower }} belangrijk is voor jouw onderneming</h2>
+        <div class="section-intro">{{ intro | safe }}</div>
+
+        <h2>Wat doen wij?</h2>
+        {{ watDoenWij | safe }}
+      </div>
+      <div>
+        <!-- Review -->
+        <blockquote class="review-block">
+          <p class="review-text">{{ review.tekst }}</p>
+          <cite class="review-author">{{ review.naam }} – {{ review.bedrijf }}</cite>
+        </blockquote>
+
+        <!-- Software -->
+        <div style="margin-top:2rem;">
+          <h3 style="margin-bottom:0.75rem">Software die wij gebruiken</h3>
+          <div class="software-list">
+            {% for s in site.software %}
+            <span class="software-badge">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VOORDELEN -->
+<section class="section section--light" aria-labelledby="voordelen-heading">
+  <div class="container">
+    <h2 id="voordelen-heading">Voordelen van {{ dienstLabel | lower }} bij Otto Visser &amp; Partners</h2>
+    <div class="voordelen-grid" style="margin-top:1.5rem">
+      {% for v in voordelen %}
+      <div class="voordeel">
+        <div class="voordeel-icon" aria-hidden="true">{{ v.icon }}</div>
+        <div>
+          <h3>{{ v.titel }}</h3>
+          <p>{{ v.tekst }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- WERKWIJZE -->
+<section class="section" aria-labelledby="werkwijze-heading">
+  <div class="container">
+    <h2 id="werkwijze-heading">Hoe werkt het?</h2>
+    <div class="stappen" style="margin-top:1.5rem">
+      {% for stap in werkwijze %}
+      <div class="stap">
+        <div class="stap-nr" aria-hidden="true">{{ loop.index }}</div>
+        <div class="stap-body">
+          <h3>{{ stap.titel }}</h3>
+          <p>{{ stap.tekst }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+{% if faq %}
+<section class="section section--grey" aria-labelledby="faq-heading">
+  <div class="container">
+    <h2 id="faq-heading">Veelgestelde vragen</h2>
+    <div class="faq" style="margin-top:1.5rem">
+      {% for item in faq %}
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          {{ item.q }}
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">{{ item.a }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- GERELATEERDE DIENSTEN -->
+{% if related %}
+<section class="section section--light" aria-labelledby="related-heading">
+  <div class="container">
+    <h2 id="related-heading">Gerelateerde diensten</h2>
+    <div class="related-diensten" style="margin-top:1.25rem">
+      {% for r in related %}
+      <a href="/diensten/{{ r.slug }}/" class="related-card">
+        <span aria-hidden="true" style="font-size:1.5rem">{{ r.icon }}</span>
+        <h4>{{ r.label }}</h4>
+        <p>{{ r.tekst }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- CTA -->
+<section class="section" aria-label="Neem contact op">
+  <div class="container">
+    <div class="cta-banner">
+      <h2>Klaar om te starten met {{ dienstLabel | lower }}?</h2>
+      <p>Neem vrijblijvend contact op. We bespreken graag jouw situatie en geven je meteen een concreet beeld van wat we voor je kunnen doen.</p>
+      <div class="cta-actions">
+        <a href="/contact/" class="btn btn-white">Plan een kennismakingsgesprek</a>
+        <a href="tel:+31515740810" class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.5)">Bel 0515 740 810</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

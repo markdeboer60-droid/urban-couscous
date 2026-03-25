@@ -1,0 +1,141 @@
+---
+layout: base
+---
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": ["LocalBusiness", "AccountingService"],
+  "name": "Otto Visser & Partners",
+  "url": "https://www.ottovisseraccountants.nl{{ page.url }}",
+  "telephone": "+31515740810",
+  "email": "info@ottovisserpartners.nl",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Prinses Julianapark 7",
+    "postalCode": "8601 GJ",
+    "addressLocality": "Sneek",
+    "addressCountry": "NL"
+  },
+  "areaServed": {
+    "@type": "City",
+    "name": "{{ stad }}"
+  },
+  "memberOf": {
+    "@type": "Organization",
+    "name": "NBA – Nederlandse Beroepsorganisatie van Accountants"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for item in faq %}
+    {
+      "@type": "Question",
+      "name": "{{ item.q }}",
+      "acceptedAnswer": { "@type": "Answer", "text": "{{ item.a }}" }
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ottovisseraccountants.nl/" },
+    { "@type": "ListItem", "position": 2, "name": "{{ h1 }}", "item": "https://www.ottovisseraccountants.nl{{ page.url }}" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% set breadcrumbs = [{ "name": h1 }] %}
+{% include "partials/breadcrumb.njk" %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>{{ h1 }}</h1>
+    <p class="page-intro">{{ intro }}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:3rem; align-items:start;">
+      <div>
+        {{ body | safe }}
+
+        <h2 style="margin-top:2rem">Onze diensten voor ondernemers in {{ stad }}</h2>
+        <p>Vanuit ons kantoor in Sneek werken we voor ondernemers in de hele regio. We komen naar je toe of je bezoekt ons op kantoor.</p>
+        <div class="diensten-grid" style="margin-top:1rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+          {% for dienst in site.diensten %}
+          <a href="/diensten/{{ dienst.slug }}/" class="dienst-card" style="padding:1.25rem">
+            <div class="dienst-icon" style="font-size:1.5rem">{{ dienst.icon }}</div>
+            <h3 style="font-size:1rem">{{ dienst.label }}</h3>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <!-- CTA Sidebar -->
+        <div class="cta-banner" style="padding:1.75rem; margin-bottom:1.5rem">
+          <h3 style="color:white; margin-bottom:0.5rem">Vrijblijvend kennismaken?</h3>
+          <p style="font-size:0.9rem">Bel ons of stuur een bericht. We reageren snel.</p>
+          <a href="tel:+31515740810" class="btn btn-white" style="width:100%; justify-content:center; margin-bottom:0.5rem">0515 740 810</a>
+          <a href="/contact/" class="btn btn-outline" style="width:100%; justify-content:center; color:white; border-color:rgba(255,255,255,0.4)">Stuur een bericht</a>
+        </div>
+
+        <!-- NBA badge -->
+        <div style="background:var(--lb1); border-radius:var(--radius); padding:1.25rem; font-size:0.875rem; color:var(--muted);">
+          <p style="font-weight:600; color:var(--ink); margin-bottom:0.5rem">NBA-lid | Gecertificeerd accountant</p>
+          <p style="margin:0">Partners: Mark de Boer MSc AA en Marco Wijnia MSc AA. Opgericht 2016, meer dan 8 jaar ervaring.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section section--grey" aria-labelledby="faq-{{ stad | lower }}-heading">
+  <div class="container">
+    <h2 id="faq-{{ stad | lower }}-heading">Veelgestelde vragen van ondernemers in {{ stad }}</h2>
+    <div class="faq" style="margin-top:1.5rem">
+      {% for item in faq %}
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          {{ item.q }}
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">{{ item.a }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section">
+  <div class="container">
+    <div class="cta-banner">
+      <h2>Accountant zoeken in {{ stad }}?</h2>
+      <p>Bel ons op 0515 740 810 of plan een kennismakingsgesprek. Altijd vrijblijvend.</p>
+      <div class="cta-actions">
+        <a href="/contact/" class="btn btn-white">Plan een gesprek</a>
+        <a href="tel:+31515740810" class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.5)">Bel 0515 740 810</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

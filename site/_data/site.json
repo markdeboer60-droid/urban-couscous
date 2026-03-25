@@ -1,0 +1,42 @@
+{
+  "name": "Otto Visser & Partners",
+  "tagline": "Accountants & Adviseurs in Sneek",
+  "url": "https://www.ottovisseraccountants.nl",
+  "email": "info@ottovisserpartners.nl",
+  "telefoon": "0515 740 810",
+  "telefoonRaw": "+31515740810",
+  "adres": "Prinses Julianapark 7",
+  "postcode": "8601 GJ",
+  "stad": "Sneek",
+  "postbus": "30, 8600 AA Sneek",
+  "kvk": "",
+  "opgericht": 2016,
+  "nbaLid": true,
+  "ogImage": "/assets/img/otto-visser-partners-team.jpg",
+  "diensten": [
+    { "slug": "jaarrekening", "label": "Jaarrekening", "icon": "📊" },
+    { "slug": "belastingaangifte", "label": "Belastingaangifte", "icon": "🧾" },
+    { "slug": "loonadministratie", "label": "Loonadministratie", "icon": "👥" },
+    { "slug": "fiscaal-advies", "label": "Fiscaal advies", "icon": "💡" },
+    { "slug": "bedrijfsoverdracht", "label": "Bedrijfsoverdracht", "icon": "🤝" },
+    { "slug": "administratie", "label": "Administratie", "icon": "📁" },
+    { "slug": "financieringsadvies", "label": "Financieringsadvies", "icon": "🏦" },
+    { "slug": "startersbegeleiding", "label": "Startersbegeleiding", "icon": "🚀" },
+    { "slug": "erf-en-schenkbelasting", "label": "Erf- en schenkbelasting", "icon": "⚖️" }
+  ],
+  "partners": [
+    {
+      "naam": "Mark de Boer",
+      "titel": "MSc AA",
+      "rol": "Partner & Accountant",
+      "email": "m.deboer@ottovisserpartners.nl"
+    },
+    {
+      "naam": "Marco Wijnia",
+      "titel": "MSc AA",
+      "rol": "Partner & Accountant",
+      "email": "m.wijnia@ottovisserpartners.nl"
+    }
+  ],
+  "software": ["SnelStart", "Exact Online", "Twinfield", "e-Boekhouden"]
+}

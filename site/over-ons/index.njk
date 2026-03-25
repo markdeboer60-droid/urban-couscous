@@ -1,0 +1,224 @@
+---
+layout: base
+title: "Accountantskantoor Sneek | Over Otto Visser & Partners"
+description: "Otto Visser & Partners – een persoonlijk accountantskantoor in Sneek opgericht in 2016. NBA-lid. Partners Mark de Boer MSc AA en Marco Wijnia MSc AA."
+permalink: /over-ons/
+---
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Otto Visser & Partners",
+  "url": "https://www.ottovisseraccountants.nl",
+  "foundingDate": "2016",
+  "description": "Persoonlijk accountantskantoor in Sneek voor MKB-ondernemers in Friesland.",
+  "telephone": "+31515740810",
+  "email": "info@ottovisserpartners.nl",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Prinses Julianapark 7",
+    "postalCode": "8601 GJ",
+    "addressLocality": "Sneek",
+    "addressCountry": "NL"
+  },
+  "memberOf": {
+    "@type": "Organization",
+    "name": "NBA – Nederlandse Beroepsorganisatie van Accountants"
+  },
+  "employee": [
+    {
+      "@type": "Person",
+      "name": "Mark de Boer",
+      "jobTitle": "Partner & Accountant-Administratieconsulent",
+      "hasCredential": "MSc AA"
+    },
+    {
+      "@type": "Person",
+      "name": "Marco Wijnia",
+      "jobTitle": "Partner & Accountant-Administratieconsulent",
+      "hasCredential": "MSc AA"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ottovisseraccountants.nl/" },
+    { "@type": "ListItem", "position": 2, "name": "Over ons", "item": "https://www.ottovisseraccountants.nl/over-ons/" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% set breadcrumbs = [{ "name": "Over ons" }] %}
+{% include "partials/breadcrumb.njk" %}
+
+<!-- NBA / E-E-A-T Hero -->
+<section class="page-hero">
+  <div class="container">
+    <div style="display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:var(--mediumblue); font-weight:600; margin-bottom:0.75rem;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      NBA-lid | Gecertificeerd accountantskantoor | Opgericht 2016
+    </div>
+    <h1>Een klein kantoor met grote betrokkenheid</h1>
+    <p class="page-intro">Otto Visser &amp; Partners is in 2016 opgericht als persoonlijk alternatief voor de grote accountantskantoren. Meer dan 8 jaar later bedienen we ondernemers in heel Friesland vanuit ons kantoor in Sneek.</p>
+  </div>
+</section>
+
+<!-- VERHAAL -->
+<section class="section">
+  <div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4rem; align-items:center;">
+      <div>
+        <h2>Ons verhaal</h2>
+        <p>Wij geloven dat iedere ondernemer recht heeft op een accountant die hem echt kent. Niet iemand die je eens per jaar ziet en alleen de jaarrekening aflevert. Maar een adviseur die meeleeft met je bedrijf, proactief meedenkt en bereikbaar is als het er op aankomt.</p>
+        <p>Dat is de gedachte achter Otto Visser & Partners. Opgericht in 2016 in Sneek, met een duidelijk doel: MKB-ondernemers in Friesland een persoonlijk en betaalbaar alternatief bieden voor de grote, anonieme kantoren.</p>
+        <p>We zijn gegroeid tot een team van zeven medewerkers. Onze klanten zijn MKB-ondernemers, vrije beroepen en non-profitorganisaties in Sneek en heel Friesland. Ze waarderen de directe communicatie, de vaste prijzen en het feit dat ze altijd dezelfde persoon aan de lijn krijgen.</p>
+        <p>We zijn lid van de NBA (Nederlandse Beroepsorganisatie van Accountants) en onderworpen aan het accountantstuchtrecht. Onze partners zijn Mark de Boer MSc AA en Marco Wijnia MSc AA – beiden afgestudeerd als registeraccountant-in-opleiding met de AA-kwalificatie.</p>
+      </div>
+      <div>
+        <img
+          src="/assets/img/kantoor-sneek.jpg"
+          alt="Het kantoor van Otto Visser & Partners aan het Prinses Julianapark 7 in Sneek"
+          width="560" height="420"
+          loading="lazy"
+          style="border-radius: var(--radius-lg); aspect-ratio: 4/3; object-fit: cover;"
+        >
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section section--light" aria-labelledby="team-heading">
+  <div class="container">
+    <div class="section-header">
+      <h2 id="team-heading">Ons team</h2>
+      <p>Zeven mensen die van accountancy en ondernemersadvies hun werk hebben gemaakt.</p>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="/assets/img/mark-de-boer.jpg" alt="Mark de Boer MSc AA – partner Otto Visser & Partners" width="96" height="96" loading="lazy">
+        </div>
+        <h3>Mark de Boer</h3>
+        <div class="team-titel">MSc AA</div>
+        <div class="team-rol">Partner &amp; Accountant-Administratieconsulent</div>
+        <p style="font-size:0.875rem; color:var(--muted); margin-top:0.75rem">Gespecialiseerd in fiscaal advies, bedrijfsoverdracht en MKB-advisering. Ruime ervaring met DGA-advies en BV-structuren.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="/assets/img/marco-wijnia.jpg" alt="Marco Wijnia MSc AA – partner Otto Visser & Partners" width="96" height="96" loading="lazy">
+        </div>
+        <h3>Marco Wijnia</h3>
+        <div class="team-titel">MSc AA</div>
+        <div class="team-rol">Partner &amp; Accountant-Administratieconsulent</div>
+        <p style="font-size:0.875rem; color:var(--muted); margin-top:0.75rem">Gespecialiseerd in jaarrekeningen, administratie en loonadministratie. Veel ervaring met groeibedrijven en startende ondernemers.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" aria-hidden="true" style="font-size:2.5rem; background:var(--lb1);">👤</div>
+        <h3>Team</h3>
+        <div class="team-rol">Medewerkers administratie &amp; advies</div>
+        <p style="font-size:0.875rem; color:var(--muted); margin-top:0.75rem">Vijf vaste medewerkers die dagelijks werken aan de administratie, aangiften en klantenservice. Altijd een herkenbaar gezicht.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAAROM LOKAAL -->
+<section class="section" aria-labelledby="waarom-heading">
+  <div class="container">
+    <h2 id="waarom-heading">Waarom kiezen voor een lokale accountant in Sneek?</h2>
+    <p style="color:var(--muted); max-width:680px; margin-bottom:1.5rem">Grote landelijke kantoren bieden schaalgrootte, maar wat je als MKB-ondernemer in Friesland echt nodig hebt is een adviseur die je persoonlijk kent.</p>
+    <div class="waarom-grid">
+      <div class="waarom-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div>
+          <h4>Vaste adviseur</h4>
+          <p>Je weet altijd met wie je te maken hebt. Geen wisselende gezichten, geen intern doorverwijzen.</p>
+        </div>
+      </div>
+      <div class="waarom-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.56 4.36 2 2 0 0 1 3.53 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <div>
+          <h4>Korte lijnen</h4>
+          <p>Bel ons gewoon. Geen wachttijden van weken, geen ticketsystemen. Gewoon direct schakelen.</p>
+        </div>
+      </div>
+      <div class="waarom-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div>
+          <h4>Proactief</h4>
+          <p>We wachten niet tot je ons belt. Als we iets signaleren, nemen we contact op.</p>
+        </div>
+      </div>
+      <div class="waarom-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div>
+          <h4>Vaste prijzen</h4>
+          <p>Geen urenadministratie, geen verrassingen. Je weet vooraf wat je betaalt.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NBA + KWALIFICATIES -->
+<section class="section section--grey">
+  <div class="container">
+    <h2>Kwalificaties en lidmaatschappen</h2>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem; margin-top:1.5rem">
+      <div style="background:white; border-radius:var(--radius-lg); padding:1.5rem; border:1px solid var(--line);">
+        <h3 style="color:var(--darkblue); margin-bottom:0.5rem">NBA-lidmaatschap</h3>
+        <p style="color:var(--muted); font-size:0.9rem">Otto Visser & Partners is aangesloten bij de NBA (Nederlandse Beroepsorganisatie van Accountants). We zijn onderworpen aan het accountantstuchtrecht en beroepsaansprakelijkheidsregels.</p>
+      </div>
+      <div style="background:white; border-radius:var(--radius-lg); padding:1.5rem; border:1px solid var(--line);">
+        <h3 style="color:var(--darkblue); margin-bottom:0.5rem">MSc AA kwalificatie</h3>
+        <p style="color:var(--muted); font-size:0.9rem">Onze partners zijn MSc AA (Accountant-Administratieconsulent). De AA-kwalificatie is een wettelijk beschermde titel voor accountants gespecialiseerd in het MKB-segment.</p>
+      </div>
+      <div style="background:white; border-radius:var(--radius-lg); padding:1.5rem; border:1px solid var(--line);">
+        <h3 style="color:var(--darkblue); margin-bottom:0.5rem">Permanente educatie</h3>
+        <p style="color:var(--muted); font-size:0.9rem">Als NBA-leden zijn we verplicht jaarlijks permanente educatie te volgen. Je kunt er zeker van zijn dat onze kennis actueel is, ook bij wijzigingen in wetgeving en regelgeving.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIENSTEN LINKS -->
+<section class="section">
+  <div class="container">
+    <h2>Onze diensten</h2>
+    <p style="color:var(--muted); margin-bottom:1.5rem">We bieden alle accountancy- en adviesdiensten voor MKB-ondernemers in Friesland.</p>
+    <div class="diensten-grid">
+      {% for dienst in site.diensten %}
+      <a href="/diensten/{{ dienst.slug }}/" class="dienst-card">
+        <div class="dienst-icon">{{ dienst.icon }}</div>
+        <h3>{{ dienst.label }}</h3>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section section--light">
+  <div class="container">
+    <div class="cta-banner">
+      <h2>Wil je kennismaken?</h2>
+      <p>Een eerste gesprek is altijd vrijblijvend. We bespreken jouw situatie en kijken samen wat we voor je kunnen betekenen.</p>
+      <div class="cta-actions">
+        <a href="/contact/" class="btn btn-white">Plan een kennismakingsgesprek</a>
+        <a href="tel:+31515740810" class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.5)">Bel 0515 740 810</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

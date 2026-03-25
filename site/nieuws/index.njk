@@ -1,0 +1,61 @@
+---
+layout: base
+title: "Nieuws voor ondernemers | Otto Visser & Partners"
+description: "Fiscaal nieuws en ondernemersupdates van Otto Visser & Partners in Sneek. Blijf op de hoogte van alles wat uw bedrijf raakt."
+permalink: /nieuws/
+---
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ottovisseraccountants.nl/" },
+    { "@type": "ListItem", "position": 2, "name": "Nieuws", "item": "https://www.ottovisseraccountants.nl/nieuws/" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% set breadcrumbs = [{ "name": "Nieuws" }] %}
+{% include "partials/breadcrumb.njk" %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Nieuws voor ondernemers in Friesland</h1>
+    <p class="page-intro">We houden je op de hoogte van fiscale wijzigingen, ondernemersregelingen en andere zaken die jouw bedrijf raken.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if collections.nieuws.length > 0 %}
+    <div class="nieuws-grid">
+      {% for artikel in collections.nieuws %}
+      <article class="nieuws-card">
+        <div class="nieuws-card-body">
+          <div class="nieuws-meta">
+            <time datetime="{{ artikel.date | isoDate }}">{{ artikel.date | dateNL }}</time>
+            {% if artikel.data.tag %}<span class="nieuws-tag">{{ artikel.data.tag }}</span>{% endif %}
+          </div>
+          <h2 style="font-size:1.05rem"><a href="{{ artikel.url }}">{{ artikel.data.title }}</a></h2>
+          <p>{{ artikel.data.excerpt }}</p>
+          <a href="{{ artikel.url }}" class="read-more">Lees meer →</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Er zijn momenteel geen nieuwsberichten. Kom binnenkort terug.</p>
+    {% endif %}
+
+    <div style="text-align:center; margin-top:3rem">
+      <p style="color:var(--muted); font-size:0.9rem">Abonneer je op onze <a href="/feed.xml">RSS-feed</a> om altijd als eerste op de hoogte te zijn.</p>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

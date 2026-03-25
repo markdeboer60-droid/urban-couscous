@@ -1,0 +1,58 @@
+---
+layout: base
+title: "Columns over ondernemen in Friesland | Otto Visser & Partners"
+description: "Columns en inzichten van de accountants van Otto Visser & Partners over ondernemen in Friesland. Fiscaal, praktisch en direct."
+permalink: /columns/
+---
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ottovisseraccountants.nl/" },
+    { "@type": "ListItem", "position": 2, "name": "Columns", "item": "https://www.ottovisseraccountants.nl/columns/" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% set breadcrumbs = [{ "name": "Columns" }] %}
+{% include "partials/breadcrumb.njk" %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Columns over ondernemen in Friesland</h1>
+    <p class="page-intro">Onze accountants schrijven regelmatig over wat er speelt in het ondernemerslandschap. Fiscaal, praktisch en altijd eerlijk.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if collections.columns.length > 0 %}
+    <div class="nieuws-grid">
+      {% for artikel in collections.columns %}
+      <article class="nieuws-card">
+        <div class="nieuws-card-body">
+          <div class="nieuws-meta">
+            <time datetime="{{ artikel.date | isoDate }}">{{ artikel.date | dateNL }}</time>
+            <span class="nieuws-tag">Column</span>
+            {% if artikel.data.auteur %}<span>Door {{ artikel.data.auteur }}</span>{% endif %}
+          </div>
+          <h2 style="font-size:1.05rem"><a href="{{ artikel.url }}">{{ artikel.data.title }}</a></h2>
+          <p>{{ artikel.data.excerpt }}</p>
+          <a href="{{ artikel.url }}" class="read-more">Lees de column →</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Er zijn momenteel geen columns beschikbaar. Kom binnenkort terug.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

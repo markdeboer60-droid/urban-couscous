@@ -1,0 +1,82 @@
+<footer class="site-footer" role="contentinfo">
+  <div class="container footer-inner">
+
+    <div class="footer-brand">
+      <a href="/" class="footer-logo" aria-label="{{ site.name }}">
+        <svg width="32" height="36" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <polygon points="18,0 36,10 36,30 18,40 0,30 0,10" fill="#2ca7e0" opacity="0.9"/>
+          <polygon points="18,4 32,12 32,28 18,36 4,28 4,12" fill="#0283c4"/>
+          <polygon points="18,8 28,14 28,26 18,32 8,26 8,14" fill="#135d9e"/>
+          <polygon points="18,12 24,16 24,24 18,28 12,24 12,16" fill="white" opacity="0.9"/>
+        </svg>
+        <span>
+          <strong>Otto Visser &amp; Partners</strong><br>
+          <small>accountants</small>
+        </span>
+      </a>
+      <address class="footer-nap" itemscope itemtype="https://schema.org/AccountingService">
+        <span itemprop="name" class="sr-only">Otto Visser &amp; Partners</span>
+        <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+          <span itemprop="streetAddress">Prinses Julianapark 7</span><br>
+          <span itemprop="postalCode">8601 GJ</span> <span itemprop="addressLocality">Sneek</span>
+        </span><br>
+        <a href="tel:+31515740810" itemprop="telephone">0515 740 810</a><br>
+        <a href="mailto:info@ottovisserpartners.nl" itemprop="email">info@ottovisserpartners.nl</a>
+      </address>
+      <p class="footer-nba">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        NBA-lid | Opgericht {{ site.opgericht }} | Meer dan 8 jaar ervaring
+      </p>
+    </div>
+
+    <nav class="footer-nav" aria-label="Diensten">
+      <h3>Diensten</h3>
+      <ul role="list">
+        {% for dienst in site.diensten %}
+        <li><a href="/diensten/{{ dienst.slug }}/">{{ dienst.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <nav class="footer-nav" aria-label="Regio">
+      <h3>Regio</h3>
+      <ul role="list">
+        <li><a href="/accountant-friesland/">Accountant Friesland</a></li>
+        <li><a href="/accountant-leeuwarden/">Accountant Leeuwarden</a></li>
+        <li><a href="/accountant-heerenveen/">Accountant Heerenveen</a></li>
+        <li><a href="/accountant-bolsward/">Accountant Bolsward</a></li>
+        <li><a href="/accountant-workum/">Accountant Workum</a></li>
+        <li><a href="/accountant-lemmer/">Accountant Lemmer</a></li>
+        <li><a href="/accountant-joure/">Accountant Joure</a></li>
+      </ul>
+    </nav>
+
+    <nav class="footer-nav" aria-label="Over ons en contact">
+      <h3>Over ons</h3>
+      <ul role="list">
+        <li><a href="/over-ons/">Over ons</a></li>
+        <li><a href="/nieuws/">Nieuws</a></li>
+        <li><a href="/columns/">Columns</a></li>
+        <li><a href="/contact/">Contact</a></li>
+      </ul>
+      <h3 style="margin-top:1.5rem">Juridisch</h3>
+      <ul role="list">
+        <li><a href="/privacy/">Privacybeleid</a></li>
+        <li><a href="/disclaimer/">Disclaimer</a></li>
+        <li><a href="/klachtenregeling/">Klachtenregeling</a></li>
+      </ul>
+    </nav>
+
+  </div>
+
+  <div class="footer-bottom">
+    <div class="container footer-bottom-inner">
+      <p>&copy; {{ site.opgericht }}–2026 Otto Visser &amp; Partners. Alle rechten voorbehouden.</p>
+      <p class="footer-legal-links">
+        <a href="/privacy/">Privacy</a> &middot;
+        <a href="/disclaimer/">Disclaimer</a> &middot;
+        <a href="/klachtenregeling/">Klachtenregeling</a>
+      </p>
+    </div>
+  </div>
+</footer>

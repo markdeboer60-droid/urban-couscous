@@ -1,0 +1,53 @@
+<header class="site-header" role="banner">
+  <div class="container header-inner">
+    <a href="/" class="site-logo" aria-label="{{ site.name }} – naar homepage">
+      <svg width="36" height="40" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="18,0 36,10 36,30 18,40 0,30 0,10" fill="#2ca7e0" opacity="0.9"/>
+        <polygon points="18,4 32,12 32,28 18,36 4,28 4,12" fill="#0283c4"/>
+        <polygon points="18,8 28,14 28,26 18,32 8,26 8,14" fill="#135d9e"/>
+        <polygon points="18,12 24,16 24,24 18,28 12,24 12,16" fill="white" opacity="0.9"/>
+      </svg>
+      <span class="logo-text">
+        <span class="logo-name">Otto Visser <strong>&amp; Partners</strong></span>
+        <span class="logo-sub">accountants</span>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Hoofdnavigatie" id="main-nav">
+      <ul class="nav-list" role="list">
+        <li class="nav-item has-dropdown">
+          <a href="/diensten/" class="nav-link {% if page.url.startsWith('/diensten') %}nav-link--active{% endif %}" aria-haspopup="true" aria-expanded="false">
+            Diensten <span class="nav-arrow" aria-hidden="true">▾</span>
+          </a>
+          <ul class="nav-dropdown" role="list">
+            {% for dienst in site.diensten %}
+            <li>
+              <a href="/diensten/{{ dienst.slug }}/" class="dropdown-link {% if page.url == '/diensten/' + dienst.slug + '/' %}dropdown-link--active{% endif %}">
+                {{ dienst.label }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a href="/over-ons/" class="nav-link {% if page.url == '/over-ons/' %}nav-link--active{% endif %}" {% if page.url == '/over-ons/' %}aria-current="page"{% endif %}>Over ons</a>
+        </li>
+        <li class="nav-item">
+          <a href="/nieuws/" class="nav-link {% if page.url.startsWith('/nieuws') %}nav-link--active{% endif %}">Nieuws</a>
+        </li>
+        <li class="nav-item">
+          <a href="/contact/" class="nav-link {% if page.url == '/contact/' %}nav-link--active{% endif %}" {% if page.url == '/contact/' %}aria-current="page"{% endif %}>Contact</a>
+        </li>
+        <li class="nav-item nav-item--cta">
+          <a href="/contact/" class="btn btn-primary btn-sm">Kennismaken</a>
+        </li>
+      </ul>
+    </nav>
+
+    <button class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Menu openen">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</header>
