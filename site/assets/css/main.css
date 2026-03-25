@@ -492,6 +492,8 @@
 .footer-nap a:hover { color: var(--brightblue); }
 .footer-nba { font-size: 0.8rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
 .footer-nba svg { color: var(--green); flex-shrink: 0; }
+.footer-linkedin { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.75rem; font-size: 0.8rem; color: rgba(255,255,255,0.55); transition: color 0.2s; }
+.footer-linkedin:hover { color: white; text-decoration: none; }
 .footer-nav h3 { color: white; font-size: 0.875rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1rem; }
 .footer-nav ul { list-style: none; }
 .footer-nav li { margin-bottom: 0.5rem; }
