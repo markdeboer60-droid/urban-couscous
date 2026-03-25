@@ -9,7 +9,6 @@ dienst: fiscaal-advies
 permalink: /nieuws/ai-juridisch-adviseur/
 ---
 
-{% block schema %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -40,9 +39,7 @@ permalink: /nieuws/ai-juridisch-adviseur/
   ]
 }
 </script>
-{% endblock %}
 
-{% block content %}
 
 {% set breadcrumbs = [{ "name": "Nieuws", "url": "/nieuws/" }, { "name": title }] %}
 {% include "partials/breadcrumb.njk" %}
@@ -94,4 +91,3 @@ permalink: /nieuws/ai-juridisch-adviseur/
   </div>
 </section>
 
-{% endblock %}

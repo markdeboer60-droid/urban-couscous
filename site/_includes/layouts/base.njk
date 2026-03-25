@@ -116,7 +116,7 @@
   <link rel="stylesheet" href="/assets/css/main.css">
 
   <!-- Schema.org JSON-LD -->
-  {% block schema %}{% endblock %}
+  {{ schemaScripts | safe }}
 </head>
 <body>
   <a href="#main-content" class="skip-link">Ga naar inhoud</a>
@@ -124,7 +124,7 @@
   {% include "partials/header.njk" %}
 
   <main id="main-content">
-    {% block content %}{% endblock %}
+    {{ content | safe }}
   </main>
 
   {% include "partials/footer.njk" %}

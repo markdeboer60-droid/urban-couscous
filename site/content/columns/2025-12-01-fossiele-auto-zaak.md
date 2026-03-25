@@ -10,7 +10,6 @@ dienst: belastingaangifte
 permalink: /columns/fossiele-auto-zaak/
 ---
 
-{% block schema %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -42,9 +41,7 @@ permalink: /columns/fossiele-auto-zaak/
   ]
 }
 </script>
-{% endblock %}
 
-{% block content %}
 
 {% set breadcrumbs = [{ "name": "Columns", "url": "/columns/" }, { "name": title }] %}
 {% include "partials/breadcrumb.njk" %}
@@ -98,4 +95,3 @@ permalink: /columns/fossiele-auto-zaak/
   </div>
 </section>
 
-{% endblock %}

@@ -6,7 +6,6 @@ permalink: /privacy/
 eleventyExcludeFromCollections: true
 ---
 
-{% block schema %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -17,9 +16,7 @@ eleventyExcludeFromCollections: true
   ]
 }
 </script>
-{% endblock %}
 
-{% block content %}
 {% set breadcrumbs = [{ "name": "Privacybeleid" }] %}
 {% include "partials/breadcrumb.njk" %}
 
@@ -86,4 +83,3 @@ eleventyExcludeFromCollections: true
   </div>
 </section>
 
-{% endblock %}

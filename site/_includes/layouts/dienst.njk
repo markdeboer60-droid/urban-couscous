@@ -2,7 +2,6 @@
 layout: base
 ---
 
-{% block schema %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -56,9 +55,7 @@ layout: base
   ]
 }
 </script>
-{% endblock %}
 
-{% block content %}
 
 {% set breadcrumbs = [{ "name": "Diensten", "url": "/diensten/" }, { "name": h1 }] %}
 {% include "partials/breadcrumb.njk" %}
@@ -205,4 +202,3 @@ layout: base
   </div>
 </section>
 
-{% endblock %}
