@@ -57,6 +57,9 @@ export default function (eleventyConfig) {
     return labels[slug] || slug;
   });
 
+  // Global data
+  eleventyConfig.addGlobalData("currentYear", () => new Date().getFullYear());
+
   // Watch targets
   eleventyConfig.addWatchTarget("site/assets/css/");
   eleventyConfig.addWatchTarget("site/assets/js/");

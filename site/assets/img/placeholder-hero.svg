@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <rect width="1400" height="900" fill="#135d9e"/>
+  <rect x="0" y="0" width="1400" height="900" fill="url(#g)"/>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0283c4" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0b1220" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <text x="700" y="430" text-anchor="middle" font-family="sans-serif" font-size="48" fill="rgba(255,255,255,0.3)" font-weight="700">Otto Visser &amp; Partners</text>
+  <text x="700" y="490" text-anchor="middle" font-family="sans-serif" font-size="22" fill="rgba(255,255,255,0.2)">Accountants Sneek</text>
+</svg>

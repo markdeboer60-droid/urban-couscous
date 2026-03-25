@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="420" viewBox="0 0 560 420">
+  <rect width="560" height="420" fill="#ecf7fc"/>
+  <rect x="120" y="80" width="320" height="240" rx="4" fill="#e7ebf2"/>
+  <rect x="140" y="200" width="80" height="120" fill="#0283c4" opacity="0.3"/>
+  <rect x="240" y="180" width="100" height="140" fill="#0283c4" opacity="0.4"/>
+  <rect x="360" y="220" width="60" height="100" fill="#0283c4" opacity="0.3"/>
+  <rect x="80" y="320" width="400" height="10" rx="5" fill="#e7ebf2"/>
+  <text x="280" y="380" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#5b6474">Prinses Julianapark 7, Sneek</text>
+</svg>

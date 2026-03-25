@@ -9,6 +9,7 @@ const siteNav   = document.querySelector('.site-nav');
 if (navToggle && siteNav) {
   navToggle.addEventListener('click', () => {
     const isOpen = siteNav.classList.toggle('nav-open');
+    navToggle.classList.toggle('is-open', isOpen);
     navToggle.setAttribute('aria-expanded', isOpen);
     navToggle.setAttribute('aria-label', isOpen ? 'Menu sluiten' : 'Menu openen');
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -18,6 +19,7 @@ if (navToggle && siteNav) {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.site-header') && siteNav.classList.contains('nav-open')) {
       siteNav.classList.remove('nav-open');
+      navToggle.classList.remove('is-open');
       navToggle.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
     }
@@ -27,6 +29,7 @@ if (navToggle && siteNav) {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && siteNav.classList.contains('nav-open')) {
       siteNav.classList.remove('nav-open');
+      navToggle.classList.remove('is-open');
       navToggle.setAttribute('aria-expanded', 'false');
       navToggle.focus();
       document.body.style.overflow = '';
@@ -41,11 +44,15 @@ document.querySelectorAll('.faq-question').forEach((btn) => {
     const isOpen = item.classList.contains('open');
 
     // Close all
-    document.querySelectorAll('.faq-item.open').forEach((el) => el.classList.remove('open'));
+    document.querySelectorAll('.faq-item.open').forEach((el) => {
+      el.classList.remove('open');
+      el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+    });
 
     // Toggle current
     if (!isOpen) {
       item.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
     }
   }, { passive: true });
 });
@@ -84,6 +91,20 @@ if (contactForm) {
     }
   });
 }
+
+// ── Image fallback for missing photos ──
+document.querySelectorAll('img[src]').forEach((img) => {
+  img.addEventListener('error', () => {
+    const src = img.getAttribute('src') || '';
+    if (src.includes('team') || src.includes('hero')) {
+      img.src = '/assets/img/placeholder-hero.svg';
+    } else if (src.includes('mark-de-boer') || src.includes('marco-wijnia') || src.includes('avatar')) {
+      img.src = '/assets/img/placeholder-avatar.svg';
+    } else {
+      img.src = '/assets/img/placeholder-kantoor.svg';
+    }
+  }, { once: true });
+});
 
 // ── Passive scroll for header shadow ──
 const header = document.querySelector('.site-header');

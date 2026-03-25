@@ -269,7 +269,7 @@
 .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
 .faq-answer-inner { padding-bottom: 1rem; color: var(--muted); font-size: 0.95rem; }
 .faq-item.open .faq-icon { transform: rotate(45deg); }
-.faq-item.open .faq-answer { max-height: 400px; }
+.faq-item.open .faq-answer { max-height: 800px; }
 
 /* ── REVIEW / QUOTE ── */
 .review-block {
