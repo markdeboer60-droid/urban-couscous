@@ -2,6 +2,91 @@
    Otto Visser & Partners – Main Stylesheet
    ============================================ */
 
+/* ── TRUST BAR ── */
+.trust-bar { background: var(--white); border-bottom: 1px solid var(--line); padding: 0.75rem 0; }
+.trust-bar-items { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; justify-content: center; align-items: center; }
+.trust-bar-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+.trust-bar-item svg { color: var(--mediumblue); flex-shrink: 0; }
+.trust-bar-item strong { color: var(--ink); font-weight: 600; }
+
+/* ── PAGE WITH SIDEBAR ── */
+.page-with-sidebar { display: grid; grid-template-columns: 1fr 320px; gap: 3rem; align-items: start; }
+@media (max-width: 960px) { .page-with-sidebar { grid-template-columns: 1fr; } }
+
+/* ── CONTACT SIDEBAR ── */
+.contact-sidebar {
+  background: var(--darkblue); border-radius: var(--radius-lg);
+  padding: 1.75rem; color: white; position: sticky; top: 88px;
+}
+.contact-sidebar-label {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 1.25rem;
+}
+.sidebar-contact-item { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.85rem; font-size: 0.9rem; }
+.sidebar-contact-item svg { flex-shrink: 0; margin-top: 2px; color: rgba(255,255,255,0.55); }
+.sidebar-contact-item a { color: white; }
+.sidebar-contact-item a:hover { color: var(--brightblue); text-decoration: none; }
+.sidebar-divider { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1.25rem 0; }
+.sidebar-hours { font-size: 0.875rem; }
+.sidebar-hours-row { display: flex; justify-content: space-between; padding: 0.2rem 0; }
+.sidebar-hours-row span:last-child { color: rgba(255,255,255,0.65); }
+
+/* ── ICON LIST ── */
+.icon-list { list-style: none; display: flex; flex-direction: column; gap: 1.25rem; }
+.icon-list-item { display: flex; gap: 1rem; align-items: flex-start; }
+.icon-list-icon {
+  flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px;
+  background: var(--lb1); display: flex; align-items: center; justify-content: center;
+  color: var(--mediumblue);
+}
+.icon-list-body h4 { margin-bottom: 0.2rem; font-size: 0.975rem; color: var(--darkblue); }
+.icon-list-body p { color: var(--muted); font-size: 0.875rem; margin: 0; line-height: 1.55; }
+
+/* ── INTRO QUOTE ── */
+.intro-quote {
+  border-left: 4px solid var(--brightblue); padding-left: 1.25rem;
+  margin-bottom: 2rem; font-size: 1.05rem; color: var(--ink); line-height: 1.7;
+}
+
+/* ── FEATURE BADGES ── */
+.feature-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.feature-badge {
+  display: flex; align-items: center; gap: 0.35rem;
+  background: var(--lb1); border: 1px solid rgba(2,131,196,0.18);
+  border-radius: 20px; padding: 0.3rem 0.85rem;
+  font-size: 0.8rem; color: var(--darkblue); font-weight: 500;
+}
+.feature-badge svg { color: var(--mediumblue); width: 13px; height: 13px; }
+
+/* ── SOFTWARE GRID (met beschrijving) ── */
+.software-desc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+.software-desc-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; }
+.software-desc-item h4 { font-size: 0.9rem; color: var(--darkblue); margin-bottom: 0.25rem; }
+.software-desc-item p { font-size: 0.8rem; color: var(--muted); margin: 0; }
+
+/* ── SECTION HEADING MET BLAUWE LIJN ── */
+.section-heading { position: relative; padding-bottom: 0.6rem; margin-bottom: 1.5rem; }
+.section-heading::after { content: ''; position: absolute; bottom: 0; left: 0; width: 36px; height: 3px; background: var(--brightblue); border-radius: 2px; }
+
+/* ── PARTNERSHIP BLOCK ── */
+.partnership-block {
+  background: var(--lb1); border: 1px solid rgba(2,131,196,0.15);
+  border-radius: var(--radius-lg); padding: 2rem; margin-top: 2rem;
+}
+.partnership-block h3 { color: var(--darkblue); margin-bottom: 0.75rem; }
+.partnership-block p { color: var(--muted); font-size: 0.95rem; }
+
+/* ── DIENST HERO (uitgebreid) ── */
+.dienst-hero-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 0.75rem; }
+
+/* ── FAQ SUBTEXT ── */
+.faq-intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+/* ── HOMEPAGE DIENSTEN UITGEBREID ── */
+.dienst-card-extended { padding: 2rem; }
+.dienst-card-extended h3 { font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--darkblue); }
+.dienst-card-extended p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; flex: 1; }
+
 /* Utility */
 .sr-only {
   position: absolute; width: 1px; height: 1px;
