@@ -99,7 +99,9 @@
 
 /* ── HEADER ── */
 .logo-text { display: flex; flex-direction: column; line-height: 1.15; }
-.logo-name { font-size: 0.95rem; color: var(--ink); }
+.logo-name { font-size: 0.95rem; color: var(--darkblue); }
+.logo-otto { color: var(--muted); font-weight: 400; }
+.logo-name strong { color: var(--darkblue); }
 .logo-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
 
 .site-nav { display: flex; align-items: center; }

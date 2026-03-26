@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 195" width="200" height="195">
+  <defs>
+    <linearGradient id="facet-tl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#b8e4f7"/>
+    </linearGradient>
+    <linearGradient id="facet-tr" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d8f0fc"/>
+      <stop offset="100%" stop-color="#7eccea"/>
+    </linearGradient>
+    <linearGradient id="facet-l" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3db4e3"/>
+      <stop offset="100%" stop-color="#1a8fc2"/>
+    </linearGradient>
+    <linearGradient id="facet-r" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2ca7e0"/>
+      <stop offset="100%" stop-color="#0f7bae"/>
+    </linearGradient>
+    <linearGradient id="facet-bl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e6d9e"/>
+      <stop offset="100%" stop-color="#0a5580"/>
+    </linearGradient>
+    <linearGradient id="facet-br" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f7ab0"/>
+      <stop offset="100%" stop-color="#0a5580"/>
+    </linearGradient>
+    <linearGradient id="facet-b" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#0d6494"/>
+      <stop offset="100%" stop-color="#135d9e"/>
+    </linearGradient>
+    <clipPath id="hex-clip">
+      <polygon points="100,4 170,43 170,153 100,192 30,153 30,43"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#hex-clip)">
+    <!-- Top-left facet (bright white/light blue) -->
+    <polygon points="100,4 30,43 100,90" fill="url(#facet-tl)"/>
+    <!-- Top-right facet (light blue) -->
+    <polygon points="100,4 170,43 100,90" fill="url(#facet-tr)"/>
+    <!-- Left facet (medium blue) -->
+    <polygon points="30,43 30,153 100,90" fill="url(#facet-l)"/>
+    <!-- Right facet (medium blue) -->
+    <polygon points="170,43 170,153 100,90" fill="url(#facet-r)"/>
+    <!-- Bottom-left facet (dark blue) -->
+    <polygon points="30,153 100,192 100,90" fill="url(#facet-bl)"/>
+    <!-- Bottom-right facet (dark blue) -->
+    <polygon points="170,153 100,192 100,90" fill="url(#facet-br)"/>
+
+    <!-- Subtle edge lines between facets -->
+    <line x1="100" y1="4"   x2="100" y2="90"  stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+    <line x1="30"  y1="43"  x2="100" y2="90"  stroke="rgba(255,255,255,0.25)" stroke-width="0.75"/>
+    <line x1="170" y1="43"  x2="100" y2="90"  stroke="rgba(255,255,255,0.25)" stroke-width="0.75"/>
+    <line x1="30"  y1="153" x2="100" y2="90"  stroke="rgba(0,0,0,0.1)"        stroke-width="0.75"/>
+    <line x1="170" y1="153" x2="100" y2="90"  stroke="rgba(0,0,0,0.1)"        stroke-width="0.75"/>
+    <line x1="100" y1="192" x2="100" y2="90"  stroke="rgba(0,0,0,0.08)"       stroke-width="0.75"/>
+  </g>
+
+  <!-- Outer hex border -->
+  <polygon points="100,4 170,43 170,153 100,192 30,153 30,43"
+    fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+</svg>
