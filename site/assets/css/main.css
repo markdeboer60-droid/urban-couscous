@@ -407,6 +407,9 @@
 .page-hero { background: var(--lb1); padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--line); }
 .page-hero h1 { margin-bottom: 0.75rem; }
 .page-hero .page-intro { color: var(--muted); font-size: 1.05rem; max-width: 640px; }
+.page-hero--dienst { background: linear-gradient(135deg, var(--darkblue) 0%, var(--mediumblue) 100%); color: white; border-bottom: none; padding: 4rem 0 3rem; }
+.page-hero--dienst h1 { color: white; }
+.page-hero--dienst .page-intro { color: rgba(255,255,255,0.85); }
 
 /* Servicepagina hero */
 .dienst-hero { background: linear-gradient(135deg, var(--darkblue) 0%, var(--mediumblue) 100%); color: white; padding: 4rem 0 3rem; }
