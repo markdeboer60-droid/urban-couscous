@@ -563,3 +563,57 @@
 .waarom-item svg { flex-shrink: 0; color: var(--mediumblue); margin-top: 2px; }
 .waarom-item h4 { margin-bottom: 0.25rem; }
 .waarom-item p { color: var(--muted); font-size: 0.875rem; margin: 0; }
+
+/* ── TWO COLUMN IMAGE GRID (homepage secties) ── */
+.two-col-img-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4rem; align-items: center;
+}
+.two-col-img-grid--start { align-items: start; }
+@media (max-width: 768px) {
+  .two-col-img-grid { grid-template-columns: 1fr; gap: 2rem; }
+  /* Zet de afbeelding na de tekst op mobiel */
+  .two-col-img-grid > *:last-child { order: 1; }
+}
+
+/* ── MOBIELE BALK PRIJSINDICATIE ── */
+.prijsgarantie-note {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; color: rgba(255,255,255,0.65);
+  margin-top: 0.75rem;
+}
+.prijsgarantie-note svg { color: var(--green); flex-shrink: 0; }
+
+/* ── STICKY MOBIELE BEL-BALK ── */
+.mob-cta-bar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+  background: var(--darkblue);
+  box-shadow: 0 -2px 16px rgba(11,18,32,0.2);
+  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+}
+.mob-cta-call {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  background: var(--brightblue); color: white; font-weight: 700;
+  border-radius: var(--radius); padding: 0.7rem 1rem;
+  font-size: 0.95rem; text-decoration: none;
+  transition: background 0.2s;
+}
+.mob-cta-call:hover { background: var(--mediumblue); text-decoration: none; color: white; }
+.mob-cta-contact {
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; color: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius); padding: 0.7rem 1rem;
+  font-size: 0.9rem; font-weight: 500; text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.mob-cta-contact:hover { background: rgba(255,255,255,0.1); color: white; text-decoration: none; }
+
+@media (max-width: 768px) {
+  .mob-cta-bar { display: flex; }
+  /* Ruimte voor sticky balk onderaan */
+  body { padding-bottom: 68px; }
+}

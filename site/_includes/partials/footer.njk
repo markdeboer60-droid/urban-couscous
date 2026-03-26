@@ -61,7 +61,7 @@
       <h3>Over ons</h3>
       <ul role="list">
         <li><a href="/over-ons/">Over ons</a></li>
-        <li><a href="/nieuws/">Nieuws</a></li>
+        {% if collections.nieuws and collections.nieuws.length > 0 %}<li><a href="/nieuws/">Nieuws</a></li>{% endif %}
         <li><a href="/columns/">Columns</a></li>
         <li><a href="/contact/">Contact</a></li>
       </ul>

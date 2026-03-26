@@ -27,9 +27,11 @@
         <li class="nav-item">
           <a href="/over-ons/" class="nav-link {% if page.url == '/over-ons/' %}nav-link--active{% endif %}" {% if page.url == '/over-ons/' %}aria-current="page"{% endif %}>Over ons</a>
         </li>
+        {% if collections.nieuws and collections.nieuws.length > 0 %}
         <li class="nav-item">
           <a href="/nieuws/" class="nav-link {% if page.url.startsWith('/nieuws') %}nav-link--active{% endif %}">Nieuws</a>
         </li>
+        {% endif %}
         <li class="nav-item">
           <a href="/contact/" class="nav-link {% if page.url == '/contact/' %}nav-link--active{% endif %}" {% if page.url == '/contact/' %}aria-current="page"{% endif %}>Contact</a>
         </li>
