@@ -1,0 +1,468 @@
+import { useEffect, useState } from 'react';
+import {
+  ArrowLeft, Upload, Plus, Trash2, GripVertical,
+  ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle
+} from 'lucide-react';
+
+const VELD_TYPES = [
+  { waarde: 'text',     label: 'Tekst (korte invoer)' },
+  { waarde: 'textarea', label: 'Tekst (lange invoer)' },
+  { waarde: 'date',     label: 'Datum' },
+  { waarde: 'number',   label: 'Getal' },
+  { waarde: 'select',   label: 'Keuzelijst (dropdown)' },
+  { waarde: 'boolean',  label: 'Ja / Nee (schakelaar)' },
+];
+
+const leegVeld = () => ({
+  sleutel: '',
+  label: '',
+  type: 'text',
+  verplicht: true,
+  volgorde: 0,
+  opties: [],
+  zichtbaarAls: null,
+  toelichting: '',
+  placeholder: '',
+});
+
+export default function TemplateEditor({ templateId, onTerug }) {
+  const bewerkModus = !!templateId;
+  const [meta, setMeta] = useState({ id: '', naam: '', categorie: '', beschrijving: '', versie: 1 });
+  const [velden, setVelden] = useState([]);
+  const [docxPad, setDocxPad] = useState('');
+  const [opgeslagen, setOpgeslagen] = useState(false);
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState('');
+  const [uitgevouwen, setUitgevouwen] = useState({});
+  const [categorieSuggesties, setCategorieSuggesties] = useState([]);
+
+  useEffect(() => {
+    window.api.templates.getCategorieen().then(setCategorieSuggesties);
+    if (bewerkModus) {
+      window.api.templates.getById(templateId).then(t => {
+        if (!t) return;
+        const { velden: v, ...m } = t;
+        setMeta(m);
+        setVelden(v || []);
+      });
+    }
+  }, [templateId]);
+
+  function setMetaVeld(key, val) {
+    setMeta(m => ({ ...m, [key]: val }));
+  }
+
+  // ── Veld beheer ─────────────────────────────────────────────────────────────
+  function voegVeldToe() {
+    const nieuw = { ...leegVeld(), volgorde: velden.length };
+    setVelden(v => [...v, nieuw]);
+    setUitgevouwen(u => ({ ...u, [velden.length]: true }));
+  }
+
+  function verwijderVeld(idx) {
+    setVelden(v => v.filter((_, i) => i !== idx));
+  }
+
+  function updateVeld(idx, key, val) {
+    setVelden(v => v.map((veld, i) => i === idx ? { ...veld, [key]: val } : veld));
+  }
+
+  function toggleUitvouwen(idx) {
+    setUitgevouwen(u => ({ ...u, [idx]: !u[idx] }));
+  }
+
+  // ── DOCX selecteren ──────────────────────────────────────────────────────────
+  async function selecteerDocx() {
+    const pad = await window.api.templates.selectDocx();
+    if (pad) setDocxPad(pad);
+  }
+
+  // ── Opslaan ──────────────────────────────────────────────────────────────────
+  async function opslaan() {
+    setFout('');
+    if (!meta.id.trim()) return setFout('Vul een uniek ID in.');
+    if (!meta.naam.trim()) return setFout('Vul een naam in.');
+    if (!meta.categorie.trim()) return setFout('Vul een categorie in.');
+    if (!bewerkModus && !docxPad) return setFout('Selecteer een Word-sjabloon (.docx).');
+    if (velden.some(v => !v.sleutel.trim())) return setFout('Elk veld moet een sleutel hebben.');
+    if (velden.some(v => !v.label.trim())) return setFout('Elk veld moet een label hebben.');
+
+    setBezig(true);
+    try {
+      const metaPayload = { ...meta, versie: meta.versie || 1 };
+
+      if (bewerkModus) {
+        await window.api.templates.update({ id: templateId, meta: metaPayload, velden });
+        if (docxPad) {
+          await window.api.templates.copyDocx({ srcPath: docxPad, templateId, versie: meta.versie });
+        }
+      } else {
+        await window.api.templates.create({ meta: metaPayload, velden });
+        await window.api.templates.copyDocx({ srcPath: docxPad, templateId: meta.id, versie: meta.versie });
+      }
+
+      setOpgeslagen(true);
+      setTimeout(onTerug, 1000);
+    } catch (e) {
+      setFout(e.message || 'Fout bij opslaan.');
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <div className="p-8 max-w-3xl mx-auto">
+      <button
+        onClick={onTerug}
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
+      >
+        <ArrowLeft size={16} />
+        Terug naar beheer
+      </button>
+
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">
+        {bewerkModus ? 'Sjabloon bewerken' : 'Nieuw sjabloon'}
+      </h1>
+
+      {/* ── Basisgegevens ── */}
+      <Sectie titel="Basisgegevens">
+        <div className="grid grid-cols-2 gap-4">
+          <Invoerveld label="ID (uniek, geen spaties)" verplicht>
+            <input
+              type="text"
+              value={meta.id}
+              onChange={e => setMetaVeld('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+              disabled={bewerkModus}
+              placeholder="bijv. opdrachtbevestiging-bv"
+              className="invoer disabled:bg-gray-50 disabled:text-gray-400"
+            />
+          </Invoerveld>
+          <Invoerveld label="Versienummer" verplicht>
+            <input
+              type="number"
+              min={1}
+              value={meta.versie}
+              onChange={e => setMetaVeld('versie', parseInt(e.target.value) || 1)}
+              className="invoer"
+            />
+          </Invoerveld>
+        </div>
+        <Invoerveld label="Naam" verplicht>
+          <input
+            type="text"
+            value={meta.naam}
+            onChange={e => setMetaVeld('naam', e.target.value)}
+            placeholder="Weergavenaam van het sjabloon"
+            className="invoer"
+          />
+        </Invoerveld>
+        <Invoerveld label="Categorie" verplicht>
+          <input
+            type="text"
+            value={meta.categorie}
+            onChange={e => setMetaVeld('categorie', e.target.value)}
+            placeholder="bijv. Opdrachtbevestigingen"
+            list="categorieen-list"
+            className="invoer"
+          />
+          <datalist id="categorieen-list">
+            {categorieSuggesties.map(c => <option key={c} value={c} />)}
+          </datalist>
+        </Invoerveld>
+        <Invoerveld label="Beschrijving (optioneel)">
+          <textarea
+            value={meta.beschrijving}
+            onChange={e => setMetaVeld('beschrijving', e.target.value)}
+            rows={2}
+            placeholder="Korte omschrijving voor de gebruiker"
+            className="invoer resize-none"
+          />
+        </Invoerveld>
+      </Sectie>
+
+      {/* ── Word-sjabloon ── */}
+      <Sectie titel="Word-sjabloon (.docx)" className="mt-6">
+        <p className="text-xs text-gray-500 mb-3">
+          Gebruik <code className="bg-gray-100 px-1 rounded">{'{sleutel}'}</code> in je Word-document als variabele
+          en <code className="bg-gray-100 px-1 rounded">{'{#conditie}'}...{'{/conditie}'}</code> voor conditionele blokken.
+        </p>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={selecteerDocx}
+            className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+          >
+            <Upload size={16} />
+            {docxPad ? 'Ander bestand kiezen' : 'Bestand selecteren'}
+          </button>
+          {docxPad && (
+            <span className="text-sm text-gray-600 truncate max-w-xs">
+              {docxPad.split(/[\\/]/).pop()}
+            </span>
+          )}
+          {bewerkModus && !docxPad && (
+            <span className="text-xs text-gray-400">Laat leeg om bestaand bestand te behouden</span>
+          )}
+        </div>
+      </Sectie>
+
+      {/* ── Velden ── */}
+      <Sectie titel="Invoervelden" className="mt-6">
+        <p className="text-xs text-gray-500 mb-4">
+          Definieer de velden die de gebruiker moet invullen. De sleutel moet overeenkomen met de variabele in het Word-document.
+        </p>
+
+        <div className="space-y-3">
+          {velden.map((veld, idx) => (
+            <VeldRij
+              key={idx}
+              veld={veld}
+              idx={idx}
+              uitgevouwen={!!uitgevouwen[idx]}
+              alleVelden={velden}
+              onToggle={() => toggleUitvouwen(idx)}
+              onChange={(key, val) => updateVeld(idx, key, val)}
+              onVerwijder={() => verwijderVeld(idx)}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={voegVeldToe}
+          className="mt-4 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+        >
+          <Plus size={16} />
+          Veld toevoegen
+        </button>
+      </Sectie>
+
+      {/* Fout */}
+      {fout && (
+        <div className="mt-6 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          {fout}
+        </div>
+      )}
+
+      {/* Opslaan */}
+      <div className="mt-8 flex justify-end gap-3">
+        <button onClick={onTerug} className="px-5 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+          Annuleren
+        </button>
+        <button
+          onClick={opslaan}
+          disabled={bezig || opgeslagen}
+          className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {bezig && <Loader2 size={15} className="animate-spin" />}
+          {opgeslagen && <CheckCircle size={15} />}
+          {opgeslagen ? 'Opgeslagen!' : bezig ? 'Opslaan...' : 'Opslaan'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── VeldRij ───────────────────────────────────────────────────────────────────
+function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVerwijder }) {
+  const andereVelden = alleVelden.filter((_, i) => i !== idx);
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      {/* Header */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+        onClick={onToggle}
+      >
+        <GripVertical size={15} className="text-gray-300" />
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium text-gray-700">
+            {veld.label || <span className="text-gray-400 italic">Naamloos veld</span>}
+          </span>
+          {veld.sleutel && (
+            <code className="ml-2 text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">{'{' + veld.sleutel + '}'}</code>
+          )}
+        </div>
+        <span className="text-xs text-gray-400 shrink-0">
+          {VELD_TYPES.find(t => t.waarde === veld.type)?.label || veld.type}
+        </span>
+        <button
+          onClick={e => { e.stopPropagation(); onVerwijder(); }}
+          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+        >
+          <Trash2 size={14} />
+        </button>
+        {uitgevouwen ? <ChevronUp size={15} className="text-gray-400" /> : <ChevronDown size={15} className="text-gray-400" />}
+      </div>
+
+      {/* Body */}
+      {uitgevouwen && (
+        <div className="px-4 py-4 space-y-4 border-t border-gray-100">
+          <div className="grid grid-cols-2 gap-4">
+            <Invoerveld label="Sleutel (variabelenaam)" verplicht>
+              <input
+                type="text"
+                value={veld.sleutel}
+                onChange={e => onChange('sleutel', e.target.value.replace(/\s+/g, '_'))}
+                placeholder="bijv. bedrijfsnaam"
+                className="invoer"
+              />
+            </Invoerveld>
+            <Invoerveld label="Label (zichtbaar voor gebruiker)" verplicht>
+              <input
+                type="text"
+                value={veld.label}
+                onChange={e => onChange('label', e.target.value)}
+                placeholder="bijv. Naam van het bedrijf"
+                className="invoer"
+              />
+            </Invoerveld>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Invoerveld label="Type">
+              <select value={veld.type} onChange={e => onChange('type', e.target.value)} className="invoer">
+                {VELD_TYPES.map(t => (
+                  <option key={t.waarde} value={t.waarde}>{t.label}</option>
+                ))}
+              </select>
+            </Invoerveld>
+            <Invoerveld label="Verplicht">
+              <select value={veld.verplicht ? 'ja' : 'nee'} onChange={e => onChange('verplicht', e.target.value === 'ja')} className="invoer">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+              </select>
+            </Invoerveld>
+          </div>
+
+          {/* Opties voor select */}
+          {veld.type === 'select' && (
+            <Invoerveld label="Opties (één per regel)">
+              <textarea
+                value={(veld.opties || []).join('\n')}
+                onChange={e => onChange('opties', e.target.value.split('\n').map(s => s.trim()).filter(Boolean))}
+                rows={4}
+                placeholder="BV&#10;Eenmanszaak&#10;VOF&#10;Maatschap"
+                className="invoer resize-y font-mono text-xs"
+              />
+            </Invoerveld>
+          )}
+
+          {/* Placeholder */}
+          {['text', 'textarea', 'number'].includes(veld.type) && (
+            <Invoerveld label="Plaatshouder (optioneel)">
+              <input
+                type="text"
+                value={veld.placeholder || ''}
+                onChange={e => onChange('placeholder', e.target.value)}
+                placeholder="Voorbeeldtekst in het invulveld"
+                className="invoer"
+              />
+            </Invoerveld>
+          )}
+
+          {/* Toelichting */}
+          <Invoerveld label="Toelichting (optioneel)">
+            <input
+              type="text"
+              value={veld.toelichting || ''}
+              onChange={e => onChange('toelichting', e.target.value)}
+              placeholder="Extra uitleg onder het veld"
+              className="invoer"
+            />
+          </Invoerveld>
+
+          {/* Conditionele zichtbaarheid */}
+          <div className="pt-2 border-t border-gray-100">
+            <div className="text-xs font-medium text-gray-500 mb-2">Zichtbaar als (conditioneel)</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Ander veld</label>
+                <select
+                  value={veld.zichtbaarAls?.sleutel || ''}
+                  onChange={e => {
+                    if (!e.target.value) {
+                      onChange('zichtbaarAls', null);
+                    } else {
+                      onChange('zichtbaarAls', { sleutel: e.target.value, waarde: veld.zichtbaarAls?.waarde ?? true });
+                    }
+                  }}
+                  className="invoer text-xs"
+                >
+                  <option value="">— Altijd zichtbaar —</option>
+                  {andereVelden.map(v => (
+                    <option key={v.sleutel} value={v.sleutel}>{v.label || v.sleutel}</option>
+                  ))}
+                </select>
+              </div>
+              {veld.zichtbaarAls?.sleutel && (
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Heeft waarde</label>
+                  <ConditionWaardeInput
+                    bronVeld={andereVelden.find(v => v.sleutel === veld.zichtbaarAls.sleutel)}
+                    waarde={veld.zichtbaarAls.waarde}
+                    onChange={w => onChange('zichtbaarAls', { ...veld.zichtbaarAls, waarde: w })}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConditionWaardeInput({ bronVeld, waarde, onChange }) {
+  if (!bronVeld) return null;
+
+  if (bronVeld.type === 'boolean') {
+    return (
+      <select value={String(waarde)} onChange={e => onChange(e.target.value === 'true')} className="invoer text-xs">
+        <option value="true">Ja (aan)</option>
+        <option value="false">Nee (uit)</option>
+      </select>
+    );
+  }
+
+  if (bronVeld.type === 'select') {
+    return (
+      <select value={waarde || ''} onChange={e => onChange(e.target.value)} className="invoer text-xs">
+        <option value="">-- kies --</option>
+        {(bronVeld.opties || []).map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  }
+
+  return (
+    <input
+      type="text"
+      value={waarde || ''}
+      onChange={e => onChange(e.target.value)}
+      className="invoer text-xs"
+      placeholder="Waarde..."
+    />
+  );
+}
+
+// ── Hulpcomponenten ───────────────────────────────────────────────────────────
+function Sectie({ titel, children, className = '' }) {
+  return (
+    <div className={`bg-white border border-gray-200 rounded-xl p-6 ${className}`}>
+      <h2 className="text-sm font-semibold text-gray-700 mb-4">{titel}</h2>
+      <div className="space-y-4">{children}</div>
+    </div>
+  );
+}
+
+function Invoerveld({ label, verplicht, children }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-600 mb-1.5">
+        {label}{verplicht && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}

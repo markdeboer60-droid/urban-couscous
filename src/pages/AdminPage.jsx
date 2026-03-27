@@ -1,0 +1,170 @@
+import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2, Settings, FileText, AlertCircle, ChevronRight } from 'lucide-react';
+import TemplateEditor from '../components/admin/TemplateEditor';
+import InstellingenPanel from '../components/admin/InstellingenPanel';
+
+export default function AdminPage() {
+  const [templates, setTemplates] = useState([]);
+  const [scherm, setScherm] = useState('lijst'); // 'lijst' | 'editor' | 'instellingen'
+  const [bewerkId, setBewerkId] = useState(null);
+  const [verwijderBevestig, setVerwijderBevestig] = useState(null);
+
+  useEffect(() => {
+    laadTemplates();
+  }, []);
+
+  async function laadTemplates() {
+    const data = await window.api.templates.getAll();
+    setTemplates(data);
+  }
+
+  function nieuw() {
+    setBewerkId(null);
+    setScherm('editor');
+  }
+
+  function bewerk(id) {
+    setBewerkId(id);
+    setScherm('editor');
+  }
+
+  async function verwijder(id) {
+    await window.api.templates.delete(id);
+    setVerwijderBevestig(null);
+    laadTemplates();
+  }
+
+  function terug() {
+    setScherm('lijst');
+    setBewerkId(null);
+    laadTemplates();
+  }
+
+  if (scherm === 'editor') {
+    return <TemplateEditor templateId={bewerkId} onTerug={terug} />;
+  }
+
+  if (scherm === 'instellingen') {
+    return <InstellingenPanel onTerug={() => setScherm('lijst')} />;
+  }
+
+  const categorieen = [...new Set(templates.map(t => t.categorie).filter(Boolean))].sort();
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Beheer</h1>
+          <p className="text-gray-500 mt-1 text-sm">{templates.length} sjabloon{templates.length !== 1 ? 'en' : ''}</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setScherm('instellingen')}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Settings size={15} />
+            Instellingen
+          </button>
+          <button
+            onClick={nieuw}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={15} />
+            Nieuw sjabloon
+          </button>
+        </div>
+      </div>
+
+      {/* Lege staat */}
+      {templates.length === 0 && (
+        <div className="flex flex-col items-center py-20 text-gray-400">
+          <FileText size={40} className="mb-3 opacity-40" />
+          <p className="text-sm mb-4">Nog geen sjablonen toegevoegd</p>
+          <button
+            onClick={nieuw}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <Plus size={15} />
+            Eerste sjabloon toevoegen
+          </button>
+        </div>
+      )}
+
+      {/* Sjablonen per categorie */}
+      {categorieen.map(cat => (
+        <div key={cat} className="mb-8">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{cat}</h2>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            {templates.filter(t => t.categorie === cat).map((t, i, arr) => (
+              <div
+                key={t.id}
+                className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${i < arr.length - 1 ? 'border-b border-gray-100' : ''}`}
+              >
+                <div className="p-2 bg-blue-50 rounded-lg shrink-0">
+                  <FileText size={16} className="text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm text-gray-900 truncate">{t.naam}</div>
+                  {t.beschrijving && (
+                    <div className="text-xs text-gray-400 truncate mt-0.5">{t.beschrijving}</div>
+                  )}
+                </div>
+                <span className="text-xs text-gray-400 shrink-0">v{t.versie}</span>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => bewerk(t.id)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Bewerken"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    onClick={() => setVerwijderBevestig(t.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Verwijderen"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Verwijder-bevestiging modal */}
+      {verwijderBevestig && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-lg shrink-0">
+                <AlertCircle size={18} className="text-red-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Sjabloon verwijderen?</div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Dit verwijdert het sjabloon en alle bijbehorende veldconfiguratie. Dit kan niet ongedaan worden gemaakt.
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setVerwijderBevestig(null)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => verwijder(verwijderBevestig)}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Verwijderen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
