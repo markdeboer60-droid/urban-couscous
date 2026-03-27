@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Settings, FileText, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings, FileText, AlertCircle, Search } from 'lucide-react';
 import TemplateEditor from '../components/admin/TemplateEditor';
 import InstellingenPanel from '../components/admin/InstellingenPanel';
 
@@ -8,6 +8,7 @@ export default function AdminPage() {
   const [scherm, setScherm] = useState('lijst'); // 'lijst' | 'editor' | 'instellingen'
   const [bewerkId, setBewerkId] = useState(null);
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
+  const [zoekterm, setZoekterm] = useState('');
 
   useEffect(() => {
     laadTemplates();
@@ -48,7 +49,15 @@ export default function AdminPage() {
     return <InstellingenPanel onTerug={() => setScherm('lijst')} />;
   }
 
-  const categorieen = [...new Set(templates.map(t => t.categorie).filter(Boolean))].sort();
+  const gefilterd = zoekterm
+    ? templates.filter(t =>
+        t.naam.toLowerCase().includes(zoekterm.toLowerCase()) ||
+        (t.beschrijving || '').toLowerCase().includes(zoekterm.toLowerCase()) ||
+        (t.categorie || '').toLowerCase().includes(zoekterm.toLowerCase())
+      )
+    : templates;
+
+  const categorieen = [...new Set(gefilterd.map(t => t.categorie).filter(Boolean))].sort();
 
   return (
     <div className="p-8">
@@ -76,6 +85,20 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* Zoekbalk */}
+      {templates.length > 0 && (
+        <div className="relative mb-6 max-w-md">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Zoeken op naam, categorie of omschrijving..."
+            value={zoekterm}
+            onChange={e => setZoekterm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          />
+        </div>
+      )}
+
       {/* Lege staat */}
       {templates.length === 0 && (
         <div className="flex flex-col items-center py-20 text-gray-400">
@@ -96,7 +119,7 @@ export default function AdminPage() {
         <div key={cat} className="mb-8">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{cat}</h2>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            {templates.filter(t => t.categorie === cat).map((t, i, arr) => (
+            {gefilterd.filter(t => t.categorie === cat).map((t, i, arr) => (
               <div
                 key={t.id}
                 className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${i < arr.length - 1 ? 'border-b border-gray-100' : ''}`}
