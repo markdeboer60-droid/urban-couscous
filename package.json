@@ -25,8 +25,7 @@
       "node_modules/docxtemplater/**"
     ],
     "win": {
-      "target": "nsis",
-      "icon": "public/favicon.ico"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,
