@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
     copyDocx: (payload) => ipcRenderer.invoke('templates:copyDocx', payload),
     getCategorieen: () => ipcRenderer.invoke('templates:getCategorieen'),
     scanDocxVars: (filePath) => ipcRenderer.invoke('templates:scanDocxVars', filePath),
+    duplicate: (id) => ipcRenderer.invoke('templates:duplicate', id),
   },
   // Export
   export: {

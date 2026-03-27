@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { History, Trash2, FileText, RotateCcw, FolderOpen, Loader2, AlertCircle } from 'lucide-react';
+import { History, Trash2, FileText, RotateCcw, FolderOpen, Loader2, AlertCircle, Search } from 'lucide-react';
 
 export default function GeschiedenisPage({ navigeer }) {
   const [geschiedenis, setGeschiedenis] = useState([]);
   const [laden, setLaden] = useState(true);
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
   const [exportBezig, setExportBezig] = useState({});
+  const [zoekterm, setZoekterm] = useState('');
+  const [sortering, setSortering] = useState('datum-nieuw');
 
   useEffect(() => {
     laad();
@@ -43,6 +45,20 @@ export default function GeschiedenisPage({ navigeer }) {
     });
   }
 
+  const gefilterd = geschiedenis
+    .filter(e =>
+      !zoekterm ||
+      e.templateNaam.toLowerCase().includes(zoekterm.toLowerCase()) ||
+      (e.ondertitel || '').toLowerCase().includes(zoekterm.toLowerCase()) ||
+      (e.categorie || '').toLowerCase().includes(zoekterm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortering === 'datum-nieuw') return new Date(b.datum) - new Date(a.datum);
+      if (sortering === 'datum-oud') return new Date(a.datum) - new Date(b.datum);
+      if (sortering === 'naam') return a.templateNaam.localeCompare(b.templateNaam);
+      return 0;
+    });
+
   if (laden) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
@@ -60,17 +76,46 @@ export default function GeschiedenisPage({ navigeer }) {
         </p>
       </div>
 
+      {geschiedenis.length > 0 && (
+        <div className="flex gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Zoeken op naam, klant of categorie..."
+              value={zoekterm}
+              onChange={e => setZoekterm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          <select
+            value={sortering}
+            onChange={e => setSortering(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+          >
+            <option value="datum-nieuw">Nieuwst eerst</option>
+            <option value="datum-oud">Oudst eerst</option>
+            <option value="naam">Naam A–Z</option>
+          </select>
+        </div>
+      )}
+
       {geschiedenis.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-gray-400">
           <History size={40} className="mb-3 opacity-40" />
           <p className="text-sm">Nog geen documenten gegenereerd</p>
         </div>
+      ) : gefilterd.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-gray-400">
+          <Search size={32} className="mb-3 opacity-30" />
+          <p className="text-sm">Geen resultaten voor deze zoekopdracht</p>
+        </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          {geschiedenis.map((entry, i) => (
+          {gefilterd.map((entry, i) => (
             <div
               key={entry.id}
-              className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${i < geschiedenis.length - 1 ? 'border-b border-gray-100' : ''}`}
+              className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${i < gefilterd.length - 1 ? 'border-b border-gray-100' : ''}`}
             >
               {/* Icoon */}
               <div className="p-2 bg-blue-50 rounded-lg shrink-0">

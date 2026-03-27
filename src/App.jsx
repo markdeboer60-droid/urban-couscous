@@ -16,7 +16,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
-      <Sidebar actief={nav.pagina} navigeer={navigeer} />
+      <Sidebar actief={nav.pagina === 'form' || nav.pagina === 'export' ? 'browser' : nav.pagina} navigeer={navigeer} />
       <main className="flex-1 overflow-y-auto">
         {nav.pagina === 'browser' && (
           <TemplateBrowser navigeer={navigeer} />

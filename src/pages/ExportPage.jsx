@@ -238,12 +238,6 @@ export default function ExportPage({ exportData, navigeer }) {
         </Sectie>
       )}
 
-      <button
-        onClick={() => navigeer('browser')}
-        className="mt-6 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-      >
-        Nieuw document starten
-      </button>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export default function TemplateBrowser({ navigeer }) {
   const [zoekterm, setZoekterm] = useState('');
   const [actieveCategorie, setActieveCategorie] = useState('Alle');
   const [laden, setLaden] = useState(true);
-  const [weergave, setWeergave] = useState('raster'); // 'raster' | 'lijst'
+  const [weergave, setWeergave] = useState(() => localStorage.getItem('sjablonen-weergave') || 'raster');
   // Kolombreedte (px) voor lijstweergave — versleepbaar
   const [kolBreedte, setKolBreedte] = useState({ categorie: 170, bijgewerkt: 110, versie: 90 });
 
@@ -89,14 +89,14 @@ export default function TemplateBrowser({ navigeer }) {
         </div>
         <div className="flex border border-gray-200 rounded-lg overflow-hidden shrink-0">
           <button
-            onClick={() => setWeergave('raster')}
+            onClick={() => { setWeergave('raster'); localStorage.setItem('sjablonen-weergave', 'raster'); }}
             title="Rasterweergave"
             className={`p-2.5 transition-colors ${weergave === 'raster' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
           >
             <LayoutGrid size={16} />
           </button>
           <button
-            onClick={() => setWeergave('lijst')}
+            onClick={() => { setWeergave('lijst'); localStorage.setItem('sjablonen-weergave', 'lijst'); }}
             title="Lijstweergave"
             className={`p-2.5 transition-colors border-l border-gray-200 ${weergave === 'lijst' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
           >

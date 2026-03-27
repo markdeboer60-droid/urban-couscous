@@ -119,6 +119,20 @@ ipcMain.handle('templates:copyDocx', (_, { srcPath, templateId, versie }) => {
   return dest;
 });
 
+ipcMain.handle('templates:duplicate', (_, id) => {
+  const all = readMeta();
+  const orig = all.find(t => t.id === id);
+  if (!orig) throw new Error('Template niet gevonden');
+  const nieuwId = id + '-kopie-' + Date.now();
+  const nieuw = { ...orig, id: nieuwId, naam: orig.naam + ' (kopie)', aangemaakt: new Date().toISOString(), bijgewerkt: new Date().toISOString() };
+  all.push(nieuw);
+  writeMeta(all);
+  writeVelden(nieuwId, readVelden(id));
+  const srcDocx = getTemplateDocxPath(id, orig.versie);
+  if (fs.existsSync(srcDocx)) fs.copyFileSync(srcDocx, getTemplateDocxPath(nieuwId, nieuw.versie));
+  return nieuwId;
+});
+
 ipcMain.handle('templates:getCategorieen', () => {
   const all = readMeta();
   return [...new Set(all.map(t => t.categorie).filter(Boolean))].sort();

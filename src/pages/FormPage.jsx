@@ -41,13 +41,17 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     return (template?.velden || []).filter(isZichtbaar);
   }
 
-  function isIngevuld() {
+  function ontbrekendeVelden() {
     return zichtbareVelden()
       .filter(v => v.verplicht)
-      .every(v => {
+      .filter(v => {
         const val = waarden[v.sleutel];
-        return val !== '' && val !== null && val !== undefined;
+        return val === '' || val === null || val === undefined;
       });
+  }
+
+  function isIngevuld() {
+    return ontbrekendeVelden().length === 0;
   }
 
   // Bedragen formatteren als Nederlands valutastring voor in het document
@@ -201,6 +205,11 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
           {bezig && <Loader2 size={16} className="animate-spin" />}
           {bezig ? 'Bezig met genereren...' : 'Document genereren'}
         </button>
+        {!isIngevuld() && !bezig && (
+          <p className="mt-2 text-xs text-gray-400 text-center">
+            Nog in te vullen: {ontbrekendeVelden().map(v => v.label).join(', ')}
+          </p>
+        )}
       </div>
     </div>
   );

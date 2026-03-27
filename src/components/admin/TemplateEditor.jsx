@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ArrowLeft, Upload, Plus, Trash2, GripVertical,
-  ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle
+  ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, ScanLine
 } from 'lucide-react';
 
 const VELD_TYPES = [
@@ -85,6 +85,28 @@ export default function TemplateEditor({ templateId, onTerug }) {
 
   function toggleUitvouwen(idx) {
     setUitgevouwen(u => ({ ...u, [idx]: !u[idx] }));
+  }
+
+  function verplaatsVeld(vanIdx, naarIdx) {
+    if (vanIdx === naarIdx) return;
+    setVelden(v => {
+      const nieuw = [...v];
+      const [item] = nieuw.splice(vanIdx, 1);
+      nieuw.splice(naarIdx, 0, item);
+      return nieuw;
+    });
+    // Uitgevouwen state meeschuiven
+    setUitgevouwen(u => {
+      const nieuw = {};
+      Object.entries(u).forEach(([k, val]) => {
+        const i = parseInt(k);
+        if (i === vanIdx) nieuw[naarIdx] = val;
+        else if (vanIdx < naarIdx && i > vanIdx && i <= naarIdx) nieuw[i - 1] = val;
+        else if (vanIdx > naarIdx && i >= naarIdx && i < vanIdx) nieuw[i + 1] = val;
+        else nieuw[i] = val;
+      });
+      return nieuw;
+    });
   }
 
   // ── DOCX selecteren + scannen ─────────────────────────────────────────────────
@@ -270,7 +292,7 @@ export default function TemplateEditor({ templateId, onTerug }) {
             disabled={scanBezig}
             className="flex items-center gap-2 mt-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 disabled:opacity-50"
           >
-            {scanBezig ? <Loader2 size={14} className="animate-spin" /> : '🔍'}
+            {scanBezig ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={14} />}
             {scanBezig ? 'Scannen...' : 'Variabelen automatisch detecteren'}
           </button>
         )}
@@ -293,6 +315,7 @@ export default function TemplateEditor({ templateId, onTerug }) {
               onToggle={() => toggleUitvouwen(idx)}
               onChange={(key, val) => updateVeld(idx, key, val)}
               onVerwijder={() => verwijderVeld(idx)}
+              onVerplaats={verplaatsVeld}
             />
           ))}
         </div>
@@ -335,17 +358,39 @@ export default function TemplateEditor({ templateId, onTerug }) {
 }
 
 // ── VeldRij ───────────────────────────────────────────────────────────────────
-function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVerwijder }) {
+function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVerwijder, onVerplaats }) {
   const andereVelden = alleVelden.filter((_, i) => i !== idx);
 
+  function onDragStart(e) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(idx));
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    const vanIdx = parseInt(e.dataTransfer.getData('text/plain'));
+    onVerplaats(vanIdx, idx);
+  }
+
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div
+      className="border border-gray-200 rounded-lg overflow-hidden"
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       {/* Header */}
       <div
         className="flex items-center gap-3 px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
         onClick={onToggle}
       >
-        <GripVertical size={15} className="text-gray-300" />
+        <GripVertical size={15} className="text-gray-300 cursor-grab active:cursor-grabbing shrink-0" />
         <div className="flex-1 min-w-0">
           <span className="text-sm font-medium text-gray-700">
             {veld.label || <span className="text-gray-400 italic">Naamloos veld</span>}
