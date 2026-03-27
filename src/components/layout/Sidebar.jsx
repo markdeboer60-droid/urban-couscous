@@ -1,8 +1,9 @@
-import { LayoutGrid, Settings, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Settings, History, ChevronRight } from 'lucide-react';
 
 const items = [
-  { id: 'browser', label: 'Sjablonen', icon: LayoutGrid },
-  { id: 'admin',   label: 'Beheer',    icon: Settings },
+  { id: 'browser',     label: 'Sjablonen',   icon: LayoutGrid },
+  { id: 'geschiedenis', label: 'Geschiedenis', icon: History },
+  { id: 'admin',       label: 'Beheer',       icon: Settings },
 ];
 
 export default function Sidebar({ actief, navigeer }) {

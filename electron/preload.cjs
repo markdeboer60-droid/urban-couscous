@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
     selectDocx: () => ipcRenderer.invoke('templates:selectDocx'),
     copyDocx: (payload) => ipcRenderer.invoke('templates:copyDocx', payload),
     getCategorieen: () => ipcRenderer.invoke('templates:getCategorieen'),
+    scanDocxVars: (filePath) => ipcRenderer.invoke('templates:scanDocxVars', filePath),
   },
   // Export
   export: {
@@ -28,5 +29,16 @@ contextBridge.exposeInMainWorld('api', {
     set: (updates) => ipcRenderer.invoke('settings:set', updates),
     selectDir: () => ipcRenderer.invoke('settings:selectDir'),
     selectLogo: () => ipcRenderer.invoke('settings:selectLogo'),
+  },
+  // Geschiedenis
+  history: {
+    getAll: () => ipcRenderer.invoke('history:getAll'),
+    add: (entry) => ipcRenderer.invoke('history:add', entry),
+    delete: (id) => ipcRenderer.invoke('history:delete', id),
+  },
+  // KVK
+  kvk: {
+    selectPdf: () => ipcRenderer.invoke('kvk:selectPdf'),
+    scanPdf: (filePath) => ipcRenderer.invoke('kvk:scanPdf', filePath),
   },
 });

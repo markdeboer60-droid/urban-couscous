@@ -23,7 +23,8 @@
     "asarUnpack": [
       "electron/**",
       "node_modules/pizzip/**",
-      "node_modules/docxtemplater/**"
+      "node_modules/docxtemplater/**",
+      "node_modules/pdf-parse/**"
     ],
     "win": {
       "target": "nsis"
@@ -41,6 +42,7 @@
     "docxtemplater": "^3.68.3",
     "express": "^5.2.1",
     "lucide-react": "^1.7.0",
+    "pdf-parse": "^2.4.5",
     "pizzip": "^3.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

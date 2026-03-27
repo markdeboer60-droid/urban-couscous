@@ -4,9 +4,9 @@ import TemplateBrowser from './pages/TemplateBrowser';
 import FormPage from './pages/FormPage';
 import ExportPage from './pages/ExportPage';
 import AdminPage from './pages/AdminPage';
+import GeschiedenisPage from './pages/GeschiedenisPage';
 import './index.css';
 
-// nav staat: { pagina: 'browser' | 'form' | 'export' | 'admin', data: any }
 export default function App() {
   const [nav, setNav] = useState({ pagina: 'browser', data: null });
 
@@ -22,13 +22,20 @@ export default function App() {
           <TemplateBrowser navigeer={navigeer} />
         )}
         {nav.pagina === 'form' && (
-          <FormPage templateId={nav.data} navigeer={navigeer} />
+          <FormPage
+            templateId={nav.data?.templateId ?? nav.data}
+            initieleWaarden={nav.data?.initieleWaarden ?? null}
+            navigeer={navigeer}
+          />
         )}
         {nav.pagina === 'export' && (
           <ExportPage exportData={nav.data} navigeer={navigeer} />
         )}
         {nav.pagina === 'admin' && (
           <AdminPage navigeer={navigeer} />
+        )}
+        {nav.pagina === 'geschiedenis' && (
+          <GeschiedenisPage navigeer={navigeer} />
         )}
       </main>
     </div>

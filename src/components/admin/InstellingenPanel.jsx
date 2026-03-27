@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, FolderOpen, Image, Loader2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Image, Loader2, CheckCircle, Plus, Trash2 } from 'lucide-react';
 
 export default function InstellingenPanel({ onTerug }) {
-  const [instellingen, setInstellingen] = useState({ templateDir: '', kantoorNaam: '', logoPad: '' });
+  const [instellingen, setInstellingen] = useState({
+    templateDir: '', kantoorNaam: '', logoPad: '', ondertekenaars: [],
+  });
   const [bezig, setBezig] = useState(false);
   const [opgeslagen, setOpgeslagen] = useState(false);
+  const [nieuweOndertekenaar, setNieuweOndertekenaar] = useState('');
 
   useEffect(() => {
-    window.api.settings.get().then(setInstellingen);
+    window.api.settings.get().then(s => {
+      setInstellingen({
+        templateDir: s.templateDir || '',
+        kantoorNaam: s.kantoorNaam || '',
+        logoPad: s.logoPad || '',
+        ondertekenaars: s.ondertekenaars || [],
+      });
+    });
   }, []);
 
   function stelIn(key, val) {
@@ -23,6 +33,17 @@ export default function InstellingenPanel({ onTerug }) {
   async function kiesLogo() {
     const pad = await window.api.settings.selectLogo();
     if (pad) stelIn('logoPad', pad);
+  }
+
+  function voegOndertekeenaarToe() {
+    const naam = nieuweOndertekenaar.trim();
+    if (!naam || instellingen.ondertekenaars.includes(naam)) return;
+    stelIn('ondertekenaars', [...instellingen.ondertekenaars, naam]);
+    setNieuweOndertekenaar('');
+  }
+
+  function verwijderOndertekenaar(naam) {
+    stelIn('ondertekenaars', instellingen.ondertekenaars.filter(o => o !== naam));
   }
 
   async function opslaan() {
@@ -44,40 +65,78 @@ export default function InstellingenPanel({ onTerug }) {
 
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Instellingen</h1>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
-
+      <div className="space-y-5">
         {/* Kantoor naam */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Naam kantoor</label>
-          <input
-            type="text"
-            value={instellingen.kantoorNaam || ''}
-            onChange={e => stelIn('kantoorNaam', e.target.value)}
-            placeholder="Naam van het accountantskantoor"
-            className="invoer"
-          />
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Kantoor</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Naam kantoor</label>
+            <input
+              type="text"
+              value={instellingen.kantoorNaam}
+              onChange={e => stelIn('kantoorNaam', e.target.value)}
+              placeholder="Naam van het accountantskantoor"
+              className="invoer"
+            />
+          </div>
         </div>
 
-        {/* Template map */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Sjablonenmap
-          </label>
-          <p className="text-xs text-gray-400 mb-2">
-            Locatie waar de Word-sjablonen (.docx) worden opgeslagen. Gebruik een gedeelde netwerkmap of OneDrive-map voor meerdere gebruikers.
+        {/* Ondertekenaars */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Ondertekenaars</h2>
+          <p className="text-xs text-gray-400 mb-4">
+            Beschikbaar als veldtype "Ondertekenaar kantoor" in sjablonen. Variabele in Word: <code className="bg-gray-100 px-1 rounded">{'{ondertekenaar}'}</code>
+          </p>
+          <div className="space-y-2 mb-4">
+            {instellingen.ondertekenaars.map(naam => (
+              <div key={naam} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-700">{naam}</span>
+                <button
+                  onClick={() => verwijderOndertekenaar(naam)}
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            {instellingen.ondertekenaars.length === 0 && (
+              <p className="text-xs text-gray-400 py-2">Nog geen ondertekenaars toegevoegd</p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={nieuweOndertekenaar}
+              onChange={e => setNieuweOndertekenaar(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && voegOndertekeenaarToe()}
+              placeholder="bijv. Drs J. Jansen RA"
+              className="invoer flex-1"
+            />
+            <button
+              onClick={voegOndertekeenaarToe}
+              className="flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              <Plus size={14} />
+              Toevoegen
+            </button>
+          </div>
+        </div>
+
+        {/* Sjablonenmap */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Sjablonenmap</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            Gebruik een gedeelde netwerkmap of OneDrive-map zodat alle gebruikers dezelfde sjablonen hebben.
           </p>
           <div className="flex gap-3 items-center">
             <input
               type="text"
-              value={instellingen.templateDir || ''}
+              value={instellingen.templateDir}
               readOnly
               placeholder="Geen map geselecteerd"
               className="invoer flex-1 bg-gray-50 cursor-default text-gray-500 text-sm"
             />
-            <button
-              onClick={kiesMap}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 shrink-0"
-            >
+            <button onClick={kiesMap} className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 shrink-0">
               <FolderOpen size={15} />
               Kiezen
             </button>
@@ -85,25 +144,20 @@ export default function InstellingenPanel({ onTerug }) {
         </div>
 
         {/* Logo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Logo / huisstijl
-          </label>
-          <p className="text-xs text-gray-400 mb-2">
-            Kies een afbeelding (PNG of JPG). Het pad wordt opgeslagen; het logo kan in sjablonen worden gebruikt via de variabele <code className="bg-gray-100 px-1 rounded">{'{logo}'}</code>.
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Logo / huisstijl</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            Variabele in Word: <code className="bg-gray-100 px-1 rounded">{'{logo}'}</code>
           </p>
           <div className="flex gap-3 items-center">
             <input
               type="text"
-              value={instellingen.logoPad || ''}
+              value={instellingen.logoPad}
               readOnly
               placeholder="Geen logo geselecteerd"
               className="invoer flex-1 bg-gray-50 cursor-default text-gray-500 text-sm"
             />
-            <button
-              onClick={kiesLogo}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 shrink-0"
-            >
+            <button onClick={kiesLogo} className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 shrink-0">
               <Image size={15} />
               Kiezen
             </button>
@@ -118,7 +172,6 @@ export default function InstellingenPanel({ onTerug }) {
         </div>
       </div>
 
-      {/* Opslaan */}
       <div className="mt-6 flex justify-end">
         <button
           onClick={opslaan}

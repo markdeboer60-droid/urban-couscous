@@ -4,6 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { exec, execFile } from 'child_process';
+import { randomUUID } from 'crypto';
 import os from 'os';
 
 const require = createRequire(import.meta.url);
@@ -15,17 +16,27 @@ const dataDir = app.getPath('userData');
 const metaFile = path.join(dataDir, 'templates.json');
 const settingsFile = path.join(dataDir, 'instellingen.json');
 const veldDir = path.join(dataDir, 'velden');
+const historyFile = path.join(dataDir, 'history.json');
+const geschiedenisDir = path.join(dataDir, 'geschiedenis');
+
+const defaultOndertekenaars = [
+  'Drs M.R. de Boer AA',
+  'Drs M.R. Wijnia',
+  'Drs G.O. Visser RA',
+];
 
 function ensureDirs() {
-  [dataDir, veldDir].forEach(d => {
+  [dataDir, veldDir, geschiedenisDir].forEach(d => {
     if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
   });
   if (!fs.existsSync(metaFile)) fs.writeFileSync(metaFile, '[]');
+  if (!fs.existsSync(historyFile)) fs.writeFileSync(historyFile, '[]');
   if (!fs.existsSync(settingsFile)) {
     fs.writeFileSync(settingsFile, JSON.stringify({
       templateDir: path.join(dataDir, 'docx'),
       kantoorNaam: '',
       logoPad: '',
+      ondertekenaars: defaultOndertekenaars,
     }, null, 2));
   }
 }
@@ -222,6 +233,130 @@ ipcMain.handle('settings:selectLogo', async () => {
   return canceled ? null : filePaths[0];
 });
 
+// ── Geschiedenis handlers ─────────────────────────────────────────────────────
+function readHistory() {
+  if (!fs.existsSync(historyFile)) return [];
+  return JSON.parse(fs.readFileSync(historyFile, 'utf-8'));
+}
+function writeHistory(data) {
+  fs.writeFileSync(historyFile, JSON.stringify(data, null, 2));
+}
+
+ipcMain.handle('history:getAll', () => readHistory());
+
+ipcMain.handle('history:add', (_, entry) => {
+  const ext = path.extname(entry.docxPad || '.docx');
+  const bestandsnaam = `${entry.templateId}_${Date.now()}${ext}`;
+  const persistentPad = path.join(geschiedenisDir, bestandsnaam);
+  if (entry.docxPad && fs.existsSync(entry.docxPad)) {
+    fs.copyFileSync(entry.docxPad, persistentPad);
+  }
+  const nieuwEntry = {
+    id: randomUUID(),
+    templateId: entry.templateId,
+    templateNaam: entry.templateNaam,
+    categorie: entry.categorie,
+    datum: new Date().toISOString(),
+    values: entry.values,
+    docxPad: persistentPad,
+  };
+  const history = readHistory();
+  history.unshift(nieuwEntry);
+  if (history.length > 200) history.length = 200;
+  writeHistory(history);
+  return nieuwEntry;
+});
+
+ipcMain.handle('history:delete', (_, id) => {
+  const history = readHistory();
+  const entry = history.find(e => e.id === id);
+  if (entry?.docxPad && fs.existsSync(entry.docxPad)) {
+    try { fs.unlinkSync(entry.docxPad); } catch {}
+  }
+  writeHistory(history.filter(e => e.id !== id));
+  return { ok: true };
+});
+
+// ── DOCX variabelen scanner ───────────────────────────────────────────────────
+ipcMain.handle('templates:scanDocxVars', (_, filePath) => {
+  const PizZip = require('pizzip');
+  const content = fs.readFileSync(filePath, 'binary');
+  const zip = new PizZip(content);
+
+  const xmlNames = Object.keys(zip.files).filter(
+    n => n.startsWith('word/') && n.endsWith('.xml') && !zip.files[n].dir
+  );
+
+  const variabelen = new Set();
+  const condities = new Set();
+
+  for (const xmlName of xmlNames) {
+    const xml = zip.files[xmlName].asText();
+    // Concateneer alle <w:t> tekstnodes om gesplitste runs samen te voegen
+    const parts = [];
+    const wtRe = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+    let m;
+    while ((m = wtRe.exec(xml)) !== null) parts.push(m[1]);
+    const tekst = parts.join('');
+
+    // Gewone variabelen {naam}
+    const varRe = /\{([^{}#\/^@>|\s][^{}\/^>|]*)\}/g;
+    while ((m = varRe.exec(tekst)) !== null) {
+      const tag = m[1].trim();
+      if (tag && !tag.startsWith('#') && !tag.startsWith('^')) variabelen.add(tag);
+    }
+    // Conditionele blokken {#conditie}
+    const condRe = /\{[#^]([^{}]+)\}/g;
+    while ((m = condRe.exec(tekst)) !== null) condities.add(m[1].trim());
+  }
+  // Sluitende condities weghalen uit variabelen
+  condities.forEach(c => variabelen.delete(c));
+
+  return { variabelen: [...variabelen], condities: [...condities] };
+});
+
+// ── KVK uittreksel scanner ────────────────────────────────────────────────────
+ipcMain.handle('kvk:selectPdf', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Selecteer KVK uittreksel (PDF)',
+    filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    properties: ['openFile'],
+  });
+  return canceled ? null : filePaths[0];
+});
+
+ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
+  const pdfParse = require('pdf-parse');
+  const buffer = fs.readFileSync(filePath);
+  const data = await pdfParse(buffer);
+  const t = data.text;
+  const result = {};
+
+  const zoek = (regex) => t.match(regex)?.[1]?.trim() || null;
+
+  const bedrijfsnaam = zoek(/Handelsnaam\s*[:\n\r]+([^\n\r]+)/i)
+    || zoek(/Naam\s*[:\n\r]+([^\n\r]+)/i);
+  if (bedrijfsnaam) result.bedrijfsnaam = bedrijfsnaam;
+
+  const kvknummer = zoek(/KVK[- ]?nummer\s*[:\n\r]+(\d{8})/i);
+  if (kvknummer) result.kvk_nummer = kvknummer;
+
+  const rechtsvorm = zoek(/Rechtsvorm\s*[:\n\r]+([^\n\r]+)/i);
+  if (rechtsvorm) result.rechtsvorm = rechtsvorm;
+
+  const adres = zoek(/Vestigingsadres\s*[:\n\r]+([^\n\r]+)/i)
+    || zoek(/Adres\s*[:\n\r]+([^\n\r]+)/i);
+  if (adres) result.adres = adres;
+
+  const bestuurder = zoek(/(?:Bestuurder|Directeur|Vennoot)\s*[:\n\r]+([^\n\r]+)/i);
+  if (bestuurder) result.naam_bestuurder = bestuurder;
+
+  const geboortedatum = zoek(/Geboortedatum\s*[:\n\r]+(\d{1,2}[-\s]\d{1,2}[-\s]\d{4}|\d{1,2}\s+\w+\s+\d{4})/i);
+  if (geboortedatum) result.geboortedatum = geboortedatum;
+
+  return result;
+});
+
 // ── Venster ───────────────────────────────────────────────────────────────────
 function createWindow() {
   const win = new BrowserWindow({
@@ -244,8 +379,6 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  // Tijdelijk: DevTools voor debuggen (verwijder na oplossen white screen)
-  win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {

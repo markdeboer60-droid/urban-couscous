@@ -5,13 +5,26 @@ import {
 } from 'lucide-react';
 
 const VELD_TYPES = [
-  { waarde: 'text',     label: 'Tekst (korte invoer)' },
-  { waarde: 'textarea', label: 'Tekst (lange invoer)' },
-  { waarde: 'date',     label: 'Datum' },
-  { waarde: 'number',   label: 'Getal' },
-  { waarde: 'select',   label: 'Keuzelijst (dropdown)' },
-  { waarde: 'boolean',  label: 'Ja / Nee (schakelaar)' },
+  { waarde: 'text',          label: 'Tekst (korte invoer)' },
+  { waarde: 'textarea',      label: 'Tekst (lange invoer)' },
+  { waarde: 'date',          label: 'Datum' },
+  { waarde: 'number',        label: 'Getal' },
+  { waarde: 'currency',      label: 'Bedrag (€)' },
+  { waarde: 'select',        label: 'Keuzelijst (dropdown)' },
+  { waarde: 'boolean',       label: 'Ja / Nee (schakelaar)' },
+  { waarde: 'ondertekenaar', label: 'Ondertekenaar kantoor' },
 ];
+
+// Slim type afleiden uit de variabelenaam
+const SLIMME_TYPES = {
+  datum: 'date', geboortedatum: 'date', startdatum: 'date', einddatum: 'date',
+  bedrag: 'currency', limiet: 'currency', honorarium: 'currency', vergoeding: 'currency',
+  ondertekenaar: 'ondertekenaar', ondertekenaar_kantoor: 'ondertekenaar',
+};
+
+function slimLabel(sleutel) {
+  return sleutel.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 const leegVeld = () => ({
   sleutel: '',
@@ -32,6 +45,7 @@ export default function TemplateEditor({ templateId, onTerug }) {
   const [docxPad, setDocxPad] = useState('');
   const [opgeslagen, setOpgeslagen] = useState(false);
   const [bezig, setBezig] = useState(false);
+  const [scanBezig, setScanBezig] = useState(false);
   const [fout, setFout] = useState('');
   const [uitgevouwen, setUitgevouwen] = useState({});
   const [categorieSuggesties, setCategorieSuggesties] = useState([]);
@@ -71,10 +85,53 @@ export default function TemplateEditor({ templateId, onTerug }) {
     setUitgevouwen(u => ({ ...u, [idx]: !u[idx] }));
   }
 
-  // ── DOCX selecteren ──────────────────────────────────────────────────────────
+  // ── DOCX selecteren + scannen ─────────────────────────────────────────────────
   async function selecteerDocx() {
     const pad = await window.api.templates.selectDocx();
     if (pad) setDocxPad(pad);
+  }
+
+  async function scanVariabelen() {
+    if (!docxPad) return;
+    setScanBezig(true);
+    try {
+      const { variabelen, condities } = await window.api.templates.scanDocxVars(docxPad);
+      const bestaandeSleutels = new Set(velden.map(v => v.sleutel));
+      const nieuw = [];
+
+      variabelen.forEach(sleutel => {
+        if (bestaandeSleutels.has(sleutel)) return;
+        nieuw.push({
+          ...leegVeld(),
+          sleutel,
+          label: slimLabel(sleutel),
+          type: SLIMME_TYPES[sleutel] || 'text',
+          volgorde: velden.length + nieuw.length,
+        });
+      });
+
+      condities.forEach(sleutel => {
+        if (bestaandeSleutels.has(sleutel)) return;
+        nieuw.push({
+          ...leegVeld(),
+          sleutel,
+          label: slimLabel(sleutel),
+          type: 'boolean',
+          volgorde: velden.length + nieuw.length,
+        });
+      });
+
+      if (nieuw.length === 0) {
+        setFout('Alle variabelen uit het document zijn al gedefinieerd, of er zijn geen variabelen gevonden.');
+      } else {
+        setVelden(v => [...v, ...nieuw]);
+        setFout('');
+      }
+    } catch (e) {
+      setFout('Scanfout: ' + (e.message || 'onbekend'));
+    } finally {
+      setScanBezig(false);
+    }
   }
 
   // ── Opslaan ──────────────────────────────────────────────────────────────────
@@ -204,6 +261,17 @@ export default function TemplateEditor({ templateId, onTerug }) {
             <span className="text-xs text-gray-400">Laat leeg om bestaand bestand te behouden</span>
           )}
         </div>
+        {docxPad && (
+          <button
+            type="button"
+            onClick={scanVariabelen}
+            disabled={scanBezig}
+            className="flex items-center gap-2 mt-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 disabled:opacity-50"
+          >
+            {scanBezig ? <Loader2 size={14} className="animate-spin" /> : '🔍'}
+            {scanBezig ? 'Scannen...' : 'Variabelen automatisch detecteren'}
+          </button>
+        )}
       </Sectie>
 
       {/* ── Velden ── */}
