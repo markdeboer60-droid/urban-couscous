@@ -37,6 +37,7 @@ const leegVeld = () => ({
   zichtbaarAls: null,
   toelichting: '',
   placeholder: '',
+  toonInGeschiedenisTitel: false,
 });
 
 export default function TemplateEditor({ templateId, onTerug }) {
@@ -441,6 +442,19 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
               className="invoer"
             />
           </Invoerveld>
+
+          {/* Toon in geschiedenis */}
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!veld.toonInGeschiedenisTitel}
+              onChange={e => onChange('toonInGeschiedenisTitel', e.target.checked)}
+              className="w-4 h-4 accent-blue-600"
+            />
+            <span className="text-xs text-gray-600">
+              Toon waarde als klantidentificatie in geschiedenis
+            </span>
+          </label>
 
           {/* Conditionele zichtbaarheid */}
           <div className="pt-2 border-t border-gray-100">

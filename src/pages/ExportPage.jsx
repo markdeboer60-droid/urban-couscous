@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle,
-  AlertCircle, ExternalLink, Cloud, ArrowRight,
+  AlertCircle, ExternalLink, Cloud, ArrowRight, Printer,
 } from 'lucide-react';
 
 export default function ExportPage({ exportData, navigeer }) {
@@ -129,6 +129,13 @@ export default function ExportPage({ exportData, navigeer }) {
           </div>
         )}
         <ActieKnop
+          label="Afdrukken (Word)"
+          beschrijving="Opent het afdrukdialoogvenster via Microsoft Word"
+          onClick={() => voerUit('printDocx', () => window.api.export.print(docxPad))}
+          staat={status.printDocx}
+          icoon={<Printer size={14} />}
+        />
+        <ActieKnop
           label="Versturen als bijlage (Word)"
           beschrijving="Opent Outlook met dit bestand als bijlage"
           onClick={() => handleEmail(docxPad, 'emailDocx')}
@@ -178,6 +185,13 @@ export default function ExportPage({ exportData, navigeer }) {
                 )}
               </div>
             )}
+            <ActieKnop
+              label="Afdrukken (PDF)"
+              beschrijving="Opent het afdrukdialoogvenster voor de PDF"
+              onClick={() => voerUit('printPdf', () => window.api.export.print(pdfPad))}
+              staat={status.printPdf}
+              icoon={<Printer size={14} />}
+            />
             <ActieKnop
               label="Versturen als bijlage (PDF)"
               beschrijving="Opent Outlook met de PDF als bijlage"

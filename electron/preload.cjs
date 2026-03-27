@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
     openInWord: (filePath) => ipcRenderer.invoke('export:openInWord', filePath),
     exportPdf: (docxPath) => ipcRenderer.invoke('export:exportPdf', docxPath),
     openPdf: (pdfPath) => ipcRenderer.invoke('export:openPdf', pdfPath),
+    print: (filePath) => ipcRenderer.invoke('export:print', filePath),
     sendEmail: (payload) => ipcRenderer.invoke('export:sendEmail', payload),
     saveDocxAs: (payload) => ipcRenderer.invoke('export:saveDocxAs', payload),
     savePdfAs: (payload) => ipcRenderer.invoke('export:savePdfAs', payload),

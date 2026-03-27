@@ -80,6 +80,9 @@ export default function GeschiedenisPage({ navigeer }) {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm text-gray-900 truncate">{entry.templateNaam}</div>
+                {entry.ondertitel && (
+                  <div className="text-sm text-gray-700 truncate font-medium">{entry.ondertitel}</div>
+                )}
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">
                     {entry.categorie}

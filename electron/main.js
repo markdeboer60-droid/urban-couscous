@@ -191,6 +191,19 @@ ipcMain.handle('export:openPdf', (_, pdfPath) => {
   return { ok: true };
 });
 
+ipcMain.handle('export:print', (_, filePath) => {
+  if (process.platform === 'win32') {
+    const fp = filePath.replace(/'/g, "''");
+    execFile('powershell', [
+      '-NoProfile', '-Command',
+      `Start-Process -FilePath '${fp}' -Verb Print`,
+    ], () => {});
+  } else {
+    shell.openPath(filePath);
+  }
+  return { ok: true };
+});
+
 ipcMain.handle('export:sendEmail', (_, { bijlagePad }) => {
   if (process.platform === 'win32') {
     const ep = bijlagePad.replace(/'/g, "''");
@@ -280,6 +293,28 @@ ipcMain.handle('history:add', (_, entry) => {
   if (entry.docxPad && fs.existsSync(entry.docxPad)) {
     fs.copyFileSync(entry.docxPad, persistentPad);
   }
+
+  // Ondertitel samenstellen uit gemarkeerde velden of bekende sleutels
+  let ondertitel = '';
+  try {
+    const velden = readVelden(entry.templateId);
+    const gemarkeerd = velden.filter(v => v.toonInGeschiedenisTitel);
+    if (gemarkeerd.length > 0) {
+      ondertitel = gemarkeerd
+        .map(v => entry.values?.[v.sleutel])
+        .filter(Boolean)
+        .join(' — ');
+    } else {
+      // Fallback op bekende sleutelnamen
+      const kandidaten = [
+        'bedrijfsnaam', 'klantnaam', 'naam_client', 'naam_cliënt', 'naam',
+        'klantnummer', 'relatienummer', 'kvk_nummer', 'debiteurnummer',
+      ];
+      const gevonden = kandidaten.map(k => entry.values?.[k]).filter(Boolean);
+      ondertitel = gevonden.slice(0, 2).join(' — ');
+    }
+  } catch {}
+
   const nieuwEntry = {
     id: randomUUID(),
     templateId: entry.templateId,
@@ -288,6 +323,7 @@ ipcMain.handle('history:add', (_, entry) => {
     datum: new Date().toISOString(),
     values: entry.values,
     docxPad: persistentPad,
+    ondertitel,
   };
   const history = readHistory();
   history.unshift(nieuwEntry);
