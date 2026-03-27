@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle, AlertCircle, Save } from 'lucide-react';
+import { ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ExportPage({ exportData, navigeer }) {
   const { docxPad, templateNaam } = exportData;
@@ -24,10 +24,9 @@ export default function ExportPage({ exportData, navigeer }) {
   }
 
   async function handleOpslaanDocx() {
-    await voerUit('opslaanDocx', 'Opslaan', async () => {
-      const pad = await window.api.export.saveDocxAs({ srcPath: docxPad, standaardNaam: `${standaardNaam}.docx` });
-      if (!pad) throw new Error('Opslaan geannuleerd');
-    });
+    const pad = await window.api.export.saveDocxAs({ srcPath: docxPad, standaardNaam: `${standaardNaam}.docx` });
+    if (!pad) return;
+    await voerUit('opslaanDocx', 'Opslaan', async () => { /* pad al opgeslagen */ });
   }
 
   async function handleExportPdf() {
@@ -39,14 +38,13 @@ export default function ExportPage({ exportData, navigeer }) {
 
   async function handleOpslaanPdf() {
     if (!pdfPad) return;
-    await voerUit('opslaanPdf', 'PDF opslaan', async () => {
-      const pad = await window.api.export.savePdfAs({ srcPath: pdfPad, standaardNaam: `${standaardNaam}.pdf` });
-      if (!pad) throw new Error('Opslaan geannuleerd');
-    });
+    const pad = await window.api.export.savePdfAs({ srcPath: pdfPad, standaardNaam: `${standaardNaam}.pdf` });
+    if (!pad) return;
+    await voerUit('opslaanPdf', 'PDF opslaan', async () => { /* pad al opgeslagen */ });
   }
 
-  async function handleEmail(bijlagePad) {
-    await voerUit('email', 'E-mail', async () => {
+  async function handleEmail(bijlagePad, statusSleutel) {
+    await voerUit(statusSleutel, 'E-mail', async () => {
       await window.api.export.sendEmail({ bijlagePad });
     });
   }
@@ -90,8 +88,8 @@ export default function ExportPage({ exportData, navigeer }) {
         <ActieKnop
           label="Versturen als bijlage (Word)"
           beschrijving="Opent Outlook of Gmail met dit bestand als bijlage"
-          onClick={() => handleEmail(docxPad)}
-          staat={status.email}
+          onClick={() => handleEmail(docxPad, 'emailDocx')}
+          staat={status.emailDocx}
           icoon={<Mail size={14} />}
         />
       </Sectie>
@@ -121,7 +119,7 @@ export default function ExportPage({ exportData, navigeer }) {
             <ActieKnop
               label="Versturen als bijlage (PDF)"
               beschrijving="Opent Outlook of Gmail met de PDF als bijlage"
-              onClick={() => handleEmail(pdfPad)}
+              onClick={() => handleEmail(pdfPad, 'emailPdf')}
               staat={status.emailPdf}
               icoon={<Mail size={14} />}
             />

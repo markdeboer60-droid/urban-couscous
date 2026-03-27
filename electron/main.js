@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import os from 'os';
 
 const require = createRequire(import.meta.url);
@@ -149,7 +149,7 @@ ipcMain.handle('export:exportPdf', async (_, docxPath) => {
     const ep = pdfPath.replace(/'/g, "''");
     const ps = `$w=New-Object -ComObject Word.Application;$w.Visible=$false;$d=$w.Documents.Open('${ed}');$d.SaveAs([ref]'${ep}',[ref]17);$d.Close();$w.Quit()`;
     await new Promise((resolve, reject) =>
-      exec(`powershell -NoProfile -Command "${ps}"`, err => err ? reject(err) : resolve())
+      execFile('powershell', ['-NoProfile', '-Command', ps], err => err ? reject(err) : resolve())
     );
   } else {
     await new Promise((resolve, reject) =>
@@ -168,7 +168,7 @@ ipcMain.handle('export:sendEmail', (_, { bijlagePad }) => {
   if (process.platform === 'win32') {
     const ep = bijlagePad.replace(/'/g, "''");
     const ps = `$o=New-Object -ComObject Outlook.Application;$m=$o.CreateItem(0);$m.Attachments.Add('${ep}');$m.Display()`;
-    exec(`powershell -NoProfile -Command "${ps}"`, () => {});
+    execFile('powershell', ['-NoProfile', '-Command', ps], () => {});
   } else {
     shell.openExternal('mailto:?subject=Document');
   }

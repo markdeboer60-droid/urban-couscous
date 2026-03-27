@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Settings, FileText, AlertCircle, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings, FileText, AlertCircle } from 'lucide-react';
 import TemplateEditor from '../components/admin/TemplateEditor';
 import InstellingenPanel from '../components/admin/InstellingenPanel';
 
