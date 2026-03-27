@@ -17,11 +17,16 @@
     "productName": "Sjablonenplatform",
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/pizzip/**",
+      "node_modules/docxtemplater/**"
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/favicon.svg"
+      "icon": "public/favicon.ico"
     },
     "nsis": {
       "oneClick": false,
