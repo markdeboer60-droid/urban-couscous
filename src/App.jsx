@@ -5,6 +5,7 @@ import FormPage from './pages/FormPage';
 import ExportPage from './pages/ExportPage';
 import AdminPage from './pages/AdminPage';
 import GeschiedenisPage from './pages/GeschiedenisPage';
+import KlantenPage from './pages/KlantenPage';
 import './index.css';
 
 export default function App() {
@@ -36,6 +37,9 @@ export default function App() {
         )}
         {nav.pagina === 'geschiedenis' && (
           <GeschiedenisPage navigeer={navigeer} />
+        )}
+        {nav.pagina === 'klanten' && (
+          <KlantenPage />
         )}
       </main>
     </div>

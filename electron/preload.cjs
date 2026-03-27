@@ -13,6 +13,19 @@ contextBridge.exposeInMainWorld('api', {
     getCategorieen: () => ipcRenderer.invoke('templates:getCategorieen'),
     scanDocxVars: (filePath) => ipcRenderer.invoke('templates:scanDocxVars', filePath),
     duplicate: (id) => ipcRenderer.invoke('templates:duplicate', id),
+    toggleFavoriet: (id) => ipcRenderer.invoke('templates:toggleFavoriet', id),
+  },
+  // Klanten
+  klanten: {
+    getAll: () => ipcRenderer.invoke('klanten:getAll'),
+    save: (klant) => ipcRenderer.invoke('klanten:save', klant),
+    delete: (id) => ipcRenderer.invoke('klanten:delete', id),
+  },
+  // Concepten
+  concepten: {
+    getByTemplate: (templateId) => ipcRenderer.invoke('concepten:getByTemplate', templateId),
+    save: (payload) => ipcRenderer.invoke('concepten:save', payload),
+    delete: (templateId) => ipcRenderer.invoke('concepten:delete', templateId),
   },
   // Export
   export: {

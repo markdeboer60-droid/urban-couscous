@@ -42,7 +42,7 @@ const leegVeld = () => ({
 
 export default function TemplateEditor({ templateId, onTerug }) {
   const bewerkModus = !!templateId;
-  const [meta, setMeta] = useState({ id: '', naam: '', categorie: '', beschrijving: '', versie: 1 });
+  const [meta, setMeta] = useState({ id: '', naam: '', categorie: '', beschrijving: '', versie: 1, bestandsnaamPatroon: '' });
   const [velden, setVelden] = useState([]);
   const [docxPad, setDocxPad] = useState('');
   const [opgeslagen, setOpgeslagen] = useState(false);
@@ -258,6 +258,18 @@ export default function TemplateEditor({ templateId, onTerug }) {
             placeholder="Korte omschrijving voor de gebruiker"
             className="invoer resize-none"
           />
+        </Invoerveld>
+        <Invoerveld label="Bestandsnaam patroon (optioneel)">
+          <input
+            type="text"
+            value={meta.bestandsnaamPatroon || ''}
+            onChange={e => setMetaVeld('bestandsnaamPatroon', e.target.value)}
+            placeholder="bijv. {klantnaam}_{datum} → laat leeg voor standaard"
+            className="invoer"
+          />
+          <p className="mt-1.5 text-xs text-gray-400">
+            Beschikbare variabelen: veldsleutels zoals <code className="bg-gray-100 px-1 rounded">{'{klantnaam}'}</code>, plus <code className="bg-gray-100 px-1 rounded">{'{datum}'}</code> en <code className="bg-gray-100 px-1 rounded">{'{templatenaam}'}</code>.
+          </p>
         </Invoerveld>
       </Sectie>
 

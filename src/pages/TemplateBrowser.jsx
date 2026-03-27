@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, FileText, ChevronRight, FolderOpen, LayoutGrid, List } from 'lucide-react';
+import { Search, FileText, ChevronRight, FolderOpen, LayoutGrid, List, Star } from 'lucide-react';
 
 function formatDatum(iso) {
   if (!iso) return '—';
@@ -45,24 +45,34 @@ export default function TemplateBrowser({ navigeer }) {
   // Kolombreedte (px) voor lijstweergave — versleepbaar
   const [kolBreedte, setKolBreedte] = useState({ categorie: 170, bijgewerkt: 110, versie: 90 });
 
-  useEffect(() => {
-    window.api.templates.getAll().then(data => {
-      setTemplates(data);
-      setLaden(false);
-    });
-  }, []);
+  useEffect(() => { laad(); }, []);
+
+  async function laad() {
+    const data = await window.api.templates.getAll();
+    setTemplates(data);
+    setLaden(false);
+  }
+
+  async function toggleFavoriet(e, id) {
+    e.stopPropagation();
+    await window.api.templates.toggleFavoriet(id);
+    laad();
+  }
 
   const categorieen = ['Alle', ...new Set(templates.map(t => t.categorie).filter(Boolean))].sort((a, b) =>
     a === 'Alle' ? -1 : b === 'Alle' ? 1 : a.localeCompare(b)
   );
 
-  const gefilterd = templates.filter(t => {
-    const matchCategorie = actieveCategorie === 'Alle' || t.categorie === actieveCategorie;
-    const matchZoek = !zoekterm ||
-      t.naam.toLowerCase().includes(zoekterm.toLowerCase()) ||
-      (t.beschrijving || '').toLowerCase().includes(zoekterm.toLowerCase());
-    return matchCategorie && matchZoek;
-  });
+  const gefilterd = templates
+    .filter(t => {
+      const matchCategorie = actieveCategorie === 'Alle' || t.categorie === actieveCategorie;
+      const matchZoek = !zoekterm ||
+        t.naam.toLowerCase().includes(zoekterm.toLowerCase()) ||
+        (t.beschrijving || '').toLowerCase().includes(zoekterm.toLowerCase());
+      return matchCategorie && matchZoek;
+    })
+    // Favorieten bovenaan
+    .sort((a, b) => (b.favoriet ? 1 : 0) - (a.favoriet ? 1 : 0));
 
   function zetKolom(kolom, delta) {
     setKolBreedte(k => ({ ...k, [kolom]: Math.max(60, k[kolom] + delta) }));
@@ -142,7 +152,7 @@ export default function TemplateBrowser({ navigeer }) {
       ) : weergave === 'raster' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {gefilterd.map(t => (
-            <TemplateKaart key={t.id} template={t} onClick={() => navigeer('form', t.id)} />
+            <TemplateKaart key={t.id} template={t} onClick={() => navigeer('form', t.id)} onToggleFavoriet={e => toggleFavoriet(e, t.id)} />
           ))}
         </div>
       ) : (
@@ -174,6 +184,7 @@ export default function TemplateBrowser({ navigeer }) {
               laatste={i === gefilterd.length - 1}
               kolBreedte={kolBreedte}
               onClick={() => navigeer('form', t.id)}
+              onToggleFavoriet={e => toggleFavoriet(e, t.id)}
             />
           ))}
         </div>
@@ -182,17 +193,26 @@ export default function TemplateBrowser({ navigeer }) {
   );
 }
 
-function TemplateKaart({ template, onClick }) {
+function TemplateKaart({ template, onClick, onToggleFavoriet }) {
   return (
     <button
       onClick={onClick}
-      className="text-left bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-sm transition-all group"
+      className={`text-left bg-white border rounded-xl p-5 hover:border-blue-400 hover:shadow-sm transition-all group ${template.favoriet ? 'border-yellow-300 bg-yellow-50/30' : 'border-gray-200'}`}
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="p-2 bg-blue-50 rounded-lg">
-          <FileText size={20} className="text-blue-600" />
+        <div className={`p-2 rounded-lg ${template.favoriet ? 'bg-yellow-100' : 'bg-blue-50'}`}>
+          <FileText size={20} className={template.favoriet ? 'text-yellow-600' : 'text-blue-600'} />
         </div>
-        <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-400 mt-1 transition-colors" />
+        <div className="flex items-center gap-1 mt-0.5">
+          <span
+            onClick={onToggleFavoriet}
+            className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+            title={template.favoriet ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}
+          >
+            <Star size={14} className={template.favoriet ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-gray-400'} />
+          </span>
+          <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
+        </div>
       </div>
       <div className="font-semibold text-gray-900 text-sm mb-1">{template.naam}</div>
       {template.beschrijving && (
@@ -208,7 +228,7 @@ function TemplateKaart({ template, onClick }) {
   );
 }
 
-function TemplateRij({ template, laatste, kolBreedte, onClick }) {
+function TemplateRij({ template, laatste, kolBreedte, onClick, onToggleFavoriet }) {
   return (
     <button
       onClick={onClick}
@@ -216,7 +236,9 @@ function TemplateRij({ template, laatste, kolBreedte, onClick }) {
     >
       <div className="flex-1 min-w-0 px-5 py-3.5">
         <div className="flex items-center gap-2">
-          <FileText size={14} className="text-blue-500 shrink-0" />
+          <span onClick={onToggleFavoriet} className="shrink-0 p-0.5 rounded hover:bg-gray-100 transition-colors" title={template.favoriet ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}>
+            <Star size={13} className={template.favoriet ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-gray-400'} />
+          </span>
           <span className="font-medium text-sm text-gray-900 truncate group-hover:text-blue-700">
             {template.naam}
           </span>

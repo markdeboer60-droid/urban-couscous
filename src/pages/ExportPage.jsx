@@ -4,8 +4,23 @@ import {
   AlertCircle, ExternalLink, Cloud, ArrowRight, Printer,
 } from 'lucide-react';
 
+function berekenBestandsnaam(patroon, templateNaam, values) {
+  if (!patroon) return templateNaam.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim() || templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
+  const datum = new Date().toISOString().slice(0, 10);
+  let naam = patroon
+    .replace(/\{datum\}/g, datum)
+    .replace(/\{templatenaam\}/g, templateNaam);
+  // Vervang alle {sleutel} door bijbehorende waarde
+  naam = naam.replace(/\{(\w+)\}/g, (_, key) => {
+    const val = values[key];
+    return val != null && val !== '' ? String(val) : key;
+  });
+  // Verwijder tekens die niet in bestandsnamen mogen
+  return naam.replace(/[<>:"/\\|?*]/g, '').trim() || templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
 export default function ExportPage({ exportData, navigeer }) {
-  const { docxPad, templateNaam, values = {} } = exportData;
+  const { docxPad, templateNaam, values = {}, bestandsnaamPatroon } = exportData;
   const [pdfPad, setPdfPad] = useState(null);
   const [status, setStatus] = useState({});
   const [opgeslagenDocxPad, setOpgeslagenDocxPad] = useState(null);
@@ -13,7 +28,7 @@ export default function ExportPage({ exportData, navigeer }) {
   const [oneDrivePad, setOneDrivePad] = useState(null);
   const [alleTemplates, setAlleTemplates] = useState([]);
   const [vervolgTemplate, setVervolgTemplate] = useState('');
-  const standaardNaam = templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
+  const standaardNaam = berekenBestandsnaam(bestandsnaamPatroon, templateNaam, values);
 
   useEffect(() => {
     window.api.settings.getOneDrivePad().then(p => setOneDrivePad(p));

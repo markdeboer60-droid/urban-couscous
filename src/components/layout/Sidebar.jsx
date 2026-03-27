@@ -1,8 +1,9 @@
-import { LayoutGrid, Settings, History, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Settings, History, ChevronRight, Users } from 'lucide-react';
 
 const items = [
   { id: 'browser',     label: 'Sjablonen',   icon: LayoutGrid },
   { id: 'geschiedenis', label: 'Geschiedenis', icon: History },
+  { id: 'klanten',     label: 'Adresboek',   icon: Users },
   { id: 'admin',       label: 'Beheer',       icon: Settings },
 ];
 

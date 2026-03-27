@@ -18,6 +18,8 @@ const settingsFile = path.join(dataDir, 'instellingen.json');
 const veldDir = path.join(dataDir, 'velden');
 const historyFile = path.join(dataDir, 'history.json');
 const geschiedenisDir = path.join(dataDir, 'geschiedenis');
+const klantenFile = path.join(dataDir, 'klanten.json');
+const conceptenFile = path.join(dataDir, 'concepten.json');
 
 const defaultOndertekenaars = [
   'Drs M.R. de Boer AA',
@@ -31,6 +33,8 @@ function ensureDirs() {
   });
   if (!fs.existsSync(metaFile)) fs.writeFileSync(metaFile, '[]');
   if (!fs.existsSync(historyFile)) fs.writeFileSync(historyFile, '[]');
+  if (!fs.existsSync(klantenFile)) fs.writeFileSync(klantenFile, '[]');
+  if (!fs.existsSync(conceptenFile)) fs.writeFileSync(conceptenFile, '[]');
   if (!fs.existsSync(settingsFile)) {
     fs.writeFileSync(settingsFile, JSON.stringify({
       templateDir: path.join(dataDir, 'docx'),
@@ -62,6 +66,11 @@ function readVelden(templateId) {
 function writeVelden(templateId, velden) {
   fs.writeFileSync(path.join(veldDir, `${templateId}.json`), JSON.stringify(velden, null, 2));
 }
+function readKlanten() { ensureDirs(); return JSON.parse(fs.readFileSync(klantenFile, 'utf-8')); }
+function writeKlanten(data) { fs.writeFileSync(klantenFile, JSON.stringify(data, null, 2)); }
+function readConcepten() { ensureDirs(); return JSON.parse(fs.readFileSync(conceptenFile, 'utf-8')); }
+function writeConcepten(data) { fs.writeFileSync(conceptenFile, JSON.stringify(data, null, 2)); }
+
 function getTemplateDocxPath(templateId, versie) {
   const settings = readSettings();
   const dir = settings.templateDir || path.join(dataDir, 'docx');
@@ -131,6 +140,52 @@ ipcMain.handle('templates:duplicate', (_, id) => {
   const srcDocx = getTemplateDocxPath(id, orig.versie);
   if (fs.existsSync(srcDocx)) fs.copyFileSync(srcDocx, getTemplateDocxPath(nieuwId, nieuw.versie));
   return nieuwId;
+});
+
+ipcMain.handle('templates:toggleFavoriet', (_, id) => {
+  const all = readMeta();
+  const idx = all.findIndex(t => t.id === id);
+  if (idx < 0) throw new Error('Template niet gevonden');
+  all[idx].favoriet = !all[idx].favoriet;
+  writeMeta(all);
+  return all[idx].favoriet;
+});
+
+// ── Klanten handlers ──────────────────────────────────────────────────────────
+ipcMain.handle('klanten:getAll', () => readKlanten());
+
+ipcMain.handle('klanten:save', (_, klant) => {
+  const all = readKlanten();
+  const idx = all.findIndex(k => k.id === klant.id);
+  if (idx >= 0) {
+    all[idx] = { ...klant, bijgewerkt: new Date().toISOString() };
+  } else {
+    all.push({ ...klant, id: randomUUID(), aangemaakt: new Date().toISOString(), bijgewerkt: new Date().toISOString() });
+  }
+  writeKlanten(all);
+  return { ok: true };
+});
+
+ipcMain.handle('klanten:delete', (_, id) => {
+  writeKlanten(readKlanten().filter(k => k.id !== id));
+  return { ok: true };
+});
+
+// ── Concepten handlers ────────────────────────────────────────────────────────
+ipcMain.handle('concepten:getByTemplate', (_, templateId) => {
+  return readConcepten().find(c => c.templateId === templateId) || null;
+});
+
+ipcMain.handle('concepten:save', (_, { templateId, templateNaam, waarden }) => {
+  const all = readConcepten().filter(c => c.templateId !== templateId);
+  all.push({ id: randomUUID(), templateId, templateNaam, waarden, datum: new Date().toISOString() });
+  writeConcepten(all);
+  return { ok: true };
+});
+
+ipcMain.handle('concepten:delete', (_, templateId) => {
+  writeConcepten(readConcepten().filter(c => c.templateId !== templateId));
+  return { ok: true };
 });
 
 ipcMain.handle('templates:getCategorieen', () => {
