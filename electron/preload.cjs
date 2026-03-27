@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('api', {
     set: (updates) => ipcRenderer.invoke('settings:set', updates),
     selectDir: () => ipcRenderer.invoke('settings:selectDir'),
     selectLogo: () => ipcRenderer.invoke('settings:selectLogo'),
+    getOneDrivePad: () => ipcRenderer.invoke('settings:getOneDrivePad'),
   },
   // Geschiedenis
   history: {

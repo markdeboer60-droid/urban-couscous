@@ -186,10 +186,10 @@ ipcMain.handle('export:sendEmail', (_, { bijlagePad }) => {
   return { ok: true };
 });
 
-ipcMain.handle('export:saveDocxAs', async (_, { srcPath, standaardNaam }) => {
+ipcMain.handle('export:saveDocxAs', async (_, { srcPath, standaardNaam, defaultDir }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Opslaan als Word-document',
-    defaultPath: standaardNaam,
+    defaultPath: defaultDir ? path.join(defaultDir, standaardNaam) : standaardNaam,
     filters: [{ name: 'Word document', extensions: ['docx'] }],
   });
   if (canceled) return null;
@@ -197,10 +197,10 @@ ipcMain.handle('export:saveDocxAs', async (_, { srcPath, standaardNaam }) => {
   return filePath;
 });
 
-ipcMain.handle('export:savePdfAs', async (_, { srcPath, standaardNaam }) => {
+ipcMain.handle('export:savePdfAs', async (_, { srcPath, standaardNaam, defaultDir }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Opslaan als PDF',
-    defaultPath: standaardNaam,
+    defaultPath: defaultDir ? path.join(defaultDir, standaardNaam) : standaardNaam,
     filters: [{ name: 'PDF', extensions: ['pdf'] }],
   });
   if (canceled) return null;
@@ -231,6 +231,19 @@ ipcMain.handle('settings:selectLogo', async () => {
     properties: ['openFile'],
   });
   return canceled ? null : filePaths[0];
+});
+
+ipcMain.handle('settings:getOneDrivePad', () => {
+  const home = os.homedir();
+  // Scan homedirectory op OneDrive-mappen (OneDrive, OneDrive - Bedrijf, etc.)
+  try {
+    const entries = fs.readdirSync(home, { withFileTypes: true });
+    const oneDriveMappen = entries
+      .filter(e => e.isDirectory() && e.name.toLowerCase().startsWith('onedrive'))
+      .map(e => path.join(home, e.name));
+    if (oneDriveMappen.length > 0) return oneDriveMappen[0];
+  } catch {}
+  return null;
 });
 
 // ── Geschiedenis handlers ─────────────────────────────────────────────────────

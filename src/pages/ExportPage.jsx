@@ -1,13 +1,20 @@
-import { useState } from 'react';
-import { ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle, AlertCircle, ExternalLink, Cloud } from 'lucide-react';
 
 export default function ExportPage({ exportData, navigeer }) {
   const { docxPad, templateNaam } = exportData;
   const [pdfPad, setPdfPad] = useState(null);
   const [status, setStatus] = useState({});
+  const [opgeslagenDocxPad, setOpgeslagenDocxPad] = useState(null);
+  const [opgeslagenPdfPad, setOpgeslagenPdfPad] = useState(null);
+  const [oneDrivePad, setOneDrivePad] = useState(null);
   const standaardNaam = templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
 
-  async function voerUit(actie, label, fn) {
+  useEffect(() => {
+    window.api.settings.getOneDrivePad().then(p => setOneDrivePad(p));
+  }, []);
+
+  async function voerUit(actie, fn) {
     setStatus(s => ({ ...s, [actie]: { bezig: true, fout: null, klaar: false } }));
     try {
       await fn();
@@ -18,35 +25,45 @@ export default function ExportPage({ exportData, navigeer }) {
   }
 
   async function handleOpenInWord() {
-    await voerUit('word', 'Open in Word', async () => {
-      await window.api.export.openInWord(docxPad);
-    });
+    await voerUit('word', () => window.api.export.openInWord(docxPad));
   }
 
-  async function handleOpslaanDocx() {
-    const pad = await window.api.export.saveDocxAs({ srcPath: docxPad, standaardNaam: `${standaardNaam}.docx` });
+  async function handleOpslaanDocx(defaultDir = null) {
+    const pad = await window.api.export.saveDocxAs({
+      srcPath: docxPad,
+      standaardNaam: `${standaardNaam}.docx`,
+      defaultDir,
+    });
     if (!pad) return;
-    await voerUit('opslaanDocx', 'Opslaan', async () => { /* pad al opgeslagen */ });
+    setOpgeslagenDocxPad(pad);
+    await voerUit(defaultDir ? 'opslaanDocxOneDrive' : 'opslaanDocx', async () => {});
   }
 
   async function handleExportPdf() {
-    await voerUit('pdf', 'PDF exporteren', async () => {
+    await voerUit('pdf', async () => {
       const pad = await window.api.export.exportPdf(docxPad);
       setPdfPad(pad);
     });
   }
 
-  async function handleOpslaanPdf() {
+  async function handleOpslaanPdf(defaultDir = null) {
     if (!pdfPad) return;
-    const pad = await window.api.export.savePdfAs({ srcPath: pdfPad, standaardNaam: `${standaardNaam}.pdf` });
+    const pad = await window.api.export.savePdfAs({
+      srcPath: pdfPad,
+      standaardNaam: `${standaardNaam}.pdf`,
+      defaultDir,
+    });
     if (!pad) return;
-    await voerUit('opslaanPdf', 'PDF opslaan', async () => { /* pad al opgeslagen */ });
+    setOpgeslagenPdfPad(pad);
+    await voerUit(defaultDir ? 'opslaanPdfOneDrive' : 'opslaanPdf', async () => {});
   }
 
   async function handleEmail(bijlagePad, statusSleutel) {
-    await voerUit(statusSleutel, 'E-mail', async () => {
-      await window.api.export.sendEmail({ bijlagePad });
-    });
+    await voerUit(statusSleutel, () => window.api.export.sendEmail({ bijlagePad }));
+  }
+
+  async function openOpgeslagen(pad) {
+    await window.api.export.openInWord(pad);
   }
 
   return (
@@ -79,15 +96,34 @@ export default function ExportPage({ exportData, navigeer }) {
           staat={status.word}
           variant="primair"
         />
-        <ActieKnop
-          label="Opslaan als .docx"
-          beschrijving="Sla het Word-bestand op een locatie naar keuze op"
-          onClick={handleOpslaanDocx}
-          staat={status.opslaanDocx}
-        />
+        <div>
+          <ActieKnop
+            label="Opslaan als .docx"
+            beschrijving="Sla het Word-bestand op een locatie naar keuze op"
+            onClick={() => handleOpslaanDocx()}
+            staat={status.opslaanDocx}
+          />
+          {opgeslagenDocxPad && !status.opslaanDocxOneDrive?.klaar && (
+            <OpenLink pad={opgeslagenDocxPad} onOpen={openOpgeslagen} />
+          )}
+        </div>
+        {oneDrivePad && (
+          <div>
+            <ActieKnop
+              label="Opslaan in OneDrive (.docx)"
+              beschrijving={oneDrivePad}
+              onClick={() => handleOpslaanDocx(oneDrivePad)}
+              staat={status.opslaanDocxOneDrive}
+              icoon={<Cloud size={14} />}
+            />
+            {status.opslaanDocxOneDrive?.klaar && opgeslagenDocxPad && (
+              <OpenLink pad={opgeslagenDocxPad} onOpen={openOpgeslagen} />
+            )}
+          </div>
+        )}
         <ActieKnop
           label="Versturen als bijlage (Word)"
-          beschrijving="Opent Outlook of Gmail met dit bestand als bijlage"
+          beschrijving="Opent Outlook met dit bestand als bijlage"
           onClick={() => handleEmail(docxPad, 'emailDocx')}
           staat={status.emailDocx}
           icoon={<Mail size={14} />}
@@ -106,19 +142,38 @@ export default function ExportPage({ exportData, navigeer }) {
           />
         ) : (
           <>
-            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-4 py-2.5 rounded-lg mb-3">
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-4 py-2.5 rounded-lg">
               <CheckCircle size={15} />
               PDF aangemaakt
             </div>
-            <ActieKnop
-              label="Opslaan als PDF"
-              beschrijving="Sla de PDF op een locatie naar keuze op"
-              onClick={handleOpslaanPdf}
-              staat={status.opslaanPdf}
-            />
+            <div>
+              <ActieKnop
+                label="Opslaan als PDF"
+                beschrijving="Sla de PDF op een locatie naar keuze op"
+                onClick={() => handleOpslaanPdf()}
+                staat={status.opslaanPdf}
+              />
+              {opgeslagenPdfPad && !status.opslaanPdfOneDrive?.klaar && (
+                <OpenLink pad={opgeslagenPdfPad} onOpen={openOpgeslagen} />
+              )}
+            </div>
+            {oneDrivePad && (
+              <div>
+                <ActieKnop
+                  label="Opslaan in OneDrive (.pdf)"
+                  beschrijving={oneDrivePad}
+                  onClick={() => handleOpslaanPdf(oneDrivePad)}
+                  staat={status.opslaanPdfOneDrive}
+                  icoon={<Cloud size={14} />}
+                />
+                {status.opslaanPdfOneDrive?.klaar && opgeslagenPdfPad && (
+                  <OpenLink pad={opgeslagenPdfPad} onOpen={openOpgeslagen} />
+                )}
+              </div>
+            )}
             <ActieKnop
               label="Versturen als bijlage (PDF)"
-              beschrijving="Opent Outlook of Gmail met de PDF als bijlage"
+              beschrijving="Opent Outlook met de PDF als bijlage"
               onClick={() => handleEmail(pdfPad, 'emailPdf')}
               staat={status.emailPdf}
               icoon={<Mail size={14} />}
@@ -134,6 +189,19 @@ export default function ExportPage({ exportData, navigeer }) {
         Nieuw document starten
       </button>
     </div>
+  );
+}
+
+function OpenLink({ pad, onOpen }) {
+  const bestandsnaam = pad.split(/[\\/]/).pop();
+  return (
+    <button
+      onClick={() => onOpen(pad)}
+      className="flex items-center gap-1.5 mt-1.5 ml-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+    >
+      <ExternalLink size={11} />
+      {bestandsnaam} openen
+    </button>
   );
 }
 
@@ -173,7 +241,7 @@ function ActieKnop({ label, beschrijving, onClick, staat = {}, variant = 'secund
         <div className="flex-1 text-left">
           <div>{label}</div>
           {beschrijving && (
-            <div className={`text-xs mt-0.5 font-normal ${variant === 'primair' ? 'text-blue-200' : 'text-gray-400'}`}>
+            <div className={`text-xs mt-0.5 font-normal truncate ${variant === 'primair' ? 'text-blue-200' : 'text-gray-400'}`}>
               {beschrijving}
             </div>
           )}
