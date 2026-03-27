@@ -107,7 +107,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         values: waarden,
       });
 
-      navigeer('export', { docxPad, templateNaam: template.naam });
+      navigeer('export', { docxPad, templateNaam: template.naam, values: waarden });
     } catch (e) {
       setFout(e.message || 'Er is een fout opgetreden bij het genereren.');
     } finally {

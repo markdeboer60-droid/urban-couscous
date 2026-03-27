@@ -6,9 +6,9 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "electron:dev": "NODE_ENV=development electron .",
+    "electron:dev": "node scripts/bundle-electron.mjs && NODE_ENV=development electron .",
     "build": "vite build",
-    "electron:build": "vite build && electron-builder",
+    "electron:build": "node scripts/bundle-electron.mjs && vite build && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -23,8 +23,7 @@
     "asarUnpack": [
       "electron/**",
       "node_modules/pizzip/**",
-      "node_modules/docxtemplater/**",
-      "node_modules/pdf-parse/**"
+      "node_modules/docxtemplater/**"
     ],
     "win": {
       "target": "nsis"

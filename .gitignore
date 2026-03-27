@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Gegenereerde electron bundels
+electron/pdf-parse-bundle.cjs

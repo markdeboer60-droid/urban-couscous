@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle, AlertCircle, ExternalLink, Cloud } from 'lucide-react';
+import {
+  ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle,
+  AlertCircle, ExternalLink, Cloud, ArrowRight,
+} from 'lucide-react';
 
 export default function ExportPage({ exportData, navigeer }) {
-  const { docxPad, templateNaam } = exportData;
+  const { docxPad, templateNaam, values = {} } = exportData;
   const [pdfPad, setPdfPad] = useState(null);
   const [status, setStatus] = useState({});
   const [opgeslagenDocxPad, setOpgeslagenDocxPad] = useState(null);
   const [opgeslagenPdfPad, setOpgeslagenPdfPad] = useState(null);
   const [oneDrivePad, setOneDrivePad] = useState(null);
+  const [alleTemplates, setAlleTemplates] = useState([]);
+  const [vervolgTemplate, setVervolgTemplate] = useState('');
   const standaardNaam = templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
 
   useEffect(() => {
     window.api.settings.getOneDrivePad().then(p => setOneDrivePad(p));
+    window.api.templates.getAll().then(setAlleTemplates);
   }, []);
 
   async function voerUit(actie, fn) {
@@ -62,8 +68,9 @@ export default function ExportPage({ exportData, navigeer }) {
     await voerUit(statusSleutel, () => window.api.export.sendEmail({ bijlagePad }));
   }
 
-  async function openOpgeslagen(pad) {
-    await window.api.export.openInWord(pad);
+  function handleVervolgTemplate() {
+    if (!vervolgTemplate) return;
+    navigeer('form', { templateId: vervolgTemplate, initieleWaarden: values });
   }
 
   return (
@@ -104,7 +111,7 @@ export default function ExportPage({ exportData, navigeer }) {
             staat={status.opslaanDocx}
           />
           {opgeslagenDocxPad && !status.opslaanDocxOneDrive?.klaar && (
-            <OpenLink pad={opgeslagenDocxPad} onOpen={openOpgeslagen} />
+            <OpenLink pad={opgeslagenDocxPad} />
           )}
         </div>
         {oneDrivePad && (
@@ -117,7 +124,7 @@ export default function ExportPage({ exportData, navigeer }) {
               icoon={<Cloud size={14} />}
             />
             {status.opslaanDocxOneDrive?.klaar && opgeslagenDocxPad && (
-              <OpenLink pad={opgeslagenDocxPad} onOpen={openOpgeslagen} />
+              <OpenLink pad={opgeslagenDocxPad} />
             )}
           </div>
         )}
@@ -154,7 +161,7 @@ export default function ExportPage({ exportData, navigeer }) {
                 staat={status.opslaanPdf}
               />
               {opgeslagenPdfPad && !status.opslaanPdfOneDrive?.klaar && (
-                <OpenLink pad={opgeslagenPdfPad} onOpen={openOpgeslagen} />
+                <OpenLink pad={opgeslagenPdfPad} />
               )}
             </div>
             {oneDrivePad && (
@@ -167,7 +174,7 @@ export default function ExportPage({ exportData, navigeer }) {
                   icoon={<Cloud size={14} />}
                 />
                 {status.opslaanPdfOneDrive?.klaar && opgeslagenPdfPad && (
-                  <OpenLink pad={opgeslagenPdfPad} onOpen={openOpgeslagen} />
+                  <OpenLink pad={opgeslagenPdfPad} />
                 )}
               </div>
             )}
@@ -182,9 +189,44 @@ export default function ExportPage({ exportData, navigeer }) {
         )}
       </Sectie>
 
+      {/* Vervolgsjabloon */}
+      {alleTemplates.length > 0 && (
+        <Sectie
+          titel="Vervolgdocument met dezelfde gegevens"
+          icoon={<ArrowRight size={18} className="text-purple-600" />}
+          className="mt-4"
+        >
+          <p className="text-xs text-gray-400 -mt-1">
+            Kies een sjabloon — overeenkomende velden worden automatisch overgenomen.
+          </p>
+          <div className="flex gap-2">
+            <select
+              value={vervolgTemplate}
+              onChange={e => setVervolgTemplate(e.target.value)}
+              className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+            >
+              <option value="">— Kies een sjabloon —</option>
+              {alleTemplates.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.naam}{t.categorie ? ` (${t.categorie})` : ''}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleVervolgTemplate}
+              disabled={!vervolgTemplate}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+            >
+              <ArrowRight size={15} />
+              Starten
+            </button>
+          </div>
+        </Sectie>
+      )}
+
       <button
         onClick={() => navigeer('browser')}
-        className="mt-8 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        className="mt-6 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
       >
         Nieuw document starten
       </button>
@@ -192,11 +234,11 @@ export default function ExportPage({ exportData, navigeer }) {
   );
 }
 
-function OpenLink({ pad, onOpen }) {
+function OpenLink({ pad }) {
   const bestandsnaam = pad.split(/[\\/]/).pop();
   return (
     <button
-      onClick={() => onOpen(pad)}
+      onClick={() => window.api.export.openInWord(pad)}
       className="flex items-center gap-1.5 mt-1.5 ml-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
     >
       <ExternalLink size={11} />

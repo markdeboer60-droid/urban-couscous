@@ -339,12 +339,14 @@ ipcMain.handle('kvk:selectPdf', async () => {
 });
 
 ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
-  const pdfParsePath = app.isPackaged
-    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'pdf-parse')
-    : 'pdf-parse';
-  const pdfParse = require(pdfParsePath);
+  // pdf-parse v2 CJS wordt gekopieerd naar electron/ via scripts/bundle-electron.mjs
+  const bundlePad = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'electron', 'pdf-parse-bundle.cjs')
+    : path.join(__dirname, 'pdf-parse-bundle.cjs');
+  const { PDFParse } = require(bundlePad);
   const buffer = fs.readFileSync(filePath);
-  const data = await pdfParse(buffer);
+  const parser = new PDFParse({ data: buffer });
+  const data = await parser.getText();
   const t = data.text;
   const result = {};
 
