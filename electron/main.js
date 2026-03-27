@@ -137,9 +137,25 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
 
   const content = fs.readFileSync(docxPath, 'binary');
   const zip = new PizZip(content);
-  const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+  const doc = new Docxtemplater(zip, {
+    paragraphLoop: true,
+    linebreaks: true,
+    // Ontbrekende variabelen worden lege string (geen fout)
+    nullGetter: () => '',
+  });
 
-  doc.render(values);
+  try {
+    doc.render(values);
+  } catch (e) {
+    // Verrijk de foutmelding met details uit de Multi error
+    if (e.properties?.errors?.length) {
+      const details = e.properties.errors
+        .map(err => err.properties?.explanation || err.message || String(err))
+        .join('; ');
+      throw new Error(`Documentfout: ${details}`);
+    }
+    throw e;
+  }
 
   const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
   const outName = `${meta.naam.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.docx`;
