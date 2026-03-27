@@ -326,7 +326,10 @@ ipcMain.handle('kvk:selectPdf', async () => {
 });
 
 ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
-  const pdfParse = require('pdf-parse');
+  const pdfParsePath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'pdf-parse')
+    : 'pdf-parse';
+  const pdfParse = require(pdfParsePath);
   const buffer = fs.readFileSync(filePath);
   const data = await pdfParse(buffer);
   const t = data.text;
