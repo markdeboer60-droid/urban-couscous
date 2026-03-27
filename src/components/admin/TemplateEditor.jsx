@@ -19,6 +19,7 @@ const VELD_TYPES = [
 const SLIMME_TYPES = {
   datum: 'date', geboortedatum: 'date', startdatum: 'date', einddatum: 'date',
   bedrag: 'currency', limiet: 'currency', honorarium: 'currency', vergoeding: 'currency',
+  rekening_courant: 'currency', kredietlimiet: 'currency',
   ondertekenaar: 'ondertekenaar', ondertekenaar_kantoor: 'ondertekenaar',
 };
 

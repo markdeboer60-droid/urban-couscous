@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 
 const SMART_TYPES = {
   datum: 'date', geboortedatum: 'date', startdatum: 'date', einddatum: 'date',

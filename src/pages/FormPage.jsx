@@ -123,6 +123,18 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     );
   }
 
+  if (!template) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
+        <AlertCircle size={32} className="text-red-400" />
+        <p className="text-sm">Sjabloon niet gevonden.</p>
+        <button onClick={() => navigeer('browser')} className="text-sm text-blue-600 underline">
+          Terug naar overzicht
+        </button>
+      </div>
+    );
+  }
+
   const velden = zichtbareVelden();
 
   return (
