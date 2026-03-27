@@ -243,6 +243,9 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // Tijdelijk: DevTools voor debuggen (verwijder na oplossen white screen)
+  win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {

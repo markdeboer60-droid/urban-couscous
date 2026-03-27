@@ -21,6 +21,7 @@
       "node_modules/**/*"
     ],
     "asarUnpack": [
+      "electron/**",
       "node_modules/pizzip/**",
       "node_modules/docxtemplater/**"
     ],
