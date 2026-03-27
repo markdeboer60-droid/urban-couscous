@@ -5,18 +5,25 @@ import {
 } from 'lucide-react';
 
 function berekenBestandsnaam(patroon, templateNaam, values) {
-  if (!patroon) return templateNaam.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim() || templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
+  const sanitize = s => s
+    .replace(/[<>:"/\\|?*]/g, '')  // verboden tekens
+    .replace(/\s+/g, '_')          // spaties → underscore
+    .replace(/_+/g, '_')           // meerdere underscores samenvoegen
+    .replace(/^_|_$/g, '')         // leading/trailing underscore weg
+    .trim();
+
+  if (!patroon) return sanitize(templateNaam) || 'document';
+
   const datum = new Date().toISOString().slice(0, 10);
   let naam = patroon
     .replace(/\{datum\}/g, datum)
-    .replace(/\{templatenaam\}/g, templateNaam);
-  // Vervang alle {sleutel} door bijbehorende waarde
+    .replace(/\{templatenaam\}/g, sanitize(templateNaam));
+  // Vervang veldsleutels; ontbrekende waarden → lege string
   naam = naam.replace(/\{(\w+)\}/g, (_, key) => {
     const val = values[key];
-    return val != null && val !== '' ? String(val) : key;
+    return val != null && val !== '' ? sanitize(String(val)) : '';
   });
-  // Verwijder tekens die niet in bestandsnamen mogen
-  return naam.replace(/[<>:"/\\|?*]/g, '').trim() || templateNaam.replace(/[^a-zA-Z0-9]/g, '_');
+  return sanitize(naam) || sanitize(templateNaam) || 'document';
 }
 
 export default function ExportPage({ exportData, navigeer }) {

@@ -116,12 +116,13 @@ export default function TemplateBrowser({ navigeer }) {
       </div>
 
       {/* Categorietabs */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none"
+        style={{ scrollbarWidth: 'none' }}>
         {categorieen.map(cat => (
           <button
             key={cat}
             onClick={() => setActieveCategorie(cat)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               actieveCategorie === cat
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600'

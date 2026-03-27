@@ -36,7 +36,11 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
             min="0"
             step="0.01"
             value={waarde === '' || waarde === null || waarde === undefined ? '' : waarde}
-            onChange={e => onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+            onChange={e => {
+              if (e.target.value === '') { onChange(''); return; }
+              const val = parseFloat(e.target.value);
+              if (!isNaN(val)) onChange(val);
+            }}
             placeholder="0,00"
             className={basisKlasse + ' pl-8'}
           />

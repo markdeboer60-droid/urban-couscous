@@ -6,6 +6,7 @@ export default function GeschiedenisPage({ navigeer }) {
   const [laden, setLaden] = useState(true);
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
   const [exportBezig, setExportBezig] = useState({});
+  const [exportFout, setExportFout] = useState({});
   const [zoekterm, setZoekterm] = useState('');
   const [sortering, setSortering] = useState('datum-nieuw');
 
@@ -27,8 +28,11 @@ export default function GeschiedenisPage({ navigeer }) {
 
   async function openInWord(entry) {
     setExportBezig(b => ({ ...b, [entry.id]: 'word' }));
+    setExportFout(f => ({ ...f, [entry.id]: null }));
     try {
       await window.api.export.openInWord(entry.docxPad);
+    } catch (e) {
+      setExportFout(f => ({ ...f, [entry.id]: 'Bestand niet gevonden of kan niet worden geopend.' }));
     } finally {
       setExportBezig(b => ({ ...b, [entry.id]: null }));
     }
@@ -137,7 +141,11 @@ export default function GeschiedenisPage({ navigeer }) {
               </div>
 
               {/* Acties */}
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                {exportFout[entry.id] && (
+                  <span className="text-xs text-red-500">{exportFout[entry.id]}</span>
+                )}
+                <div className="flex items-center gap-1">
                 <KnopActie
                   titel="Openen in Word"
                   icoon={<FolderOpen size={15} />}
@@ -155,6 +163,7 @@ export default function GeschiedenisPage({ navigeer }) {
                   gevaarlijk
                   onClick={() => setVerwijderBevestig(entry.id)}
                 />
+                </div>
               </div>
             </div>
           ))}

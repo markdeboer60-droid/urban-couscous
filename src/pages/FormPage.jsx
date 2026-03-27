@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Loader2, AlertCircle, FileUp, Users, Save, BookmarkCheck } from 'lucide-react';
 import VeldInput from '../components/forms/VeldInput';
 
@@ -14,9 +14,23 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const [klanten, setKlanten] = useState([]);
   const [klantZoek, setKlantZoek] = useState('');
   const [klantPickerOpen, setKlantPickerOpen] = useState(false);
+  const [klantMelding, setKlantMelding] = useState('');
   const [concept, setConcept] = useState(null);
   const [conceptGeladen, setConceptGeladen] = useState(false);
   const [conceptOpgeslagen, setConceptOpgeslagen] = useState(false);
+  const klantPickerRef = useRef(null);
+
+  // Sluit klantpicker bij klik buiten
+  useEffect(() => {
+    if (!klantPickerOpen) return;
+    function handleClickOutside(e) {
+      if (klantPickerRef.current && !klantPickerRef.current.contains(e.target)) {
+        setKlantPickerOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [klantPickerOpen]);
 
   useEffect(() => {
     Promise.all([
@@ -101,6 +115,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       } else {
         setWaarden(prev => ({ ...prev, ...matches }));
         setKvkMelding(`${Object.keys(matches).length} veld(en) automatisch ingevuld.`);
+        setTimeout(() => setKvkMelding(''), 4000);
       }
     } catch (e) {
       setKvkMelding('Kon het PDF niet lezen: ' + (e.message || 'onbekende fout'));
@@ -118,6 +133,8 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     setWaarden(prev => ({ ...prev, ...matches }));
     setKlantPickerOpen(false);
     setKlantZoek('');
+    const n = Object.keys(matches).length;
+    setKlantMelding(n > 0 ? `${n} veld${n !== 1 ? 'en' : ''} ingevuld vanuit ${klant.naam}` : `Geen overeenkomende velden gevonden voor ${klant.naam}`);
   }
 
   async function slaConceptOp() {
@@ -234,9 +251,9 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         </button>
 
         {klanten.length > 0 && (
-          <div className="relative">
+          <div className="relative" ref={klantPickerRef}>
             <button
-              onClick={() => setKlantPickerOpen(o => !o)}
+              onClick={() => { setKlantPickerOpen(o => !o); setKlantMelding(''); }}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
             >
               <Users size={14} />
@@ -276,6 +293,9 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
 
         {kvkMelding && (
           <span className="text-xs text-blue-600">{kvkMelding}</span>
+        )}
+        {klantMelding && (
+          <span className="text-xs text-gray-500">{klantMelding}</span>
         )}
       </div>
 
