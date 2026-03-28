@@ -3,8 +3,10 @@ import { Plus, Pencil, Trash2, Settings, FileText, Search, Copy } from 'lucide-r
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import TemplateEditor from '../components/admin/TemplateEditor';
 import InstellingenPanel from '../components/admin/InstellingenPanel';
+import { useToast } from '../context/ToastContext';
 
 export default function AdminPage() {
+  const showToast = useToast();
   const [templates, setTemplates] = useState([]);
   const [scherm, setScherm] = useState('lijst'); // 'lijst' | 'editor' | 'instellingen'
   const [bewerkId, setBewerkId] = useState(null);
@@ -34,11 +36,13 @@ export default function AdminPage() {
     await window.api.templates.delete(id);
     setVerwijderBevestig(null);
     laadTemplates();
+    showToast('Sjabloon verwijderd', 'info');
   }
 
   async function dupliceer(id) {
     await window.api.templates.duplicate(id);
     laadTemplates();
+    showToast('Sjabloon gedupliceerd');
   }
 
   function terug() {

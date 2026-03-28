@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { History, Trash2, FileText, RotateCcw, FolderOpen, Loader2, Search } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { formatDatumTijd } from '../utils/formatDatum';
+import { useToast } from '../context/ToastContext';
 
 export default function GeschiedenisPage({ navigeer }) {
+  const showToast = useToast();
   const [geschiedenis, setGeschiedenis] = useState([]);
   const [laden, setLaden] = useState(true);
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
@@ -26,6 +28,7 @@ export default function GeschiedenisPage({ navigeer }) {
     await window.api.history.delete(id);
     setVerwijderBevestig(null);
     setGeschiedenis(g => g.filter(e => e.id !== id));
+    showToast('Document verwijderd uit geschiedenis', 'info');
   }
 
   async function openInWord(entry) {

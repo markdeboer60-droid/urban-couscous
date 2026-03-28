@@ -1,6 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  // App
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:getVersion'),
+  },
   // Templates
   templates: {
     getAll: () => ipcRenderer.invoke('templates:getAll'),
@@ -37,6 +41,7 @@ contextBridge.exposeInMainWorld('api', {
     sendEmail: (payload) => ipcRenderer.invoke('export:sendEmail', payload),
     saveDocxAs: (payload) => ipcRenderer.invoke('export:saveDocxAs', payload),
     savePdfAs: (payload) => ipcRenderer.invoke('export:savePdfAs', payload),
+    bulkGenereer: (payload) => ipcRenderer.invoke('export:bulkGenereer', payload),
   },
   // Instellingen
   settings: {

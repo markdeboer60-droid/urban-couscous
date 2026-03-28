@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { LayoutGrid, Settings, History, ChevronRight, Users } from 'lucide-react';
 
 const items = [
@@ -8,6 +9,12 @@ const items = [
 ];
 
 export default function Sidebar({ actief, navigeer }) {
+  const [versie, setVersie] = useState('');
+
+  useEffect(() => {
+    window.api.app?.getVersion().then(setVersie).catch(() => {});
+  }, []);
+
   return (
     <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
       <div className="px-5 py-5 border-b border-gray-100">
@@ -35,7 +42,7 @@ export default function Sidebar({ actief, navigeer }) {
       </nav>
 
       <div className="px-5 py-4 border-t border-gray-100">
-        <span className="text-xs text-gray-400">v1.0.0</span>
+        <span className="text-xs text-gray-400">{versie ? `v${versie}` : 'v1.0.0'}</span>
       </div>
     </aside>
   );

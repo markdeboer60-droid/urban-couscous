@@ -78,6 +78,9 @@ function getTemplateDocxPath(templateId, versie) {
   return path.join(dir, `${templateId}_v${versie}.docx`);
 }
 
+// ── App info ──────────────────────────────────────────────────────────────────
+ipcMain.handle('app:getVersion', () => app.getVersion());
+
 // ── Template handlers ─────────────────────────────────────────────────────────
 ipcMain.handle('templates:getAll', () => readMeta());
 
@@ -282,6 +285,41 @@ ipcMain.handle('export:sendEmail', (_, { bijlagePad }) => {
     shell.openExternal('mailto:?subject=Document');
   }
   return { ok: true };
+});
+
+ipcMain.handle('export:bulkGenereer', async (_, { templateId, rijen, opslagMap }) => {
+  const meta = readMeta().find(t => t.id === templateId);
+  if (!meta) throw new Error('Template niet gevonden');
+  const docxPath = getTemplateDocxPath(templateId, meta.versie);
+  if (!fs.existsSync(docxPath)) throw new Error('DOCX bestand niet gevonden: ' + docxPath);
+
+  const PizZip = require('pizzip');
+  const Docxtemplater = require('docxtemplater');
+  const content = fs.readFileSync(docxPath, 'binary');
+
+  if (!fs.existsSync(opslagMap)) fs.mkdirSync(opslagMap, { recursive: true });
+
+  const paden = [];
+  const fouten = [];
+
+  for (let i = 0; i < rijen.length; i++) {
+    const values = rijen[i];
+    try {
+      const zip = new PizZip(content);
+      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => '' });
+      doc.render(values);
+      const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
+      const naamBase = Object.values(values).filter(Boolean).slice(0, 2).join('_').replace(/[^a-zA-Z0-9_\-]/g, '_') || `rij_${i + 1}`;
+      const uitvoerNaam = `${meta.naam.replace(/[^a-zA-Z0-9]/g, '_')}_${naamBase}_${i + 1}.docx`;
+      const uitvoerPad = path.join(opslagMap, uitvoerNaam);
+      fs.writeFileSync(uitvoerPad, buf);
+      paden.push(uitvoerPad);
+    } catch (e) {
+      fouten.push({ rij: i + 1, fout: e.message || String(e) });
+    }
+  }
+
+  return { paden, fouten };
 });
 
 ipcMain.handle('export:saveDocxAs', async (_, { srcPath, standaardNaam, defaultDir }) => {

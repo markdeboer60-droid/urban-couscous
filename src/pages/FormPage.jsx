@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Loader2, AlertCircle, FileUp, Users, Save, BookmarkCheck } from 'lucide-react';
 import VeldInput from '../components/forms/VeldInput';
+import { useToast } from '../context/ToastContext';
 
 export default function FormPage({ templateId, initieleWaarden, navigeer }) {
+  const showToast = useToast();
   const [template, setTemplate] = useState(null);
   const [waarden, setWaarden] = useState({});
   const [laden, setLaden] = useState(true);
@@ -44,8 +46,10 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       setOndertekenaars(settings.ondertekenaars || []);
       setKlanten(klantenData);
       const init = {};
+      const vandaag = new Date().toISOString().slice(0, 10);
       (t?.velden || []).forEach(v => {
         if (v.type === 'boolean') init[v.sleutel] = false;
+        else if (v.type === 'date') init[v.sleutel] = vandaag;
         else init[v.sleutel] = '';
       });
       if (initieleWaarden) {
@@ -149,6 +153,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     });
     setConceptOpgeslagen(true);
     setTimeout(() => setConceptOpgeslagen(false), 2000);
+    showToast('Concept opgeslagen');
   }
 
   async function verwijderConcept() {
@@ -217,6 +222,22 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   }
 
   const velden = zichtbareVelden();
+
+  // Groepeer velden per groepnaam (leeg = geen header)
+  const gegroepeerdeVelden = (() => {
+    const groepen = [];
+    let huidigeGroep = null;
+    for (const v of velden) {
+      const groepNaam = v.groep || '';
+      if (groepNaam !== huidigeGroep) {
+        groepen.push({ naam: groepNaam, velden: [v] });
+        huidigeGroep = groepNaam;
+      } else {
+        groepen[groepen.length - 1].velden.push(v);
+      }
+    }
+    return groepen;
+  })();
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -315,16 +336,27 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         )}
       </div>
 
-      {/* Velden */}
-      <div className="space-y-5">
-        {velden.map(veld => (
-          <VeldInput
-            key={veld.sleutel}
-            veld={veld}
-            waarde={waarden[veld.sleutel]}
-            onChange={val => setWaarden(prev => ({ ...prev, [veld.sleutel]: val }))}
-            ondertekenaars={ondertekenaars}
-          />
+      {/* Velden (gegroepeerd per sectie) */}
+      <div className="space-y-6">
+        {gegroepeerdeVelden.map((groep, gi) => (
+          <div key={gi}>
+            {groep.naam && (
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                {groep.naam}
+              </h2>
+            )}
+            <div className="space-y-5">
+              {groep.velden.map(veld => (
+                <VeldInput
+                  key={veld.sleutel}
+                  veld={veld}
+                  waarde={waarden[veld.sleutel]}
+                  onChange={val => setWaarden(prev => ({ ...prev, [veld.sleutel]: val }))}
+                  ondertekenaars={ondertekenaars}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 

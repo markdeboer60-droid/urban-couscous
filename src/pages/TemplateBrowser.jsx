@@ -1,6 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Search, FileText, ChevronRight, FolderOpen, LayoutGrid, List, Star } from 'lucide-react';
+import { Search, FileText, ChevronRight, FolderOpen, LayoutGrid, List, Star, Sheet } from 'lucide-react';
 import { formatDatum } from '../utils/formatDatum';
+import BulkModal from '../components/ui/BulkModal';
+
+const RECENTE_KEY = 'sjablonen-recent';
+const MAX_RECENT = 5;
+
+function leesRecent() {
+  try { return JSON.parse(localStorage.getItem(RECENTE_KEY) || '[]'); } catch { return []; }
+}
+
+function slaRecentOp(id) {
+  try {
+    const bestaand = leesRecent().filter(x => x !== id);
+    localStorage.setItem(RECENTE_KEY, JSON.stringify([id, ...bestaand].slice(0, MAX_RECENT)));
+  } catch {}
+}
 
 // Versleepbare scheidingslijn voor kolombreedte
 function DragHandle({ onDrag }) {
@@ -32,7 +47,7 @@ function DragHandle({ onDrag }) {
   );
 }
 
-export default function TemplateBrowser({ navigeer }) {
+export default function TemplateBrowser({ navigeer, zoekRef }) {
   const [templates, setTemplates] = useState([]);
   const [zoekterm, setZoekterm] = useState('');
   const [actieveCategorie, setActieveCategorie] = useState('Alle');
@@ -40,13 +55,14 @@ export default function TemplateBrowser({ navigeer }) {
   const [weergave, setWeergave] = useState(() => {
     try { return localStorage.getItem('sjablonen-weergave') || 'raster'; } catch { return 'raster'; }
   });
-  // Kolombreedte (px) voor lijstweergave — versleepbaar, bewaard in localStorage
   const [kolBreedte, setKolBreedte] = useState(() => {
     try {
       const opgeslagen = localStorage.getItem('sjablonen-kolbreedte');
       return opgeslagen ? JSON.parse(opgeslagen) : { categorie: 170, bijgewerkt: 110, versie: 90 };
     } catch { return { categorie: 170, bijgewerkt: 110, versie: 90 }; }
   });
+  const [bulkTemplate, setBulkTemplate] = useState(null);
+  const [recenteIds, setRecenteIds] = useState(leesRecent);
 
   useEffect(() => { laad(); }, []);
 
@@ -62,6 +78,12 @@ export default function TemplateBrowser({ navigeer }) {
     laad();
   }
 
+  function openTemplate(id) {
+    slaRecentOp(id);
+    setRecenteIds(leesRecent());
+    navigeer('form', id);
+  }
+
   const categorieen = ['Alle', ...new Set(templates.map(t => t.categorie).filter(Boolean))].sort((a, b) =>
     a === 'Alle' ? -1 : b === 'Alle' ? 1 : a.localeCompare(b)
   );
@@ -74,8 +96,12 @@ export default function TemplateBrowser({ navigeer }) {
         (t.beschrijving || '').toLowerCase().includes(zoekterm.toLowerCase());
       return matchCategorie && matchZoek;
     })
-    // Favorieten bovenaan
     .sort((a, b) => (b.favoriet ? 1 : 0) - (a.favoriet ? 1 : 0));
+
+  // Recente sjablonen (alleen als er geen zoekterm/filter actief is)
+  const recenteTemplates = (!zoekterm && actieveCategorie === 'Alle')
+    ? recenteIds.map(id => templates.find(t => t.id === id)).filter(Boolean)
+    : [];
 
   function zetKolom(kolom, delta) {
     setKolBreedte(k => {
@@ -97,8 +123,9 @@ export default function TemplateBrowser({ navigeer }) {
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            ref={zoekRef}
             type="text"
-            placeholder="Zoeken..."
+            placeholder="Zoeken… (Ctrl+K)"
             value={zoekterm}
             onChange={e => setZoekterm(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -140,6 +167,25 @@ export default function TemplateBrowser({ navigeer }) {
         ))}
       </div>
 
+      {/* Recente sjablonen */}
+      {recenteTemplates.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Recent gebruikt</h2>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {recenteTemplates.map(t => (
+              <button
+                key={t.id}
+                onClick={() => openTemplate(t.id)}
+                className="shrink-0 flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+              >
+                <FileText size={13} className="text-gray-400" />
+                {t.naam}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Inhoud */}
       {laden ? (
         <div className="text-gray-400 py-16 text-center">Laden...</div>
@@ -160,7 +206,13 @@ export default function TemplateBrowser({ navigeer }) {
       ) : weergave === 'raster' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {gefilterd.map(t => (
-            <TemplateKaart key={t.id} template={t} onClick={() => navigeer('form', t.id)} onToggleFavoriet={e => toggleFavoriet(e, t.id)} />
+            <TemplateKaart
+              key={t.id}
+              template={t}
+              onClick={() => openTemplate(t.id)}
+              onToggleFavoriet={e => toggleFavoriet(e, t.id)}
+              onBulk={e => { e.stopPropagation(); setBulkTemplate(t); }}
+            />
           ))}
         </div>
       ) : (
@@ -169,7 +221,6 @@ export default function TemplateBrowser({ navigeer }) {
           <div className="flex items-stretch border-b border-gray-200 bg-gray-50 select-none">
             <div className="relative flex-1 px-5 py-2.5 overflow-hidden">
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Naam / toelichting</span>
-              {/* Sleephandvat rechts van naam-kolom: maakt categorie smaller */}
               <DragHandle onDrag={d => zetKolom('categorie', -d)} />
             </div>
             <div className="relative px-3 py-2.5 shrink-0 overflow-hidden" style={{ width: kolBreedte.categorie }}>
@@ -191,17 +242,22 @@ export default function TemplateBrowser({ navigeer }) {
               template={t}
               laatste={i === gefilterd.length - 1}
               kolBreedte={kolBreedte}
-              onClick={() => navigeer('form', t.id)}
+              onClick={() => openTemplate(t.id)}
               onToggleFavoriet={e => toggleFavoriet(e, t.id)}
+              onBulk={e => { e.stopPropagation(); setBulkTemplate(t); }}
             />
           ))}
         </div>
+      )}
+
+      {bulkTemplate && (
+        <BulkModal template={bulkTemplate} onSluit={() => setBulkTemplate(null)} />
       )}
     </div>
   );
 }
 
-function TemplateKaart({ template, onClick, onToggleFavoriet }) {
+function TemplateKaart({ template, onClick, onToggleFavoriet, onBulk }) {
   return (
     <button
       onClick={onClick}
@@ -212,6 +268,13 @@ function TemplateKaart({ template, onClick, onToggleFavoriet }) {
           <FileText size={20} className={template.favoriet ? 'text-yellow-600' : 'text-blue-600'} />
         </div>
         <div className="flex items-center gap-1 mt-0.5">
+          <span
+            onClick={onBulk}
+            className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+            title="Bulk opmaken"
+          >
+            <Sheet size={13} className="text-gray-300 group-hover:text-gray-500" />
+          </span>
           <span
             onClick={onToggleFavoriet}
             className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
@@ -236,7 +299,7 @@ function TemplateKaart({ template, onClick, onToggleFavoriet }) {
   );
 }
 
-function TemplateRij({ template, laatste, kolBreedte, onClick, onToggleFavoriet }) {
+function TemplateRij({ template, laatste, kolBreedte, onClick, onToggleFavoriet, onBulk }) {
   return (
     <button
       onClick={onClick}
@@ -263,7 +326,12 @@ function TemplateRij({ template, laatste, kolBreedte, onClick, onToggleFavoriet 
       </div>
       <div className="px-3 py-3.5 flex items-center justify-between shrink-0" style={{ width: kolBreedte.versie }}>
         <span className="text-xs text-gray-400">v{template.versie}</span>
-        <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
+        <div className="flex items-center gap-1">
+          <span onClick={onBulk} className="p-1 rounded hover:bg-gray-100 transition-colors" title="Bulk opmaken">
+            <Sheet size={13} className="text-gray-300 group-hover:text-gray-500" />
+          </span>
+          <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
+        </div>
       </div>
     </button>
   );

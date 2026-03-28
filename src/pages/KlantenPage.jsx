@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Users, Search, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { useToast } from '../context/ToastContext';
 
 export default function KlantenPage() {
+  const showToast = useToast();
   const [klanten, setKlanten] = useState([]);
   const [zoekterm, setZoekterm] = useState('');
   const [bewerkKlant, setBewerkKlant] = useState(null); // null = lijst, object = formulier
@@ -28,12 +30,14 @@ export default function KlantenPage() {
     await window.api.klanten.save(bewerkKlant);
     setBewerkKlant(null);
     laad();
+    showToast(bewerkKlant.id ? 'Klant bijgewerkt' : 'Klant toegevoegd');
   }
 
   async function verwijder(id) {
     await window.api.klanten.delete(id);
     setVerwijderBevestig(null);
     laad();
+    showToast('Klant verwijderd', 'info');
   }
 
   const gefilterd = zoekterm

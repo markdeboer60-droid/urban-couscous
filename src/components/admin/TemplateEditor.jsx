@@ -38,6 +38,7 @@ const leegVeld = () => ({
   toelichting: '',
   placeholder: '',
   toonInGeschiedenisTitel: false,
+  groep: '',
 });
 
 export default function TemplateEditor({ templateId, onTerug }) {
@@ -496,6 +497,17 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
               value={veld.toelichting || ''}
               onChange={e => onChange('toelichting', e.target.value)}
               placeholder="Extra uitleg onder het veld"
+              className="invoer"
+            />
+          </Invoerveld>
+
+          {/* Groep */}
+          <Invoerveld label="Sectiegroep (optioneel)">
+            <input
+              type="text"
+              value={veld.groep || ''}
+              onChange={e => onChange('groep', e.target.value)}
+              placeholder="bijv. Klantgegevens, Financieel…"
               className="invoer"
             />
           </Invoerveld>
