@@ -48,9 +48,14 @@ export default function InstellingenPanel({ onTerug }) {
 
   async function opslaan() {
     setBezig(true);
-    await window.api.settings.set(instellingen);
-    setBezig(false);
-    setOpgeslagen(true);
+    try {
+      await window.api.settings.set(instellingen);
+      setOpgeslagen(true);
+    } catch (e) {
+      console.error('Instellingen opslaan mislukt:', e);
+    } finally {
+      setBezig(false);
+    }
   }
 
   return (

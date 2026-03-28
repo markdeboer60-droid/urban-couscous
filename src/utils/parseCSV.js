@@ -1,19 +1,27 @@
 /**
  * Parseer een CSV-string naar een array van objecten.
- * Ondersteunt komma- en puntkommascheidingstekens, geciteerde velden met newlines.
+ * Detecteert automatisch of komma of puntkomma als scheidingsteken wordt gebruikt.
+ * Ondersteunt geciteerde velden met komma's, puntkomma's en newlines.
  */
 export function parseCSV(tekst) {
+  const genormaliseerd = tekst.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  // Auto-detecteer scheidingsteken op basis van de eerste rij
+  const eersteLijn = genormaliseerd.split('\n')[0] || '';
+  const aantalKommas    = (eersteLijn.match(/,/g)  || []).length;
+  const aantalPuntkommas = (eersteLijn.match(/;/g) || []).length;
+  const sep = aantalPuntkommas >= aantalKommas ? ';' : ',';
+
   const regels = [];
   let huidigVeld = '';
   let inAanhalingstekens = false;
   let rijVelden = [];
-  const chars = tekst.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-  for (let i = 0; i < chars.length; i++) {
-    const c = chars[i];
+  for (let i = 0; i < genormaliseerd.length; i++) {
+    const c = genormaliseerd[i];
 
     if (inAanhalingstekens) {
-      if (c === '"' && chars[i + 1] === '"') {
+      if (c === '"' && genormaliseerd[i + 1] === '"') {
         huidigVeld += '"';
         i++;
       } else if (c === '"') {
@@ -24,7 +32,7 @@ export function parseCSV(tekst) {
     } else {
       if (c === '"') {
         inAanhalingstekens = true;
-      } else if (c === ',' || c === ';') {
+      } else if (c === sep) {
         rijVelden.push(huidigVeld.trim());
         huidigVeld = '';
       } else if (c === '\n') {
@@ -46,9 +54,7 @@ export function parseCSV(tekst) {
   const headers = regels[0].map(h => h.trim());
   return regels.slice(1).map(rij => {
     const obj = {};
-    headers.forEach((h, i) => {
-      obj[h] = rij[i] ?? '';
-    });
+    headers.forEach((h, i) => { obj[h] = rij[i] ?? ''; });
     return obj;
   });
 }

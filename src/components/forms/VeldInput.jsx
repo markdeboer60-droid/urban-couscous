@@ -1,11 +1,4 @@
 
-const SMART_TYPES = {
-  datum: 'date', geboortedatum: 'date', startdatum: 'date', einddatum: 'date',
-  bedrag: 'currency', limiet: 'currency', honorarium: 'currency', vergoeding: 'currency',
-  rekening_courant: 'currency', kredietlimiet: 'currency',
-  ondertekenaar: 'ondertekenaar', ondertekenaar_kantoor: 'ondertekenaar',
-};
-
 export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] }) {
   const basisKlasse = "w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
 
@@ -143,4 +136,3 @@ function VeldWrap({ veld, children }) {
   );
 }
 
-export { SMART_TYPES };

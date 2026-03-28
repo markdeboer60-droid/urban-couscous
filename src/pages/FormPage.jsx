@@ -23,20 +23,26 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const [conceptOpgeslagen, setConceptOpgeslagen] = useState(false);
   const [autoOpgeslagenTijd, setAutoOpgeslagenTijd] = useState(null);
   const klantPickerRef = useRef(null);
+  const klantMeldingTimer = useRef(null);
+  // Ref zodat auto-save altijd de meest recente waarden leest
+  // zonder het interval te herstarten bij elke toetsaanslag
+  const waardenRef = useRef(waarden);
+  useEffect(() => { waardenRef.current = waarden; }, [waarden]);
 
   // Auto-save concept elke 30 seconden
   useEffect(() => {
     if (!template || laden) return;
     const timer = setInterval(async () => {
-      const heeftWaarden = Object.values(waarden).some(v => v !== '' && v !== false);
+      const huidig = waardenRef.current;
+      const heeftWaarden = Object.values(huidig).some(v => v !== '' && v !== false);
       if (!heeftWaarden) return;
       try {
-        await window.api.concepten.save({ templateId, templateNaam: template.naam, waarden });
+        await window.api.concepten.save({ templateId, templateNaam: template.naam, waarden: huidig });
         setAutoOpgeslagenTijd(new Date());
       } catch {}
     }, 30000);
     return () => clearInterval(timer);
-  }, [template, laden, waarden, templateId]);
+  }, [template, laden, templateId]);
 
   // Sluit klantpicker bij klik buiten
   useEffect(() => {
@@ -158,6 +164,8 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     setKlantZoek('');
     const n = Object.keys(matches).length;
     setKlantMelding(n > 0 ? `${n} veld${n !== 1 ? 'en' : ''} ingevuld vanuit ${klant.naam}` : `Geen overeenkomende velden gevonden voor ${klant.naam}`);
+    clearTimeout(klantMeldingTimer.current);
+    klantMeldingTimer.current = setTimeout(() => setKlantMelding(''), 4000);
   }
 
   async function slaConceptOp() {
@@ -190,8 +198,8 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         docxPad,
         values: waarden,
       });
-      // Verwijder concept na succesvol genereren
-      await window.api.concepten.delete(templateId);
+      // Concept verwijderen — fout hier mag genereren niet blokkeren
+      try { await window.api.concepten.delete(templateId); } catch {}
       navigeer('export', { docxPad, templateNaam: template.naam, values: waarden, bestandsnaamPatroon: template.bestandsnaamPatroon });
     } catch (e) {
       setFout(e.message || 'Er is een fout opgetreden bij het genereren.');

@@ -58,6 +58,9 @@ export default function TemplateEditor({ templateId, onTerug }) {
   const [ongedaanVeld, setOngedaanVeld] = useState(null); // { veld, idx }
   const ongedaanTimer = useRef(null);
 
+  // Cleanup bij unmount
+  useEffect(() => () => clearTimeout(ongedaanTimer.current), []);
+
   useEffect(() => {
     window.api.templates.getCategorieen().then(setCategorieSuggesties);
     if (bewerkModus) {

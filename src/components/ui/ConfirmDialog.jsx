@@ -1,9 +1,19 @@
+import { useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 
 export default function ConfirmDialog({ titel, omschrijving, bevestigLabel = 'Bevestigen', bevestigKlasse = 'bg-red-600 hover:bg-red-700', onBevestig, onAnnuleer }) {
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === 'Escape') onAnnuleer();
+      if (e.key === 'Enter') onBevestig();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onBevestig, onAnnuleer]);
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onAnnuleer}>
+      <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-start gap-3 mb-4">
           <div className="p-2 bg-red-100 rounded-lg shrink-0">
             <AlertCircle size={18} className="text-red-600" />
