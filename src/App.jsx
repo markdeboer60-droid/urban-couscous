@@ -58,7 +58,7 @@ export default function App() {
             <GeschiedenisPage navigeer={navigeer} />
           )}
           {nav.pagina === 'klanten' && (
-            <KlantenPage />
+            <KlantenPage navigeer={navigeer} />
           )}
         </main>
       </div>

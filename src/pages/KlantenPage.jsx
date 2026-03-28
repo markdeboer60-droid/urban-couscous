@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Users, Search, X, Check, UserPlus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Plus, Pencil, Trash2, Users, Search, X, Check, UserPlus, FileText, RotateCcw, FolderOpen, Loader2 } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
+import { formatDatumTijd } from '../utils/formatDatum';
 
 // Sleutels die als standaardvelden worden behandeld (niet in "Overige velden" getoond)
 const STANDAARD_SLEUTELS = new Set(['adres', 'postcode', 'plaats', 'klantnummer']);
@@ -11,7 +12,7 @@ function isContactSleutel(sleutel) {
   return CONTACT_REGEX.test(sleutel);
 }
 
-export default function KlantenPage() {
+export default function KlantenPage({ navigeer }) {
   const showToast = useToast();
   const [klanten, setKlanten] = useState([]);
   const [zoekterm, setZoekterm] = useState('');
@@ -75,6 +76,7 @@ export default function KlantenPage() {
         onChange={setBewerkKlant}
         onSla={sla}
         onAnnuleer={() => setBewerkKlant(null)}
+        navigeer={navigeer}
       />
     );
   }
@@ -194,10 +196,41 @@ function KlantRij({ klant, laatste, onBewerk, onVerwijder }) {
 }
 
 // ── Klantformulier met standaardvelden ────────────────────────────────────────
-function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
+function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
   const velden = klant.velden || {};
   const [nieuwSleutel, setNieuwSleutel] = useState('');
   const [nieuwWaarde, setNieuwWaarde] = useState('');
+  const [overeenkomsten, setOvereenkomsten] = useState([]);
+  const [overeenkomstenLaden, setOvereenkomstenLaden] = useState(!!klant.id);
+  const [verwijderDoc, setVerwijderDoc] = useState(null);
+  const initialKlant = useRef(klant);
+
+  useEffect(() => {
+    if (!klant.id) return;
+    const { naam, velden: v } = initialKlant.current;
+    const naamLc = (naam || '').toLowerCase().trim();
+    const nr = (v?.klantnummer || '').toLowerCase().trim();
+    window.api.history.getAll().then(alle => {
+      setOvereenkomsten(alle.filter(e => {
+        const vals = e.values || {};
+        const matchNaam = naamLc && (
+          (vals['Klantnaam'] || '').toLowerCase().trim() === naamLc ||
+          (vals['klantnaam'] || '').toLowerCase().trim() === naamLc
+        );
+        const matchNr = nr && (
+          (vals['Klantnummer'] || '').toLowerCase().trim() === nr ||
+          (vals['klantnummer'] || '').toLowerCase().trim() === nr
+        );
+        return matchNaam || matchNr;
+      }));
+    }).catch(() => {}).finally(() => setOvereenkomstenLaden(false));
+  }, [klant.id]);
+
+  async function verwijderOvereenkomst(id) {
+    await window.api.history.delete(id);
+    setOvereenkomsten(prev => prev.filter(e => e.id !== id));
+    setVerwijderDoc(null);
+  }
 
   function setVeld(key, val) {
     onChange({ ...klant, velden: { ...velden, [key]: val } });
@@ -412,6 +445,61 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
         </div>
       </div>
 
+      {/* Overeenkomsten — alleen tonen voor bestaande klanten */}
+      {klant.id && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mt-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Overeenkomsten</h2>
+          {overeenkomstenLaden ? (
+            <div className="flex items-center gap-2 text-gray-400 py-1">
+              <Loader2 size={13} className="animate-spin" />
+              <span className="text-xs">Laden...</span>
+            </div>
+          ) : overeenkomsten.length === 0 ? (
+            <p className="text-xs text-gray-400 py-1">
+              Geen documenten gevonden voor <span className="font-medium">{klant.naam}</span>.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {overeenkomsten.map(entry => (
+                <div key={entry.id} className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
+                  <FileText size={15} className="text-blue-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-800 truncate">{entry.templateNaam}</div>
+                    {entry.ondertitel && (
+                      <div className="text-xs text-gray-500 truncate">{entry.ondertitel}</div>
+                    )}
+                    <div className="text-xs text-gray-400 mt-0.5">{formatDatumTijd(entry.datum)}</div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => navigeer('form', { templateId: entry.templateId, initieleWaarden: entry.values })}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Herbewerken"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      onClick={async () => { try { await window.api.export.openInWord(entry.docxPad); } catch {} }}
+                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Openen in Word"
+                    >
+                      <FolderOpen size={14} />
+                    </button>
+                    <button
+                      onClick={() => setVerwijderDoc(entry.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Verwijderen"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end gap-3">
         <button onClick={onAnnuleer} className="px-5 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
           Annuleren
@@ -425,6 +513,16 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
           Opslaan
         </button>
       </div>
+
+      {verwijderDoc && (
+        <ConfirmDialog
+          titel="Document verwijderen?"
+          omschrijving="Het document wordt definitief verwijderd uit de geschiedenis."
+          bevestigLabel="Verwijderen"
+          onBevestig={() => verwijderOvereenkomst(verwijderDoc)}
+          onAnnuleer={() => setVerwijderDoc(null)}
+        />
+      )}
     </div>
   );
 }
