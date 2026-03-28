@@ -224,19 +224,26 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
-    nullGetter: () => '',
+    stripInvalidXMLChars: true,
+    // Lege string voor reguliere tags, lege array voor loop/conditie-modules
+    nullGetter: (part) => part.module ? [] : '',
   });
 
   try {
     doc.render(renderValues);
   } catch (e) {
-    if (e.properties?.errors?.length) {
-      const details = e.properties.errors
-        .map(err => err.properties?.explanation || err.message || String(err))
-        .join('; ');
-      throw new Error(`Documentfout: ${details}`);
+    const errors = e.properties?.errors;
+    let details = '';
+    if (Array.isArray(errors) && errors.length > 0) {
+      details = errors.map(err => {
+        const uitleg = err.properties?.explanation;
+        const tag   = err.properties?.xtag;
+        const id    = err.properties?.id;
+        return [uitleg, tag ? `tag: {${tag}}` : '', id ? `(${id})` : '']
+          .filter(Boolean).join(' ');
+      }).filter(Boolean).join('; ');
     }
-    throw e;
+    throw new Error(`Documentfout: ${details || e.message || String(e)}`);
   }
 
   // Na succesvolle render: volgnummer verhogen
@@ -332,7 +339,10 @@ ipcMain.handle('export:bulkGenereer', async (_, { templateId, rijen, opslagMap }
     const values = rijen[i];
     try {
       const zip = new PizZip(content);
-      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => '' });
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true, linebreaks: true, stripInvalidXMLChars: true,
+        nullGetter: (part) => part.module ? [] : '',
+      });
       doc.render(values);
       const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
       const naamBase = Object.values(values).filter(Boolean).slice(0, 2).join('_').replace(/[^a-zA-Z0-9_\-]/g, '_') || `rij_${i + 1}`;
