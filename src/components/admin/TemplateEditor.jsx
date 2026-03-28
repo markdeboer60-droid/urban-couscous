@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, Upload, Plus, Trash2, GripVertical,
-  ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, ScanLine
+  ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, ScanLine, Undo2
 } from 'lucide-react';
 
 const VELD_TYPES = [
@@ -43,7 +43,10 @@ const leegVeld = () => ({
 
 export default function TemplateEditor({ templateId, onTerug }) {
   const bewerkModus = !!templateId;
-  const [meta, setMeta] = useState({ id: '', naam: '', categorie: '', beschrijving: '', versie: 1, bestandsnaamPatroon: '' });
+  const [meta, setMeta] = useState({
+    id: '', naam: '', categorie: '', beschrijving: '', versie: 1, bestandsnaamPatroon: '',
+    volgnummerActief: false, volgnummerPrefix: '', volgnummerHuidig: 1, volgnummerPadding: 4,
+  });
   const [velden, setVelden] = useState([]);
   const [docxPad, setDocxPad] = useState('');
   const [opgeslagen, setOpgeslagen] = useState(false);
@@ -52,6 +55,8 @@ export default function TemplateEditor({ templateId, onTerug }) {
   const [fout, setFout] = useState('');
   const [uitgevouwen, setUitgevouwen] = useState({});
   const [categorieSuggesties, setCategorieSuggesties] = useState([]);
+  const [ongedaanVeld, setOngedaanVeld] = useState(null); // { veld, idx }
+  const ongedaanTimer = useRef(null);
 
   useEffect(() => {
     window.api.templates.getCategorieen().then(setCategorieSuggesties);
@@ -77,7 +82,22 @@ export default function TemplateEditor({ templateId, onTerug }) {
   }
 
   function verwijderVeld(idx) {
+    const veld = velden[idx];
     setVelden(v => v.filter((_, i) => i !== idx));
+    setOngedaanVeld({ veld, idx });
+    clearTimeout(ongedaanTimer.current);
+    ongedaanTimer.current = setTimeout(() => setOngedaanVeld(null), 5000);
+  }
+
+  function herstelVeld() {
+    if (!ongedaanVeld) return;
+    setVelden(v => {
+      const nieuw = [...v];
+      nieuw.splice(ongedaanVeld.idx, 0, ongedaanVeld.veld);
+      return nieuw;
+    });
+    setOngedaanVeld(null);
+    clearTimeout(ongedaanTimer.current);
   }
 
   function updateVeld(idx, key, val) {
@@ -272,6 +292,58 @@ export default function TemplateEditor({ templateId, onTerug }) {
             Beschikbare variabelen: veldsleutels zoals <code className="bg-gray-100 px-1 rounded">{'{klantnaam}'}</code>, plus <code className="bg-gray-100 px-1 rounded">{'{datum}'}</code> en <code className="bg-gray-100 px-1 rounded">{'{templatenaam}'}</code>.
           </p>
         </Invoerveld>
+
+        {/* Volgnummer */}
+        <div className="pt-2 border-t border-gray-100">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none mb-3">
+            <input
+              type="checkbox"
+              checked={!!meta.volgnummerActief}
+              onChange={e => setMetaVeld('volgnummerActief', e.target.checked)}
+              className="w-4 h-4 accent-blue-600"
+            />
+            <span className="text-xs font-medium text-gray-600">Automatisch volgnummer activeren</span>
+          </label>
+          {meta.volgnummerActief && (
+            <div className="grid grid-cols-3 gap-3 pl-6">
+              <Invoerveld label="Prefix (optioneel)">
+                <input
+                  type="text"
+                  value={meta.volgnummerPrefix || ''}
+                  onChange={e => setMetaVeld('volgnummerPrefix', e.target.value)}
+                  placeholder="bijv. OB- of 2025-"
+                  className="invoer"
+                />
+              </Invoerveld>
+              <Invoerveld label="Huidige waarde">
+                <input
+                  type="number"
+                  min={1}
+                  value={meta.volgnummerHuidig || 1}
+                  onChange={e => setMetaVeld('volgnummerHuidig', parseInt(e.target.value) || 1)}
+                  className="invoer"
+                />
+              </Invoerveld>
+              <Invoerveld label="Cijfers (opvulling)">
+                <select
+                  value={meta.volgnummerPadding || 4}
+                  onChange={e => setMetaVeld('volgnummerPadding', parseInt(e.target.value))}
+                  className="invoer"
+                >
+                  {[2,3,4,5,6].map(n => (
+                    <option key={n} value={n}>{n} → {String(meta.volgnummerHuidig || 1).padStart(n, '0')}</option>
+                  ))}
+                </select>
+              </Invoerveld>
+            </div>
+          )}
+          {meta.volgnummerActief && (
+            <p className="mt-2 pl-6 text-xs text-gray-400">
+              Gebruik <code className="bg-gray-100 px-1 rounded">{'{volgnummer}'}</code> in je Word-document.
+              Voorbeeld: <strong>{(meta.volgnummerPrefix || '') + String(meta.volgnummerHuidig || 1).padStart(meta.volgnummerPadding || 4, '0')}</strong>
+            </p>
+          )}
+        </div>
       </Sectie>
 
       {/* ── Word-sjabloon ── */}
@@ -333,14 +405,26 @@ export default function TemplateEditor({ templateId, onTerug }) {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={voegVeldToe}
-          className="mt-4 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
-        >
-          <Plus size={16} />
-          Veld toevoegen
-        </button>
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={voegVeldToe}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            <Plus size={16} />
+            Veld toevoegen
+          </button>
+          {ongedaanVeld && (
+            <button
+              type="button"
+              onClick={herstelVeld}
+              className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              <Undo2 size={13} />
+              Ongedaan maken: &ldquo;{ongedaanVeld.veld.label || ongedaanVeld.veld.sleutel || 'naamloos'}&rdquo;
+            </button>
+          )}
+        </div>
       </Sectie>
 
       {/* Fout */}

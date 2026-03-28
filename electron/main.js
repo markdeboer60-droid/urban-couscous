@@ -175,6 +175,8 @@ ipcMain.handle('klanten:delete', (_, id) => {
 });
 
 // ── Concepten handlers ────────────────────────────────────────────────────────
+ipcMain.handle('concepten:getAll', () => readConcepten());
+
 ipcMain.handle('concepten:getByTemplate', (_, templateId) => {
   return readConcepten().find(c => c.templateId === templateId) || null;
 });
@@ -198,11 +200,21 @@ ipcMain.handle('templates:getCategorieen', () => {
 
 // ── Export handlers ───────────────────────────────────────────────────────────
 ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
-  const meta = readMeta().find(t => t.id === templateId);
+  const all = readMeta();
+  const meta = all.find(t => t.id === templateId);
   if (!meta) throw new Error('Template niet gevonden');
 
   const docxPath = getTemplateDocxPath(templateId, meta.versie);
   if (!fs.existsSync(docxPath)) throw new Error('DOCX bestand niet gevonden: ' + docxPath);
+
+  // Volgnummer ophogen en injecteren als {volgnummer}
+  let renderValues = { ...values };
+  if (meta.volgnummerActief) {
+    const prefix  = meta.volgnummerPrefix  || '';
+    const padding = meta.volgnummerPadding || 4;
+    const huidig  = meta.volgnummerHuidig  || 1;
+    renderValues.volgnummer = `${prefix}${String(huidig).padStart(padding, '0')}`;
+  }
 
   const PizZip = require('pizzip');
   const Docxtemplater = require('docxtemplater');
@@ -212,14 +224,12 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
-    // Ontbrekende variabelen worden lege string (geen fout)
     nullGetter: () => '',
   });
 
   try {
-    doc.render(values);
+    doc.render(renderValues);
   } catch (e) {
-    // Verrijk de foutmelding met details uit de Multi error
     if (e.properties?.errors?.length) {
       const details = e.properties.errors
         .map(err => err.properties?.explanation || err.message || String(err))
@@ -227,6 +237,15 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
       throw new Error(`Documentfout: ${details}`);
     }
     throw e;
+  }
+
+  // Na succesvolle render: volgnummer verhogen
+  if (meta.volgnummerActief) {
+    const idx = all.findIndex(t => t.id === templateId);
+    if (idx >= 0) {
+      all[idx].volgnummerHuidig = (meta.volgnummerHuidig || 1) + 1;
+      writeMeta(all);
+    }
   }
 
   const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
@@ -285,6 +304,13 @@ ipcMain.handle('export:sendEmail', (_, { bijlagePad }) => {
     shell.openExternal('mailto:?subject=Document');
   }
   return { ok: true };
+});
+
+ipcMain.handle('export:saveDocxToDir', (_, { srcPath, opslagMap, naam }) => {
+  if (!fs.existsSync(opslagMap)) fs.mkdirSync(opslagMap, { recursive: true });
+  const doel = path.join(opslagMap, naam);
+  fs.copyFileSync(srcPath, doel);
+  return doel;
 });
 
 ipcMain.handle('export:bulkGenereer', async (_, { templateId, rijen, opslagMap }) => {

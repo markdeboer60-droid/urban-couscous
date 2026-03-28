@@ -21,7 +21,22 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const [concept, setConcept] = useState(null);
   const [conceptGeladen, setConceptGeladen] = useState(false);
   const [conceptOpgeslagen, setConceptOpgeslagen] = useState(false);
+  const [autoOpgeslagenTijd, setAutoOpgeslagenTijd] = useState(null);
   const klantPickerRef = useRef(null);
+
+  // Auto-save concept elke 30 seconden
+  useEffect(() => {
+    if (!template || laden) return;
+    const timer = setInterval(async () => {
+      const heeftWaarden = Object.values(waarden).some(v => v !== '' && v !== false);
+      if (!heeftWaarden) return;
+      try {
+        await window.api.concepten.save({ templateId, templateNaam: template.naam, waarden });
+        setAutoOpgeslagenTijd(new Date());
+      } catch {}
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [template, laden, waarden, templateId]);
 
   // Sluit klantpicker bij klik buiten
   useEffect(() => {
@@ -273,6 +288,12 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
             Concept geladen van {new Date(concept.datum).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </span>
           <button onClick={verwijderConcept} className="text-xs text-amber-600 hover:underline shrink-0">Verwijderen</button>
+        </div>
+      )}
+      {autoOpgeslagenTijd && !conceptGeladen && (
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-lg">
+          <BookmarkCheck size={13} className="text-gray-400" />
+          Automatisch opgeslagen om {autoOpgeslagenTijd.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
 

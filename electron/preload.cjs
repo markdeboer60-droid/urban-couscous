@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   // Concepten
   concepten: {
+    getAll: () => ipcRenderer.invoke('concepten:getAll'),
     getByTemplate: (templateId) => ipcRenderer.invoke('concepten:getByTemplate', templateId),
     save: (payload) => ipcRenderer.invoke('concepten:save', payload),
     delete: (templateId) => ipcRenderer.invoke('concepten:delete', templateId),
@@ -42,6 +43,7 @@ contextBridge.exposeInMainWorld('api', {
     saveDocxAs: (payload) => ipcRenderer.invoke('export:saveDocxAs', payload),
     savePdfAs: (payload) => ipcRenderer.invoke('export:savePdfAs', payload),
     bulkGenereer: (payload) => ipcRenderer.invoke('export:bulkGenereer', payload),
+    saveDocxToDir: (payload) => ipcRenderer.invoke('export:saveDocxToDir', payload),
   },
   // Instellingen
   settings: {
