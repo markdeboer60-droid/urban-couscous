@@ -260,7 +260,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
       {/* Naam */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
         <h2 className="text-sm font-semibold text-gray-700">Klantgegevens</h2>
-        <Invoerveld label="Naam" verplicht>
+        <Invoerveld label="Naam" verplicht variabele="{Klantnaam}">
           <input
             type="text"
             value={klant.naam}
@@ -279,7 +279,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
             className="invoer"
           />
         </Invoerveld>
-        <Invoerveld label="Adres">
+        <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer}">
           <input
             type="text"
             value={velden.adres || ''}
@@ -288,27 +288,32 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
             className="invoer"
           />
         </Invoerveld>
-        <div className="grid grid-cols-3 gap-3">
-          <Invoerveld label="Postcode">
-            <input
-              type="text"
-              value={velden.postcode || ''}
-              onChange={e => setVeld('postcode', e.target.value)}
-              placeholder="1234 AB"
-              className="invoer"
-            />
-          </Invoerveld>
-          <div className="col-span-2">
-            <Invoerveld label="Plaats">
+        <div>
+          <div className="grid grid-cols-3 gap-3">
+            <Invoerveld label="Postcode">
               <input
                 type="text"
-                value={velden.plaats || ''}
-                onChange={e => setVeld('plaats', e.target.value)}
-                placeholder="Amsterdam"
+                value={velden.postcode || ''}
+                onChange={e => setVeld('postcode', e.target.value)}
+                placeholder="1234 AB"
                 className="invoer"
               />
             </Invoerveld>
+            <div className="col-span-2">
+              <Invoerveld label="Plaats">
+                <input
+                  type="text"
+                  value={velden.plaats || ''}
+                  onChange={e => setVeld('plaats', e.target.value)}
+                  placeholder="Amsterdam"
+                  className="invoer"
+                />
+              </Invoerveld>
+            </div>
           </div>
+          <p className="text-xs text-gray-400 mt-1">
+            Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam}'}</span> in sjablonen
+          </p>
         </div>
       </div>
 
@@ -327,9 +332,12 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
         <div className="space-y-3">
           {contactLijst.map(n => (
             <div key={n} className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 w-24 shrink-0">
-                Contactpersoon {n}
-              </span>
+              <div className="w-28 shrink-0">
+                <span className="text-xs text-gray-500 block leading-tight">Contactpersoon {n}</span>
+                <span className="text-xs font-mono text-blue-500 leading-tight">
+                  {n === 1 ? '{Naam contactpersoon}' : `{Naam contactpersoon${n}}`}
+                </span>
+              </div>
               <input
                 type="text"
                 value={velden[`contactpersoon_${n}`] || ''}
@@ -421,12 +429,19 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer }) {
   );
 }
 
-function Invoerveld({ label, verplicht, children }) {
+function Invoerveld({ label, verplicht, variabele, children }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-        {label}{verplicht && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
+      <div className="flex items-center gap-2 mb-1.5">
+        <label className="text-xs font-medium text-gray-600">
+          {label}{verplicht && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+        {variabele && (
+          <span className="text-xs font-mono text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded leading-none">
+            {variabele}
+          </span>
+        )}
+      </div>
       {children}
     </div>
   );

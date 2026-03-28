@@ -3,6 +3,17 @@ import { ChevronRight, Loader2, AlertCircle, FileUp, Users, Save, BookmarkCheck 
 import VeldInput from '../components/forms/VeldInput';
 import { useToast } from '../context/ToastContext';
 
+// Koppeling van standaard sjabloontags naar klantgegevens in het adresboek
+const STANDAARD_VARIABELEN = {
+  'Klantnaam':             (k) => k.naam || '',
+  'klantnaam':             (k) => k.naam || '',  // backwards compat
+  'Naam contactpersoon':   (k) => k.velden?.contactpersoon_1 || '',
+  'Naam contactpersoon2':  (k) => k.velden?.contactpersoon_2 || '',
+  'Naam contactpersoon3':  (k) => k.velden?.contactpersoon_3 || '',
+  'Adres + huisnummer':    (k) => k.velden?.adres || '',
+  'Postcode + plaatsnaam': (k) => [k.velden?.postcode, k.velden?.plaats].filter(Boolean).join('  '),
+};
+
 export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const showToast = useToast();
   const [template, setTemplate] = useState(null);
@@ -73,6 +84,17 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         else if (v.type === 'date') init[v.sleutel] = vandaag;
         else init[v.sleutel] = '';
       });
+      // Auto-vul standaard datum/jaar velden als ze leeg zijn (text-type velden)
+      const nu = new Date();
+      const huidigJaar = nu.getFullYear().toString();
+      const autoVullen = {
+        'Datum':              nu.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }),
+        'Boekjaar':           huidigJaar,
+        'Startjaar opdracht': huidigJaar,
+      };
+      for (const [sleutel, waarde] of Object.entries(autoVullen)) {
+        if (sleutel in init && !init[sleutel]) init[sleutel] = waarde;
+      }
       if (initieleWaarden) {
         setWaarden({ ...init, ...initieleWaarden });
       } else if (conceptData) {
@@ -156,10 +178,16 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   function laadKlant(klant) {
     const sleutels = (template?.velden || []).map(v => v.sleutel);
     const matches = {};
-    // Koppel de top-level klantnaam aan de {klantnaam} sjabloontag
-    if (sleutels.includes('klantnaam') && klant.naam) matches['klantnaam'] = klant.naam;
+    // Standaard variabelen: map klantgegevens naar sjabloontags
+    for (const [variabele, ophalen] of Object.entries(STANDAARD_VARIABELEN)) {
+      if (sleutels.includes(variabele)) {
+        const waarde = ophalen(klant);
+        if (waarde) matches[variabele] = waarde;
+      }
+    }
+    // Overige klant-velden: directe sleutelovereenkomst (custom velden)
     for (const [key, val] of Object.entries(klant.velden || {})) {
-      if (sleutels.includes(key) && val) matches[key] = val;
+      if (sleutels.includes(key) && val && !(key in matches)) matches[key] = val;
     }
     setWaarden(prev => ({ ...prev, ...matches }));
     setKlantPickerOpen(false);
