@@ -138,7 +138,13 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     const result = {};
     (template?.velden || []).forEach(v => {
       const val = waarden[v.sleutel];
-      if (v.type === 'currency' && val !== '' && val !== null && val !== undefined) {
+      if (v.type === 'radio') {
+        // Zet de geselecteerde optie om naar booleaanse vlaggen per optie:
+        // rente = 'euribor' → rente_euribor=true, rente_vast=false, rente_onderling=false
+        (v.radioOpties || []).forEach(opt => {
+          result[`${v.sleutel}_${opt.key}`] = val === opt.key;
+        });
+      } else if (v.type === 'currency' && val !== '' && val !== null && val !== undefined) {
         result[v.sleutel] = new Intl.NumberFormat('nl-NL', {
           style: 'currency', currency: 'EUR',
         }).format(val);

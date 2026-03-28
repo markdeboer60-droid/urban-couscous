@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowLeft, Upload, Plus, Trash2, GripVertical,
+  ArrowLeft, Upload, Plus, Trash2, GripVertical, X,
   ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, ScanLine, Undo2
 } from 'lucide-react';
 
@@ -11,6 +11,7 @@ const VELD_TYPES = [
   { waarde: 'number',        label: 'Getal' },
   { waarde: 'currency',      label: 'Bedrag (€)' },
   { waarde: 'select',        label: 'Keuzelijst (dropdown)' },
+  { waarde: 'radio',         label: 'Keuzeknop (radio — meerdere opties)' },
   { waarde: 'boolean',       label: 'Ja / Nee (schakelaar)' },
   { waarde: 'ondertekenaar', label: 'Ondertekenaar kantoor' },
 ];
@@ -34,6 +35,7 @@ const leegVeld = () => ({
   verplicht: true,
   volgorde: 0,
   opties: [],
+  radioOpties: [],
   zichtbaarAls: null,
   toelichting: '',
   placeholder: '',
@@ -564,6 +566,76 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
             </Invoerveld>
           )}
 
+          {/* Opties voor radio */}
+          {veld.type === 'radio' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-2">
+                Keuzemogelijkheden
+              </label>
+              <div className="space-y-2 mb-2">
+                <div className="grid grid-cols-[7rem_1fr_1fr_1.5rem] gap-2 text-xs text-gray-400 px-1">
+                  <span>Sleutel*</span><span>Label*</span><span>Toelichting</span><span />
+                </div>
+                {(veld.radioOpties || []).map((opt, i) => (
+                  <div key={i} className="grid grid-cols-[7rem_1fr_1fr_1.5rem] gap-2 items-center">
+                    <input
+                      type="text"
+                      value={opt.key}
+                      onChange={e => {
+                        const n = [...(veld.radioOpties || [])];
+                        n[i] = { ...n[i], key: e.target.value.replace(/\s+/g, '_') };
+                        onChange('radioOpties', n);
+                      }}
+                      placeholder="bijv. euribor"
+                      className="invoer font-mono text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={opt.label}
+                      onChange={e => {
+                        const n = [...(veld.radioOpties || [])];
+                        n[i] = { ...n[i], label: e.target.value };
+                        onChange('radioOpties', n);
+                      }}
+                      placeholder="Label voor gebruiker"
+                      className="invoer text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={opt.toelichting || ''}
+                      onChange={e => {
+                        const n = [...(veld.radioOpties || [])];
+                        n[i] = { ...n[i], toelichting: e.target.value };
+                        onChange('radioOpties', n);
+                      }}
+                      placeholder="Optionele toelichting"
+                      className="invoer text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onChange('radioOpties', (veld.radioOpties || []).filter((_, j) => j !== i))}
+                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => onChange('radioOpties', [...(veld.radioOpties || []), { key: '', label: '', toelichting: '' }])}
+                className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                <Plus size={12} />
+                Optie toevoegen
+              </button>
+              <p className="mt-1.5 text-xs text-gray-400">
+                Per geselecteerde optie worden booleaanse sjabloonvariabelen aangemaakt:
+                <code className="bg-gray-100 px-1 rounded ml-1">{`{${veld.sleutel || 'veld'}_sleutel}`}</code>
+              </p>
+            </div>
+          )}
+
           {/* Placeholder */}
           {['text', 'textarea', 'number'].includes(veld.type) && (
             <Invoerveld label="Plaatshouder (optioneel)">
@@ -670,6 +742,17 @@ function ConditionWaardeInput({ bronVeld, waarde, onChange }) {
       <select value={waarde || ''} onChange={e => onChange(e.target.value)} className="invoer text-xs">
         <option value="">-- kies --</option>
         {(bronVeld.opties || []).map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  }
+
+  if (bronVeld.type === 'radio') {
+    return (
+      <select value={waarde || ''} onChange={e => onChange(e.target.value)} className="invoer text-xs">
+        <option value="">-- kies --</option>
+        {(bronVeld.radioOpties || []).map(o => (
+          <option key={o.key} value={o.key}>{o.label || o.key}</option>
+        ))}
       </select>
     );
   }

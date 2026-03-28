@@ -2,6 +2,41 @@
 export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] }) {
   const basisKlasse = "w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
 
+  // Radio type: kaartachtige keuzeknopgroep
+  if (veld.type === 'radio') {
+    return (
+      <VeldWrap veld={veld}>
+        <div className="space-y-2">
+          {(veld.radioOpties || []).map(opt => (
+            <label
+              key={opt.key}
+              className={`flex items-start gap-3 p-3.5 border rounded-lg cursor-pointer transition-colors ${
+                waarde === opt.key
+                  ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <input
+                type="radio"
+                name={veld.sleutel}
+                value={opt.key}
+                checked={waarde === opt.key}
+                onChange={() => onChange(opt.key)}
+                className="mt-0.5 accent-blue-600 shrink-0"
+              />
+              <div>
+                <div className="text-sm font-medium text-gray-800">{opt.label || opt.key}</div>
+                {opt.toelichting && (
+                  <div className="text-xs text-gray-500 mt-0.5">{opt.toelichting}</div>
+                )}
+              </div>
+            </label>
+          ))}
+        </div>
+      </VeldWrap>
+    );
+  }
+
   // Ondertekenaar type: select gevuld vanuit instellingen
   if (veld.type === 'ondertekenaar') {
     return (
