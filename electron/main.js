@@ -206,22 +206,32 @@ ipcMain.handle('templates:getCategorieen', () => {
  * <w:t>-element terechtkomt.
  */
 function fixSplitTemplateTags(zip) {
+  // Verwerk alle relevante XML-bestanden in het word/-gedeelte van de docx
   const doelBestanden = Object.keys(zip.files).filter(name =>
     !zip.files[name].dir &&
-    /^word\/(document|header\d*|footer\d*)\.xml$/.test(name)
+    name.startsWith('word/') &&
+    name.endsWith('.xml') &&
+    !name.includes('_rels')
   );
   for (const naam of doelBestanden) {
-    let xml = zip.files[naam].asText();
+    let xml;
+    try { xml = zip.files[naam].asText(); } catch { continue; }
+
+    // Stap 1: verwijder zelf-sluitende inline-elementen die Word tussen runs plaatst
+    // (spellingmarkeringen, bladwijzers) — ze beïnvloeden de documentinhoud niet
+    xml = xml.replace(/<w:(?:proofErr|bookmarkStart|bookmarkEnd)[^>]*\/?>/g, '');
+
+    // Stap 2: voeg opeenvolgende runs samen waar de tekst een { heeft maar nog geen }
+    // Iteratief totdat er geen wijzigingen meer zijn (voor tags gesplitst over 3+ runs)
     let vorige;
     do {
       vorige = xml;
-      // Vind een <w:t> die een { heeft maar nog geen }, gevolgd door een
-      // nieuw <w:r><w:t>-blok — verwijder de tussenliggende run-grens
       xml = xml.replace(
         /(<w:t(?:[^>]*)>[^<]*\{[^}<]*)<\/w:t><\/w:r><w:r(?:[^>]*)?>(?:<w:rPr>[\s\S]*?<\/w:rPr>)?<w:t(?:[^>]*)?>/g,
         '$1'
       );
     } while (xml !== vorige);
+
     zip.file(naam, xml);
   }
   return zip;
