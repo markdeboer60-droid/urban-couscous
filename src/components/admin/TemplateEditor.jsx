@@ -147,6 +147,15 @@ export default function TemplateEditor({ templateId, onTerug }) {
     try {
       const { variabelen, condities } = await window.api.templates.scanDocxVars(docxPad);
       const bestaandeSleutels = new Set(velden.map(v => v.sleutel));
+      // Voeg ook de radio-gegenereerde sleutels toe als 'al aanwezig',
+      // zodat de scanner ze niet opnieuw aanmaakt als losse boolean-velden.
+      velden.forEach(v => {
+        if (v.type === 'radio') {
+          (v.radioOpties || []).forEach(opt => {
+            bestaandeSleutels.add(`${v.sleutel}_${opt.key}`);
+          });
+        }
+      });
       const nieuw = [];
 
       variabelen.forEach(sleutel => {
