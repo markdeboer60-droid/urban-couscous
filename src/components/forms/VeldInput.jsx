@@ -83,8 +83,12 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
       {veld.type === 'number' && (
         <input
           type="number"
-          value={waarde || ''}
-          onChange={e => onChange(e.target.value)}
+          value={waarde === '' || waarde === null || waarde === undefined ? '' : waarde}
+          onChange={e => {
+            if (e.target.value === '') { onChange(''); return; }
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val)) onChange(val);
+          }}
           placeholder={veld.placeholder || ''}
           className={basisKlasse}
         />

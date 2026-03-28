@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search, FileText, ChevronRight, FolderOpen, LayoutGrid, List, Star } from 'lucide-react';
-
-function formatDatum(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
+import { formatDatum } from '../utils/formatDatum';
 
 // Versleepbare scheidingslijn voor kolombreedte
 function DragHandle({ onDrag }) {
@@ -41,9 +37,16 @@ export default function TemplateBrowser({ navigeer }) {
   const [zoekterm, setZoekterm] = useState('');
   const [actieveCategorie, setActieveCategorie] = useState('Alle');
   const [laden, setLaden] = useState(true);
-  const [weergave, setWeergave] = useState(() => localStorage.getItem('sjablonen-weergave') || 'raster');
-  // Kolombreedte (px) voor lijstweergave — versleepbaar
-  const [kolBreedte, setKolBreedte] = useState({ categorie: 170, bijgewerkt: 110, versie: 90 });
+  const [weergave, setWeergave] = useState(() => {
+    try { return localStorage.getItem('sjablonen-weergave') || 'raster'; } catch { return 'raster'; }
+  });
+  // Kolombreedte (px) voor lijstweergave — versleepbaar, bewaard in localStorage
+  const [kolBreedte, setKolBreedte] = useState(() => {
+    try {
+      const opgeslagen = localStorage.getItem('sjablonen-kolbreedte');
+      return opgeslagen ? JSON.parse(opgeslagen) : { categorie: 170, bijgewerkt: 110, versie: 90 };
+    } catch { return { categorie: 170, bijgewerkt: 110, versie: 90 }; }
+  });
 
   useEffect(() => { laad(); }, []);
 
@@ -75,7 +78,11 @@ export default function TemplateBrowser({ navigeer }) {
     .sort((a, b) => (b.favoriet ? 1 : 0) - (a.favoriet ? 1 : 0));
 
   function zetKolom(kolom, delta) {
-    setKolBreedte(k => ({ ...k, [kolom]: Math.max(60, k[kolom] + delta) }));
+    setKolBreedte(k => {
+      const nieuw = { ...k, [kolom]: Math.max(60, k[kolom] + delta) };
+      try { localStorage.setItem('sjablonen-kolbreedte', JSON.stringify(nieuw)); } catch {}
+      return nieuw;
+    });
   }
 
   return (

@@ -6,6 +6,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const [template, setTemplate] = useState(null);
   const [waarden, setWaarden] = useState({});
   const [laden, setLaden] = useState(true);
+  const [laadFout, setLaadFout] = useState(false);
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState('');
   const [ondertekenaars, setOndertekenaars] = useState([]);
@@ -56,6 +57,9 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       } else {
         setWaarden(init);
       }
+      setLaden(false);
+    }).catch(() => {
+      setLaadFout(true);
       setLaden(false);
     });
   }, [templateId]);
@@ -184,6 +188,18 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
         <Loader2 size={24} className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (laadFout) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
+        <AlertCircle size={32} className="text-red-400" />
+        <p className="text-sm">Kon het sjabloon niet laden.</p>
+        <button onClick={() => navigeer('browser')} className="text-sm text-blue-600 underline">
+          Terug naar overzicht
+        </button>
       </div>
     );
   }
