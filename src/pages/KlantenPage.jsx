@@ -445,6 +445,19 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         </div>
       </div>
 
+      {/* Notities */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mt-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-1">Notities</h2>
+        <p className="text-xs text-gray-400 mb-3">Interne aantekeningen en bijzonderheden over deze klant.</p>
+        <textarea
+          value={klant.notities || ''}
+          onChange={e => onChange({ ...klant, notities: e.target.value })}
+          rows={3}
+          placeholder="Bijzonderheden, afspraken, aandachtspunten..."
+          className="invoer w-full resize-y text-sm"
+        />
+      </div>
+
       {/* Overeenkomsten — alleen tonen voor bestaande klanten */}
       {klant.id && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 mt-4">

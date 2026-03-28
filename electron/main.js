@@ -237,6 +237,34 @@ function fixSplitTemplateTags(zip) {
   return zip;
 }
 
+/**
+ * Na het renderen verwijdert deze functie opeenvolgende lege alinea's uit het
+ * document. Dit voorkomt witte gaten die ontstaan wanneer conditionele blokken
+ * ({#rente_euribor}...{/rente_euribor}) niet worden gerenderd.
+ * Reeksen van 2+ lege alinea's (geen <w:r>-elementen) worden teruggebracht naar 1.
+ */
+function compacteerLegeAlineas(zip) {
+  const doelBestanden = Object.keys(zip.files).filter(name =>
+    !zip.files[name].dir &&
+    /^word\/(document|header\d*|footer\d*)\.xml$/.test(name)
+  );
+  for (const naam of doelBestanden) {
+    let xml;
+    try { xml = zip.files[naam].asText(); } catch { continue; }
+    let aantalLeeg = 0;
+    xml = xml.replace(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g, (match) => {
+      // Een alinea is leeg als hij geen tekstrun (<w:r>) bevat
+      if (!/<w:r[\s>]/.test(match)) {
+        aantalLeeg++;
+        return aantalLeeg <= 1 ? match : '';
+      }
+      aantalLeeg = 0;
+      return match;
+    });
+    zip.file(naam, xml);
+  }
+}
+
 // ── Export handlers ───────────────────────────────────────────────────────────
 ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const all = readMeta();
@@ -270,7 +298,9 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
       nullGetter: (part) => part.module ? [] : '',
     });
     doc.render(renderValues);
-    buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
+    const renderedZip = doc.getZip();
+    compacteerLegeAlineas(renderedZip);
+    buf = renderedZip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
   } catch (e) {
     const errors = e.properties?.errors;
     let details = '';
@@ -382,7 +412,9 @@ ipcMain.handle('export:bulkGenereer', async (_, { templateId, rijen, opslagMap }
         nullGetter: (part) => part.module ? [] : '',
       });
       doc.render(values);
-      const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
+      const renderedZip = doc.getZip();
+      compacteerLegeAlineas(renderedZip);
+      const buf = renderedZip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
       const naamBase = Object.values(values).filter(Boolean).slice(0, 2).join('_').replace(/[^a-zA-Z0-9_\-]/g, '_') || `rij_${i + 1}`;
       const uitvoerNaam = `${meta.naam.replace(/[^a-zA-Z0-9]/g, '_')}_${naamBase}_${i + 1}.docx`;
       const uitvoerPad = path.join(opslagMap, uitvoerNaam);

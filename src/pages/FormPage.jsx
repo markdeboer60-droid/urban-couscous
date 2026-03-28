@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Loader2, AlertCircle, FileUp, Users, Save, BookmarkCheck } from 'lucide-react';
 import VeldInput from '../components/forms/VeldInput';
 import { useToast } from '../context/ToastContext';
@@ -111,10 +111,27 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     });
   }, [templateId]);
 
+  // Uitgebreide waarden: bevat naast de directe invulwaarden ook de booleaanse
+  // vlaggen die radio-velden genereren (bijv. rente='euribor' → rente_euribor=true).
+  // Dit zorgt dat zichtbaarAls werkt ongeacht of er verwezen wordt naar de radio-sleutel
+  // zelf ('rente'='euribor') of naar de gegenereerde vlag ('rente_euribor'=true).
+  const uitgebreideWaarden = useMemo(() => {
+    const result = { ...waarden };
+    (template?.velden || []).forEach(v => {
+      if (v.type === 'radio') {
+        const val = waarden[v.sleutel];
+        (v.radioOpties || []).forEach(opt => {
+          result[`${v.sleutel}_${opt.key}`] = val === opt.key;
+        });
+      }
+    });
+    return result;
+  }, [waarden, template]);
+
   function isZichtbaar(veld) {
     if (!veld.zichtbaarAls) return true;
     const { sleutel, waarde } = veld.zichtbaarAls;
-    return waarden[sleutel] === waarde || String(waarden[sleutel]) === String(waarde);
+    return uitgebreideWaarden[sleutel] === waarde || String(uitgebreideWaarden[sleutel]) === String(waarde);
   }
 
   function zichtbareVelden() {
