@@ -220,17 +220,18 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const Docxtemplater = require('docxtemplater');
 
   const content = fs.readFileSync(docxPath, 'binary');
-  const zip = new PizZip(content);
-  const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
-    stripInvalidXMLChars: true,
-    // Lege string voor reguliere tags, lege array voor loop/conditie-modules
-    nullGetter: (part) => part.module ? [] : '',
-  });
-
+  let buf;
   try {
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      stripInvalidXMLChars: true,
+      // Lege string voor reguliere tags, lege array voor loop/conditie-modules
+      nullGetter: (part) => part.module ? [] : '',
+    });
     doc.render(renderValues);
+    buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
   } catch (e) {
     const errors = e.properties?.errors;
     let details = '';
@@ -254,8 +255,6 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
       writeMeta(all);
     }
   }
-
-  const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
   const outName = `${meta.naam.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.docx`;
   const outPath = path.join(os.tmpdir(), outName);
   fs.writeFileSync(outPath, buf);
