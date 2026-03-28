@@ -198,6 +198,35 @@ ipcMain.handle('templates:getCategorieen', () => {
   return [...new Set(all.map(t => t.categorie).filter(Boolean))].sort();
 });
 
+// ── Docxtemplater hulpfunctie ─────────────────────────────────────────────────
+/**
+ * Word kan sjabloontags (bv. {Boekjaar}) splitsen over meerdere XML-runs,
+ * wat Docxtemplater "unclosed_tag" fouten veroorzaakt.
+ * Deze functie voegt aangrenzende runs samen zodat de tag in één
+ * <w:t>-element terechtkomt.
+ */
+function fixSplitTemplateTags(zip) {
+  const doelBestanden = Object.keys(zip.files).filter(name =>
+    !zip.files[name].dir &&
+    /^word\/(document|header\d*|footer\d*)\.xml$/.test(name)
+  );
+  for (const naam of doelBestanden) {
+    let xml = zip.files[naam].asText();
+    let vorige;
+    do {
+      vorige = xml;
+      // Vind een <w:t> die een { heeft maar nog geen }, gevolgd door een
+      // nieuw <w:r><w:t>-blok — verwijder de tussenliggende run-grens
+      xml = xml.replace(
+        /(<w:t(?:[^>]*)>[^<]*\{[^}<]*)<\/w:t><\/w:r><w:r(?:[^>]*)?>(?:<w:rPr>[\s\S]*?<\/w:rPr>)?<w:t(?:[^>]*)?>/g,
+        '$1'
+      );
+    } while (xml !== vorige);
+    zip.file(naam, xml);
+  }
+  return zip;
+}
+
 // ── Export handlers ───────────────────────────────────────────────────────────
 ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const all = readMeta();
@@ -222,7 +251,7 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const content = fs.readFileSync(docxPath, 'binary');
   let buf;
   try {
-    const zip = new PizZip(content);
+    const zip = fixSplitTemplateTags(new PizZip(content));
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
@@ -337,7 +366,7 @@ ipcMain.handle('export:bulkGenereer', async (_, { templateId, rijen, opslagMap }
   for (let i = 0; i < rijen.length; i++) {
     const values = rijen[i];
     try {
-      const zip = new PizZip(content);
+      const zip = fixSplitTemplateTags(new PizZip(content));
       const doc = new Docxtemplater(zip, {
         paragraphLoop: true, linebreaks: true, stripInvalidXMLChars: true,
         nullGetter: (part) => part.module ? [] : '',

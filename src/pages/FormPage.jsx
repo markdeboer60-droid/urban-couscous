@@ -156,6 +156,8 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   function laadKlant(klant) {
     const sleutels = (template?.velden || []).map(v => v.sleutel);
     const matches = {};
+    // Koppel de top-level klantnaam aan de {klantnaam} sjabloontag
+    if (sleutels.includes('klantnaam') && klant.naam) matches['klantnaam'] = klant.naam;
     for (const [key, val] of Object.entries(klant.velden || {})) {
       if (sleutels.includes(key) && val) matches[key] = val;
     }
