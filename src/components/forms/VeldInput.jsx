@@ -3,11 +3,26 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   const basisKlasse = "w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
 
   // Radio type: kaartachtige keuzeknopgroep
+  // Fallback naar tekstveld als er geen opties zijn geconfigureerd
   if (veld.type === 'radio') {
+    const opties = veld.radioOpties || [];
+    if (opties.length === 0) {
+      return (
+        <VeldWrap veld={veld}>
+          <input
+            type="text"
+            value={waarde || ''}
+            onChange={e => onChange(e.target.value)}
+            placeholder={veld.placeholder || ''}
+            className={basisKlasse}
+          />
+        </VeldWrap>
+      );
+    }
     return (
       <VeldWrap veld={veld}>
         <div className="space-y-2">
-          {(veld.radioOpties || []).map(opt => (
+          {opties.map(opt => (
             <label
               key={opt.key}
               className={`flex items-start gap-3 p-3.5 border rounded-lg cursor-pointer transition-colors ${
@@ -76,6 +91,8 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
       </VeldWrap>
     );
   }
+
+  const bekendeTypes = ['text', 'textarea', 'date', 'number', 'select', 'boolean'];
 
   return (
     <VeldWrap veld={veld}>
@@ -152,6 +169,17 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
           </span>
         </label>
       )}
+
+      {/* Fallback voor onbekend of verkeerd geconfigureerd type */}
+      {!bekendeTypes.includes(veld.type) && (
+        <input
+          type="text"
+          value={waarde || ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={veld.placeholder || ''}
+          className={basisKlasse}
+        />
+      )}
     </VeldWrap>
   );
 }
@@ -170,4 +198,3 @@ function VeldWrap({ veld, children }) {
     </div>
   );
 }
-
