@@ -64,4 +64,8 @@ contextBridge.exposeInMainWorld('api', {
     selectPdf: () => ipcRenderer.invoke('kvk:selectPdf'),
     scanPdf: (filePath) => ipcRenderer.invoke('kvk:scanPdf', filePath),
   },
+  // Bedrijvenmonitor opzoeken
+  bedrijf: {
+    zoek: (payload) => ipcRenderer.invoke('bedrijf:zoek', payload),
+  },
 });

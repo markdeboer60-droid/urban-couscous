@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { exec, execFile } from 'child_process';
@@ -638,6 +639,125 @@ ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
   if (geboortedatum) result.geboortedatum = geboortedatum;
 
   return result;
+});
+
+// ── Bedrijvenmonitor lookup ───────────────────────────────────────────────────
+
+/**
+ * Fetches a URL via HTTPS, following up to `maxRedirects` redirects.
+ * Returns the final HTML body as a string.
+ */
+function fetchHtml(url, maxRedirects = 5) {
+  return new Promise((resolve, reject) => {
+    let urlObj;
+    try { urlObj = new URL(url); } catch { return reject(new Error(`Ongeldige URL: ${url}`)); }
+
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'nl-NL,nl;q=0.9',
+      },
+    };
+
+    const req = https.get(options, (res) => {
+      const { statusCode, headers } = res;
+      if ([301, 302, 303, 307, 308].includes(statusCode) && headers.location && maxRedirects > 0) {
+        const next = headers.location.startsWith('http')
+          ? headers.location
+          : `https://${urlObj.hostname}${headers.location}`;
+        res.resume();
+        resolve(fetchHtml(next, maxRedirects - 1));
+        return;
+      }
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Verzoek verlopen (timeout)')); });
+  });
+}
+
+/**
+ * Extracts company address data from a bedrijvenmonitor.info company page.
+ * Tries JSON-LD schema.org first, then common HTML patterns.
+ */
+function parseBedrijfPagina(html) {
+  const result = {};
+
+  // JSON-LD schema.org (most reliable)
+  const jsonLdBlocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+  for (const [, raw] of jsonLdBlocks) {
+    try {
+      let parsed = JSON.parse(raw.trim());
+      if (Array.isArray(parsed)) parsed = parsed.find(j => j['@type'] === 'Organization' || j['@type'] === 'LocalBusiness') || {};
+      if (parsed['@type'] === 'Organization' || parsed['@type'] === 'LocalBusiness') {
+        if (parsed.name) result.naam = parsed.name;
+        const addr = parsed.address || {};
+        if (addr.streetAddress) result.adres = addr.streetAddress;
+        if (addr.postalCode) result.postcode = addr.postalCode;
+        if (addr.addressLocality) result.plaats = addr.addressLocality;
+        if (result.adres) break;
+      }
+    } catch { /* skip malformed JSON-LD */ }
+  }
+
+  // Fallback: look for Dutch postcode (1234 AB) and nearby address text
+  if (!result.postcode) {
+    const pc = html.match(/\b(\d{4}\s+[A-Z]{2})\b/);
+    if (pc) result.postcode = pc[1].replace(/\s+/, ' ');
+  }
+
+  // Fallback: meta description often contains "adres: Straat 12, 1234 AB Plaats"
+  if (!result.adres) {
+    const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+    if (meta) {
+      const desc = meta[1];
+      // Dutch address pattern: "Word+ number, postcode City"
+      const adresM = desc.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-']+\s+\d+[A-Za-z]?(?:\s*[-–]\s*\d+[A-Za-z]?)?)/);
+      if (adresM) result.adres = adresM[1].trim();
+      const pcM = desc.match(/(\d{4}\s*[A-Z]{2})\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-']+)/);
+      if (pcM) {
+        if (!result.postcode) result.postcode = pcM[1].replace(/\s+/, ' ');
+        if (!result.plaats) result.plaats = pcM[2].trim();
+      }
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+ipcMain.handle('bedrijf:zoek', async (_, { naam, plaats }) => {
+  try {
+    // Step 1: search on bedrijvenmonitor.info
+    const params = new URLSearchParams({ bedrijfsnaam: naam.trim() });
+    if (plaats && plaats.trim()) params.set('gemeente', plaats.trim());
+    const zoekUrl = `https://bedrijvenmonitor.info/zoeken?${params.toString()}`;
+
+    const zoekHtml = await fetchHtml(zoekUrl);
+
+    // Step 2: find the first company link (/bedrijf/...) in the results page
+    const linkMatches = [...zoekHtml.matchAll(/href="(\/bedrijf\/[^"?#]+)"/g)];
+    if (!linkMatches.length) {
+      return { fout: `Geen bedrijven gevonden voor "${naam}"${plaats ? ' in ' + plaats : ''}.` };
+    }
+
+    // Step 3: fetch the first company page
+    const bedrijfUrl = `https://bedrijvenmonitor.info${linkMatches[0][1]}`;
+    const bedrijfHtml = await fetchHtml(bedrijfUrl);
+
+    const data = parseBedrijfPagina(bedrijfHtml);
+    if (!data) return { fout: 'Bedrijf gevonden maar adresgegevens konden niet worden uitgelezen.' };
+
+    return data;
+  } catch (err) {
+    return { fout: err.message || 'Zoeken mislukt' };
+  }
 });
 
 // ── Venster ───────────────────────────────────────────────────────────────────

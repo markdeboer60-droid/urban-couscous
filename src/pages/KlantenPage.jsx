@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, Users, Search, X, Check, UserPlus, FileText, RotateCcw, FolderOpen, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Search, X, Check, UserPlus, FileText, RotateCcw, FolderOpen, Loader2, Building2 } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 import { formatDatumTijd } from '../utils/formatDatum';
@@ -197,13 +197,42 @@ function KlantRij({ klant, laatste, onBewerk, onVerwijder }) {
 
 // ── Klantformulier met standaardvelden ────────────────────────────────────────
 function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
+  const showToast = useToast();
   const velden = klant.velden || {};
   const [nieuwSleutel, setNieuwSleutel] = useState('');
   const [nieuwWaarde, setNieuwWaarde] = useState('');
   const [overeenkomsten, setOvereenkomsten] = useState([]);
   const [overeenkomstenLaden, setOvereenkomstenLaden] = useState(!!klant.id);
   const [verwijderDoc, setVerwijderDoc] = useState(null);
+  const [bedrijfLaden, setBedrijfLaden] = useState(false);
   const initialKlant = useRef(klant);
+
+  async function zoekBedrijfGegevens() {
+    if (!klant.naam.trim()) return;
+    setBedrijfLaden(true);
+    try {
+      const result = await window.api.bedrijf.zoek({
+        naam: klant.naam.trim(),
+        plaats: (velden.plaats || '').trim(),
+      });
+      if (result.fout) {
+        showToast(result.fout, 'error');
+        return;
+      }
+      const nieuwVelden = { ...velden };
+      if (result.adres) nieuwVelden.adres = result.adres;
+      if (result.postcode) nieuwVelden.postcode = result.postcode;
+      if (result.plaats) nieuwVelden.plaats = result.plaats;
+      const nieuwKlant = { ...klant, velden: nieuwVelden };
+      if (result.naam) nieuwKlant.naam = result.naam;
+      onChange(nieuwKlant);
+      showToast('Bedrijfsgegevens ingevuld');
+    } catch {
+      showToast('Opzoeken mislukt', 'error');
+    } finally {
+      setBedrijfLaden(false);
+    }
+  }
 
   useEffect(() => {
     if (!klant.id) return;
@@ -292,7 +321,21 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
 
       {/* Naam */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-700">Klantgegevens</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-700">Klantgegevens</h2>
+          <button
+            type="button"
+            onClick={zoekBedrijfGegevens}
+            disabled={!klant.naam.trim() || bedrijfLaden}
+            title="Adresgegevens opzoeken via bedrijvenmonitor.info"
+            className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {bedrijfLaden
+              ? <Loader2 size={13} className="animate-spin" />
+              : <Building2 size={13} />}
+            {bedrijfLaden ? 'Bezig...' : 'Gegevens opzoeken'}
+          </button>
+        </div>
         <Invoerveld label="Naam" verplicht variabele="{Klantnaam}">
           <input
             type="text"
