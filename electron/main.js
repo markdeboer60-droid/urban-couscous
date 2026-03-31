@@ -817,42 +817,6 @@ ipcMain.handle('bedrijf:zoek', async (_, { naam, plaats }) => {
 
 // ── Venster ───────────────────────────────────────────────────────────────────
 function createWindow() {
-  return new Promise((resolve, reject) => {
-    let urlObj;
-    try { urlObj = new URL(url); } catch { return reject(new Error(`Ongeldige URL: ${url}`)); }
-
-    const options = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'nl-NL,nl;q=0.9',
-      },
-    };
-
-    const req = https.get(options, (res) => {
-      const { statusCode, headers } = res;
-      if ([301, 302, 303, 307, 308].includes(statusCode) && headers.location && maxRedirects > 0) {
-        const next = headers.location.startsWith('http')
-          ? headers.location
-          : `https://${urlObj.hostname}${headers.location}`;
-        res.resume();
-        resolve(fetchHtml(next, maxRedirects - 1));
-        return;
-      }
-      let data = '';
-      res.setEncoding('utf8');
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => resolve(data));
-    });
-    req.on('error', reject);
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Verzoek verlopen (timeout)')); });
-  });
-}
-
-// ── Venster ───────────────────────────────────────────────────────────────────
-function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
