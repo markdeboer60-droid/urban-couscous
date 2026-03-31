@@ -641,13 +641,182 @@ ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
   return result;
 });
 
-// ── Bedrijvenmonitor lookup ───────────────────────────────────────────────────
+// ── Bedrijvenmonitor / CompanyInfo lookup ────────────────────────────────────
 
 /**
- * Fetches a URL via HTTPS, following up to `maxRedirects` redirects.
- * Returns the final HTML body as a string.
+ * Fetches a URL via HTTPS with redirect following. Returns HTML string.
  */
-function fetchHtml(url, maxRedirects = 5) {
+function fetchHtml(url, maxRedirects = 5, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    let urlObj;
+    try { urlObj = new URL(url); } catch { return reject(new Error(`Ongeldige URL: ${url}`)); }
+
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'nl-NL,nl;q=0.9',
+      },
+    };
+
+    const req = https.get(options, (res) => {
+      const { statusCode, headers } = res;
+      if ([301, 302, 303, 307, 308].includes(statusCode) && headers.location && maxRedirects > 0) {
+        const next = headers.location.startsWith('http')
+          ? headers.location
+          : `https://${urlObj.hostname}${headers.location}`;
+        res.resume();
+        resolve(fetchHtml(next, maxRedirects - 1, timeoutMs));
+        return;
+      }
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+  });
+}
+
+/**
+ * Extracts one company record from a detail page.
+ * Returns { naam, kvknummer, adres, postcode, plaats, bron } or null.
+ */
+function parseerBedrijfPagina(html, bron) {
+  const rec = { bron };
+
+  // 1. JSON-LD schema.org
+  for (const [, raw] of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      let d = JSON.parse(raw.trim());
+      if (Array.isArray(d)) d = d.find(j => /^(Organization|LocalBusiness|Corporation)$/.test(j['@type']));
+      if (d && /^(Organization|LocalBusiness|Corporation)$/.test(d['@type'])) {
+        if (d.name) rec.naam = d.name;
+        const a = d.address || {};
+        if (a.streetAddress) rec.adres = a.streetAddress;
+        if (a.postalCode)    rec.postcode = a.postalCode.replace(/\s+/, ' ');
+        if (a.addressLocality) rec.plaats = a.addressLocality;
+        if (rec.adres) break;
+      }
+    } catch { /* skip */ }
+  }
+
+  // 2. KVK 8-digit number
+  const kvkM = html.match(/KVK[^<\n]{0,30}?(\d{8})/i) || html.match(/handelsregister[^<\n]{0,30}?(\d{8})/i);
+  if (kvkM) rec.kvknummer = kvkM[1];
+
+  // 3. Postcode fallback (4 digits + space + 2 uppercase)
+  if (!rec.postcode) {
+    const m = html.match(/\b(\d{4}\s+[A-Z]{2})\b/);
+    if (m) rec.postcode = m[1];
+  }
+
+  // 4. Meta description fallback for address + city
+  if (!rec.adres || !rec.plaats) {
+    const metaM = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{10,}?)["']/i)
+                || html.match(/<meta[^>]+content=["']([^"']{10,}?)["'][^>]+name=["']description["']/i);
+    if (metaM) {
+      const desc = metaM[1];
+      if (!rec.adres) {
+        const am = desc.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-'\.]+\s+\d+[A-Za-z]?)/);
+        if (am) rec.adres = am[1].trim();
+      }
+      if (!rec.postcode || !rec.plaats) {
+        const pm = desc.match(/(\d{4}\s*[A-Z]{2})\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-']+)/);
+        if (pm) {
+          if (!rec.postcode) rec.postcode = pm[1].replace(/\s+/, ' ');
+          if (!rec.plaats)   rec.plaats = pm[2].trim().split(/[,\n\r;]/)[0].trim();
+        }
+      }
+    }
+  }
+
+  // 5. Page title / h1 as last resort for company name
+  if (!rec.naam) {
+    const h1 = html.match(/<h1[^>]*>\s*([^<]{3,}?)\s*<\/h1>/i);
+    const title = html.match(/<title[^>]*>([^<|–\-]{3,}?)\s*[-|–]/i);
+    rec.naam = (h1?.[1] || title?.[1] || '').trim() || undefined;
+  }
+
+  return (rec.naam || rec.adres || rec.postcode) ? rec : null;
+}
+
+/** Deduplicate by lowercase company name. Keeps first occurrence. */
+function dedupliceer(lijst) {
+  const seen = new Set();
+  return lijst.filter(r => {
+    const key = (r.naam || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function zoekOpBedrijvenmonitor(naam, plaats) {
+  const params = new URLSearchParams({ bedrijfsnaam: naam.trim() });
+  if (plaats?.trim()) params.set('gemeente', plaats.trim());
+  const zoekHtml = await fetchHtml(`https://bedrijvenmonitor.info/zoeken?${params}`);
+
+  const links = [...new Set(
+    [...zoekHtml.matchAll(/href="(\/bedrijf\/[^"?#]+)"/g)].map(m => m[1])
+  )].slice(0, 4);
+  if (!links.length) return [];
+
+  const settled = await Promise.allSettled(
+    links.map(l =>
+      fetchHtml(`https://bedrijvenmonitor.info${l}`)
+        .then(html => parseerBedrijfPagina(html, 'bedrijvenmonitor.info'))
+    )
+  );
+  return settled.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value);
+}
+
+async function zoekOpCompanyInfo(naam, plaats) {
+  const q = [naam.trim(), plaats?.trim()].filter(Boolean).join(' ');
+  const zoekHtml = await fetchHtml(`https://companyinfo.nl/zoeken?q=${encodeURIComponent(q)}`);
+
+  const links = [...new Set(
+    [...zoekHtml.matchAll(/href="(\/organisatieprofiel\/[^"?#]+)"/g)].map(m => m[1])
+  )].slice(0, 4);
+  if (!links.length) return [];
+
+  const settled = await Promise.allSettled(
+    links.map(l =>
+      fetchHtml(`https://companyinfo.nl${l}`)
+        .then(html => parseerBedrijfPagina(html, 'companyinfo.nl'))
+    )
+  );
+  return settled.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value);
+}
+
+ipcMain.handle('bedrijf:zoek', async (_, { naam, plaats }) => {
+  try {
+    // Search both sources in parallel
+    const [bmResultaten, ciResultaten] = await Promise.allSettled([
+      zoekOpBedrijvenmonitor(naam, plaats),
+      zoekOpCompanyInfo(naam, plaats),
+    ]);
+
+    const alle = [
+      ...(bmResultaten.status === 'fulfilled' ? bmResultaten.value : []),
+      ...(ciResultaten.status === 'fulfilled' ? ciResultaten.value : []),
+    ];
+
+    const resultaten = dedupliceer(alle);
+    if (!resultaten.length) {
+      return { fout: `Geen bedrijven gevonden voor "${naam}"${plaats ? ' in ' + plaats : ''}.` };
+    }
+    return { resultaten };
+  } catch (err) {
+    return { fout: err.message || 'Zoeken mislukt' };
+  }
+});
+
+// ── Venster ───────────────────────────────────────────────────────────────────
+function createWindow() {
   return new Promise((resolve, reject) => {
     let urlObj;
     try { urlObj = new URL(url); } catch { return reject(new Error(`Ongeldige URL: ${url}`)); }
@@ -681,84 +850,6 @@ function fetchHtml(url, maxRedirects = 5) {
     req.setTimeout(15000, () => { req.destroy(); reject(new Error('Verzoek verlopen (timeout)')); });
   });
 }
-
-/**
- * Extracts company address data from a bedrijvenmonitor.info company page.
- * Tries JSON-LD schema.org first, then common HTML patterns.
- */
-function parseBedrijfPagina(html) {
-  const result = {};
-
-  // JSON-LD schema.org (most reliable)
-  const jsonLdBlocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
-  for (const [, raw] of jsonLdBlocks) {
-    try {
-      let parsed = JSON.parse(raw.trim());
-      if (Array.isArray(parsed)) parsed = parsed.find(j => j['@type'] === 'Organization' || j['@type'] === 'LocalBusiness') || {};
-      if (parsed['@type'] === 'Organization' || parsed['@type'] === 'LocalBusiness') {
-        if (parsed.name) result.naam = parsed.name;
-        const addr = parsed.address || {};
-        if (addr.streetAddress) result.adres = addr.streetAddress;
-        if (addr.postalCode) result.postcode = addr.postalCode;
-        if (addr.addressLocality) result.plaats = addr.addressLocality;
-        if (result.adres) break;
-      }
-    } catch { /* skip malformed JSON-LD */ }
-  }
-
-  // Fallback: look for Dutch postcode (1234 AB) and nearby address text
-  if (!result.postcode) {
-    const pc = html.match(/\b(\d{4}\s+[A-Z]{2})\b/);
-    if (pc) result.postcode = pc[1].replace(/\s+/, ' ');
-  }
-
-  // Fallback: meta description often contains "adres: Straat 12, 1234 AB Plaats"
-  if (!result.adres) {
-    const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
-    if (meta) {
-      const desc = meta[1];
-      // Dutch address pattern: "Word+ number, postcode City"
-      const adresM = desc.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-']+\s+\d+[A-Za-z]?(?:\s*[-–]\s*\d+[A-Za-z]?)?)/);
-      if (adresM) result.adres = adresM[1].trim();
-      const pcM = desc.match(/(\d{4}\s*[A-Z]{2})\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-']+)/);
-      if (pcM) {
-        if (!result.postcode) result.postcode = pcM[1].replace(/\s+/, ' ');
-        if (!result.plaats) result.plaats = pcM[2].trim();
-      }
-    }
-  }
-
-  return Object.keys(result).length > 0 ? result : null;
-}
-
-ipcMain.handle('bedrijf:zoek', async (_, { naam, plaats }) => {
-  try {
-    // Step 1: search on bedrijvenmonitor.info
-    const params = new URLSearchParams({ bedrijfsnaam: naam.trim() });
-    if (plaats && plaats.trim()) params.set('gemeente', plaats.trim());
-    const zoekUrl = `https://bedrijvenmonitor.info/zoeken?${params.toString()}`;
-
-    const zoekHtml = await fetchHtml(zoekUrl);
-
-    // Step 2: find the first company link (/bedrijf/...) in the results page
-    const linkMatches = [...zoekHtml.matchAll(/href="(\/bedrijf\/[^"?#]+)"/g)];
-    if (!linkMatches.length) {
-      return { fout: `Geen bedrijven gevonden voor "${naam}"${plaats ? ' in ' + plaats : ''}.` };
-    }
-
-    // Step 3: fetch the first company page
-    const bedrijfUrl = `https://bedrijvenmonitor.info${linkMatches[0][1]}`;
-    const bedrijfHtml = await fetchHtml(bedrijfUrl);
-
-    const data = parseBedrijfPagina(bedrijfHtml);
-    if (!data) return { fout: 'Bedrijf gevonden maar adresgegevens konden niet worden uitgelezen.' };
-
-    return data;
-  } catch (err) {
-    return { fout: err.message || 'Zoeken mislukt' };
-  }
-});
 
 // ── Venster ───────────────────────────────────────────────────────────────────
 function createWindow() {

@@ -205,6 +205,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
   const [overeenkomstenLaden, setOvereenkomstenLaden] = useState(!!klant.id);
   const [verwijderDoc, setVerwijderDoc] = useState(null);
   const [bedrijfLaden, setBedrijfLaden] = useState(false);
+  const [bedrijfKeuzes, setBedrijfKeuzes] = useState(null); // null | []
   const initialKlant = useRef(klant);
 
   async function zoekBedrijfGegevens() {
@@ -219,19 +220,25 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         showToast(result.fout, 'error');
         return;
       }
-      const nieuwVelden = { ...velden };
-      if (result.adres) nieuwVelden.adres = result.adres;
-      if (result.postcode) nieuwVelden.postcode = result.postcode;
-      if (result.plaats) nieuwVelden.plaats = result.plaats;
-      const nieuwKlant = { ...klant, velden: nieuwVelden };
-      if (result.naam) nieuwKlant.naam = result.naam;
-      onChange(nieuwKlant);
-      showToast('Bedrijfsgegevens ingevuld');
+      // Always show the selection modal (even with 1 result for confirmation)
+      setBedrijfKeuzes(result.resultaten);
     } catch {
       showToast('Opzoeken mislukt', 'error');
     } finally {
       setBedrijfLaden(false);
     }
+  }
+
+  function kiesBedrijf(rec) {
+    const nieuwVelden = { ...velden };
+    if (rec.adres)    nieuwVelden.adres    = rec.adres;
+    if (rec.postcode) nieuwVelden.postcode = rec.postcode;
+    if (rec.plaats)   nieuwVelden.plaats   = rec.plaats;
+    const nieuwKlant = { ...klant, velden: nieuwVelden };
+    if (rec.naam) nieuwKlant.naam = rec.naam;
+    onChange(nieuwKlant);
+    setBedrijfKeuzes(null);
+    showToast('Bedrijfsgegevens ingevuld');
   }
 
   useEffect(() => {
@@ -579,6 +586,96 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
           onAnnuleer={() => setVerwijderDoc(null)}
         />
       )}
+
+      {bedrijfKeuzes !== null && (
+        <BedrijfKiezenModal
+          resultaten={bedrijfKeuzes}
+          onKies={kiesBedrijf}
+          onSluiten={() => setBedrijfKeuzes(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Modal: kies het juiste bedrijf uit de zoekresultaten ─────────────────────
+function BedrijfKiezenModal({ resultaten, onKies, onSluiten }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onSluiten} />
+
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+        {/* header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Bedrijf kiezen</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {resultaten.length === 0
+                ? 'Geen resultaten gevonden'
+                : `${resultaten.length} bedrijf${resultaten.length !== 1 ? 'en' : ''} gevonden — klik op het juiste bedrijf`}
+            </p>
+          </div>
+          <button
+            onClick={onSluiten}
+            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* results list */}
+        <div className="overflow-y-auto flex-1 p-4 space-y-3">
+          {resultaten.length === 0 ? (
+            <div className="flex flex-col items-center py-10 text-gray-400">
+              <Search size={32} className="mb-3 opacity-30" />
+              <p className="text-sm">Geen bedrijven gevonden</p>
+              <p className="text-xs mt-1">Controleer de bedrijfsnaam en probeer opnieuw</p>
+            </div>
+          ) : (
+            resultaten.map((rec, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onKies(rec)}
+                className="w-full text-left p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors group"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-gray-900 group-hover:text-blue-700 transition-colors">
+                      {rec.naam || <span className="text-gray-400 italic">Onbekende naam</span>}
+                    </div>
+                    {rec.kvknummer && (
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        KVK: <span className="font-mono">{rec.kvknummer}</span>
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-600 mt-1.5 space-y-0.5">
+                      {rec.adres && <div>{rec.adres}</div>}
+                      {(rec.postcode || rec.plaats) && (
+                        <div>{[rec.postcode, rec.plaats].filter(Boolean).join('  ')}</div>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full shrink-0 mt-0.5">
+                    {rec.bron}
+                  </span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+          <button
+            onClick={onSluiten}
+            className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Sluiten
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
