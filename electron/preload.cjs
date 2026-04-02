@@ -68,4 +68,10 @@ contextBridge.exposeInMainWorld('api', {
   bedrijf: {
     zoek: (payload) => ipcRenderer.invoke('bedrijf:zoek', payload),
   },
+  // Standaard teksten (Visionplanner dossiernotities)
+  standaardTeksten: {
+    getAll:  ()     => ipcRenderer.invoke('standaardTeksten:getAll'),
+    save:    (item) => ipcRenderer.invoke('standaardTeksten:save', item),
+    delete:  (id)   => ipcRenderer.invoke('standaardTeksten:delete', id),
+  },
 });

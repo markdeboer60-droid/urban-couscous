@@ -6,6 +6,7 @@ import ExportPage from './pages/ExportPage';
 import AdminPage from './pages/AdminPage';
 import GeschiedenisPage from './pages/GeschiedenisPage';
 import KlantenPage from './pages/KlantenPage';
+import StandaardTekstenPage from './pages/StandaardTekstenPage';
 import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import './index.css';
@@ -59,6 +60,9 @@ export default function App() {
           )}
           {nav.pagina === 'klanten' && (
             <KlantenPage navigeer={navigeer} />
+          )}
+          {nav.pagina === 'standaardTeksten' && (
+            <StandaardTekstenPage />
           )}
         </main>
       </div>

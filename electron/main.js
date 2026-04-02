@@ -21,6 +21,7 @@ const historyFile = path.join(dataDir, 'history.json');
 const geschiedenisDir = path.join(dataDir, 'geschiedenis');
 const klantenFile = path.join(dataDir, 'klanten.json');
 const conceptenFile = path.join(dataDir, 'concepten.json');
+const standaardTekstenFile = path.join(dataDir, 'standaard_teksten.json');
 
 const defaultOndertekenaars = [
   'Drs M.R. de Boer AA',
@@ -36,6 +37,20 @@ function ensureDirs() {
   if (!fs.existsSync(historyFile)) fs.writeFileSync(historyFile, '[]');
   if (!fs.existsSync(klantenFile)) fs.writeFileSync(klantenFile, '[]');
   if (!fs.existsSync(conceptenFile)) fs.writeFileSync(conceptenFile, '[]');
+  if (!fs.existsSync(standaardTekstenFile)) {
+    const nu = new Date().toISOString();
+    const seed = [
+      { vraag: 'Voeg de documentatie voor cliëntacceptatie/continuatie (inclusief Wwft) toe', antwoord: 'Getoetst via Grub. Geen signalen integriteit of verhoogd Wwft-risico. Identificatie en verificatie vastgelegd conform art. 33 Wwft. Opdracht kan worden gecontinueerd.' },
+      { vraag: 'Voeg de documentatie voor opdrachtacceptatie/continuatie toe', antwoord: 'Vanuit Grub en teambespreking vastgesteld dat geen bedreigingen of belemmeringen zijn geconstateerd. Opdrachtbevestiging actueel. Voldoende deskundigheid, tijd en capaciteit beschikbaar. Opdracht wordt gecontinueerd.' },
+      { vraag: 'Wwft risicoprofiel', antwoord: 'Vastgesteld op gemiddeld. Geen indicatoren voor bijstelling naar verhoogd risico. Vastgelegd in Grub.' },
+      { vraag: 'Opdrachtteam competentie', antwoord: 'Het opdrachtteam beschikt collectief over de passende competentie en capaciteiten. Vereiste branchekennis en kennis van Titel 9 BW2 zijn binnen het team aanwezig.' },
+      { vraag: 'Stel vast welke significante aangelegenheden er zijn', antwoord: '1. Waardering MVA / afschrijvingen (fiscale grondslagen, bodemwaarde)\n2. Interne verhuur OG (zakelijkheid, indexatie)\n3. Huurovereenkomsten (actualiteit)\n4. Investeringsaftrek (geen FE, verhuur kwalificeert niet)\n5. Toerekening huisvestingskosten (eigenaar vs gebruiker)\n6. Deelneming NVW (aansluiting vermogen en resultaat)' },
+      { vraag: 'Beoordeel continuïteit', antwoord: 'Resultaat en vermogen uitstekend. Geen aanwijzingen die de continuïteit in gevaar brengen. Geen significante aangelegenheid.' },
+      { vraag: 'Controleer volledigheid aangeleverde administratie', antwoord: 'Saldibalans, jaarrekening deelneming, huurovereenkomsten, MVA-staat en overige bescheiden aanwezig en volledig. Voorraadlijsten niet van toepassing.' },
+      { vraag: 'Zijn de grondslagen gewijzigd ten opzichte van vorig jaar?', antwoord: 'Geen wijziging in grondslagen. Geen stelsel- of schattingswijziging. Nadere toelichting in jaarrekening niet vereist.' },
+    ].map(item => ({ ...item, id: randomUUID(), categorie: 'Algemeen', aangemaakt: nu, bijgewerkt: nu }));
+    fs.writeFileSync(standaardTekstenFile, JSON.stringify(seed, null, 2));
+  }
   if (!fs.existsSync(settingsFile)) {
     fs.writeFileSync(settingsFile, JSON.stringify({
       templateDir: path.join(dataDir, 'docx'),
@@ -71,6 +86,8 @@ function readKlanten() { ensureDirs(); return JSON.parse(fs.readFileSync(klanten
 function writeKlanten(data) { fs.writeFileSync(klantenFile, JSON.stringify(data, null, 2)); }
 function readConcepten() { ensureDirs(); return JSON.parse(fs.readFileSync(conceptenFile, 'utf-8')); }
 function writeConcepten(data) { fs.writeFileSync(conceptenFile, JSON.stringify(data, null, 2)); }
+function readStandaardTeksten() { ensureDirs(); return JSON.parse(fs.readFileSync(standaardTekstenFile, 'utf-8')); }
+function writeStandaardTeksten(data) { fs.writeFileSync(standaardTekstenFile, JSON.stringify(data, null, 2)); }
 
 function getTemplateDocxPath(templateId, versie) {
   const settings = readSettings();
@@ -191,6 +208,27 @@ ipcMain.handle('concepten:save', (_, { templateId, templateNaam, waarden }) => {
 
 ipcMain.handle('concepten:delete', (_, templateId) => {
   writeConcepten(readConcepten().filter(c => c.templateId !== templateId));
+  return { ok: true };
+});
+
+// ── Standaard teksten ─────────────────────────────────────────────────────────
+ipcMain.handle('standaardTeksten:getAll', () => readStandaardTeksten());
+
+ipcMain.handle('standaardTeksten:save', (_, item) => {
+  const all = readStandaardTeksten();
+  const idx = all.findIndex(t => t.id === item.id);
+  const nu = new Date().toISOString();
+  if (idx >= 0) {
+    all[idx] = { ...all[idx], ...item, bijgewerkt: nu };
+  } else {
+    all.push({ ...item, id: randomUUID(), aangemaakt: nu, bijgewerkt: nu });
+  }
+  writeStandaardTeksten(all);
+  return { ok: true };
+});
+
+ipcMain.handle('standaardTeksten:delete', (_, id) => {
+  writeStandaardTeksten(readStandaardTeksten().filter(t => t.id !== id));
   return { ok: true };
 });
 

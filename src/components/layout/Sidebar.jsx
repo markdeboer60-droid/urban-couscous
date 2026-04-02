@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { LayoutGrid, Settings, History, ChevronRight, Users } from 'lucide-react';
+import { LayoutGrid, Settings, History, ChevronRight, Users, BookOpen } from 'lucide-react';
 
 const items = [
-  { id: 'browser',     label: 'Sjablonen',   icon: LayoutGrid },
-  { id: 'geschiedenis', label: 'Geschiedenis', icon: History },
-  { id: 'klanten',     label: 'Adresboek',   icon: Users },
-  { id: 'admin',       label: 'Beheer',       icon: Settings },
+  { id: 'browser',          label: 'Sjablonen',        icon: LayoutGrid },
+  { id: 'geschiedenis',     label: 'Geschiedenis',     icon: History },
+  { id: 'klanten',          label: 'Adresboek',        icon: Users },
+  { id: 'standaardTeksten', label: 'Standaard teksten', icon: BookOpen },
+  { id: 'admin',            label: 'Beheer',            icon: Settings },
 ];
 
 export default function Sidebar({ actief, navigeer }) {
