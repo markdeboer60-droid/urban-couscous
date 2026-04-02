@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Loader2, AlertCircle, FileUp, Users, Save, BookmarkCheck } from 'lucide-react';
 import VeldInput from '../components/forms/VeldInput';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
 // Koppeling van standaard sjabloontags naar klantgegevens in het adresboek
@@ -32,6 +33,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const [concept, setConcept] = useState(null);
   const [conceptGeladen, setConceptGeladen] = useState(false);
   const [conceptOpgeslagen, setConceptOpgeslagen] = useState(false);
+  const [conceptVerwijderBevestig, setConceptVerwijderBevestig] = useState(false);
   const [autoOpgeslagenTijd, setAutoOpgeslagenTijd] = useState(null);
   const klantPickerRef = useRef(null);
   const klantMeldingTimer = useRef(null);
@@ -348,7 +350,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
           <span className="text-xs text-amber-700 flex-1">
             Concept geladen van {new Date(concept.datum).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </span>
-          <button onClick={verwijderConcept} className="text-xs text-amber-600 hover:underline shrink-0">Verwijderen</button>
+          <button onClick={() => setConceptVerwijderBevestig(true)} className="text-xs text-amber-600 hover:underline shrink-0">Verwijderen</button>
         </div>
       )}
       {autoOpgeslagenTijd && !conceptGeladen && (
@@ -429,13 +431,14 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
             )}
             <div className="space-y-5">
               {groep.velden.map(veld => (
-                <VeldInput
-                  key={veld.sleutel}
-                  veld={veld}
-                  waarde={waarden[veld.sleutel]}
-                  onChange={val => setWaarden(prev => ({ ...prev, [veld.sleutel]: val }))}
-                  ondertekenaars={ondertekenaars}
-                />
+                <div key={veld.sleutel} id={`veld-${veld.sleutel}`}>
+                  <VeldInput
+                    veld={veld}
+                    waarde={waarden[veld.sleutel]}
+                    onChange={val => setWaarden(prev => ({ ...prev, [veld.sleutel]: val }))}
+                    ondertekenaars={ondertekenaars}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -460,7 +463,19 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         </button>
         {!isIngevuld() && !bezig && (
           <p className="text-xs text-gray-400 text-center">
-            Nog in te vullen: {ontbrekendeVelden().map(v => v.label).join(', ')}
+            Nog in te vullen:{' '}
+            {ontbrekendeVelden().map((v, i) => (
+              <span key={v.sleutel}>
+                {i > 0 && ', '}
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(`veld-${v.sleutel}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                  className="text-blue-500 hover:underline"
+                >
+                  {v.label}
+                </button>
+              </span>
+            ))}
           </p>
         )}
         <button
@@ -474,6 +489,16 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
           )}
         </button>
       </div>
+
+      {conceptVerwijderBevestig && (
+        <ConfirmDialog
+          titel="Concept verwijderen?"
+          omschrijving="Het opgeslagen concept wordt verwijderd. De ingevulde waarden blijven zichtbaar in het formulier."
+          bevestigLabel="Verwijderen"
+          onBevestig={() => { verwijderConcept(); setConceptVerwijderBevestig(false); }}
+          onAnnuleer={() => setConceptVerwijderBevestig(false)}
+        />
+      )}
     </div>
   );
 }

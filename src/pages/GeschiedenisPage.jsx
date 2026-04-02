@@ -36,8 +36,8 @@ export default function GeschiedenisPage({ navigeer }) {
     setExportFout(f => ({ ...f, [entry.id]: null }));
     try {
       await window.api.export.openInWord(entry.docxPad);
-    } catch (e) {
-      setExportFout(f => ({ ...f, [entry.id]: 'Bestand niet gevonden of kan niet worden geopend.' }));
+    } catch {
+      setExportFout(f => ({ ...f, [entry.id]: 'Bestand niet gevonden — mogelijk verplaatst of verwijderd. Genereer het document opnieuw via "Opnieuw bewerken".' }));
     } finally {
       setExportBezig(b => ({ ...b, [entry.id]: null }));
     }

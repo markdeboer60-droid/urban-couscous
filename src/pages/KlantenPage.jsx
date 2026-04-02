@@ -175,6 +175,11 @@ function KlantRij({ klant, laatste, onBewerk, onVerwijder }) {
           {[samenvatting, ...contacten.slice(0, 1)].filter(Boolean).join(' · ')}
         </div>
       </div>
+      {klant.bijgewerkt && (
+        <div className="text-xs text-gray-300 shrink-0 hidden group-hover:block" title="Laatste wijziging">
+          {new Date(klant.bijgewerkt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </div>
+      )}
       <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
         <button
           onClick={onBewerk}

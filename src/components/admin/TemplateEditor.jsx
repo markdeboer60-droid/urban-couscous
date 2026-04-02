@@ -3,6 +3,7 @@ import {
   ArrowLeft, Upload, Plus, Trash2, GripVertical, X,
   ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, ScanLine, Undo2
 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 const VELD_TYPES = [
   { waarde: 'text',          label: 'Tekst (korte invoer)' },
@@ -44,6 +45,7 @@ const leegVeld = () => ({
 });
 
 export default function TemplateEditor({ templateId, onTerug }) {
+  const showToast = useToast();
   const bewerkModus = !!templateId;
   const [meta, setMeta] = useState({
     id: '', naam: '', categorie: '', beschrijving: '', versie: 1, bestandsnaamPatroon: '',
@@ -58,10 +60,21 @@ export default function TemplateEditor({ templateId, onTerug }) {
   const [uitgevouwen, setUitgevouwen] = useState({});
   const [categorieSuggesties, setCategorieSuggesties] = useState([]);
   const [ongedaanVeld, setOngedaanVeld] = useState(null); // { veld, idx }
+  const [ongedaanSeconden, setOngedaanSeconden] = useState(0);
   const ongedaanTimer = useRef(null);
 
   // Cleanup bij unmount
   useEffect(() => () => clearTimeout(ongedaanTimer.current), []);
+
+  // Aftellen voor undo-knop
+  useEffect(() => {
+    if (!ongedaanVeld) { setOngedaanSeconden(0); return; }
+    setOngedaanSeconden(5);
+    const interval = setInterval(() => {
+      setOngedaanSeconden(s => (s <= 1 ? (clearInterval(interval), 0) : s - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [ongedaanVeld]);
 
   useEffect(() => {
     window.api.templates.getCategorieen().then(setCategorieSuggesties);
@@ -202,6 +215,9 @@ export default function TemplateEditor({ templateId, onTerug }) {
     if (!bewerkModus && !docxPad) return setFout('Selecteer een Word-sjabloon (.docx).');
     if (velden.some(v => !v.sleutel.trim())) return setFout('Elk veld moet een sleutel hebben.');
     if (velden.some(v => !v.label.trim())) return setFout('Elk veld moet een label hebben.');
+    const sleutels = velden.map(v => v.sleutel.trim()).filter(Boolean);
+    const dubbele = sleutels.filter((s, i) => sleutels.indexOf(s) !== i);
+    if (dubbele.length > 0) return setFout(`Dubbele veldsleutels gevonden: ${[...new Set(dubbele)].join(', ')} — elke sleutel moet uniek zijn.`);
 
     setBezig(true);
     try {
@@ -218,6 +234,7 @@ export default function TemplateEditor({ templateId, onTerug }) {
       }
 
       setOpgeslagen(true);
+      showToast(bewerkModus ? 'Sjabloon bijgewerkt' : 'Sjabloon aangemaakt');
       setTimeout(onTerug, 1000);
     } catch (e) {
       setFout(e.message || 'Fout bij opslaan.');
@@ -436,6 +453,7 @@ export default function TemplateEditor({ templateId, onTerug }) {
             >
               <Undo2 size={13} />
               Ongedaan maken: &ldquo;{ongedaanVeld.veld.label || ongedaanVeld.veld.sleutel || 'naamloos'}&rdquo;
+              <span className="ml-1 text-amber-500 tabular-nums">({ongedaanSeconden}s)</span>
             </button>
           )}
         </div>

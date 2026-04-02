@@ -70,8 +70,9 @@ contextBridge.exposeInMainWorld('api', {
   },
   // Standaard teksten (Visionplanner dossiernotities)
   standaardTeksten: {
-    getAll:  ()     => ipcRenderer.invoke('standaardTeksten:getAll'),
-    save:    (item) => ipcRenderer.invoke('standaardTeksten:save', item),
-    delete:  (id)   => ipcRenderer.invoke('standaardTeksten:delete', id),
+    getAll:      ()      => ipcRenderer.invoke('standaardTeksten:getAll'),
+    save:        (item)  => ipcRenderer.invoke('standaardTeksten:save', item),
+    delete:      (id)    => ipcRenderer.invoke('standaardTeksten:delete', id),
+    reorderAll:  (items) => ipcRenderer.invoke('standaardTeksten:reorderAll', items),
   },
 });

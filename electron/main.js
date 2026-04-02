@@ -232,6 +232,11 @@ ipcMain.handle('standaardTeksten:delete', (_, id) => {
   return { ok: true };
 });
 
+ipcMain.handle('standaardTeksten:reorderAll', (_, items) => {
+  writeStandaardTeksten(items);
+  return { ok: true };
+});
+
 ipcMain.handle('templates:getCategorieen', () => {
   const all = readMeta();
   return [...new Set(all.map(t => t.categorie).filter(Boolean))].sort();

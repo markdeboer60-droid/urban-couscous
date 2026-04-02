@@ -356,10 +356,9 @@ function TemplateKaart({ template, heeftConcept, onClick, onToggleFavoriet, onBu
       className={`text-left bg-white border rounded-xl p-5 hover:border-blue-400 hover:shadow-sm transition-all group relative ${template.favoriet ? 'border-yellow-300 bg-yellow-50/30' : 'border-gray-200'}`}
     >
       {heeftConcept && (
-        <span
-          className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white"
-          title="Openstaand concept"
-        />
+        <span className="absolute top-3 right-3 text-[10px] font-semibold text-amber-700 bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-full leading-none">
+          concept
+        </span>
       )}
       <div className="flex items-start justify-between mb-3">
         <div className={`p-2 rounded-lg ${template.favoriet ? 'bg-yellow-100' : 'bg-blue-50'}`}>
@@ -401,7 +400,7 @@ function TemplateRij({ template, heeftConcept, laatste, kolBreedte, onClick, onT
           </span>
           <span className="font-medium text-sm text-gray-900 truncate group-hover:text-blue-700">{template.naam}</span>
           {heeftConcept && (
-            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Openstaand concept" />
+            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-full leading-none shrink-0">concept</span>
           )}
         </div>
         {template.beschrijving && (

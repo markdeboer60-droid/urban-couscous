@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Copy, Check, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Copy, Check, Pencil, Trash2, BookOpen, ArrowUp, ArrowDown } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
@@ -74,6 +74,18 @@ export default function StandaardTekstenPage() {
     setVerwijderBevestig(null);
     laad();
     showToast('Verwijderd', 'info');
+  }
+
+  async function verplaats(item, richting) {
+    // Find global index in the full teksten array
+    const idx = teksten.findIndex(t => t.id === item.id);
+    if (idx < 0) return;
+    const nieuw = [...teksten];
+    const doelIdx = idx + richting;
+    if (doelIdx < 0 || doelIdx >= nieuw.length) return;
+    [nieuw[idx], nieuw[doelIdx]] = [nieuw[doelIdx], nieuw[idx]];
+    setTeksten(nieuw);
+    await window.api.standaardTeksten.reorderAll(nieuw);
   }
 
   function kopieer(tekst, id) {
@@ -273,6 +285,20 @@ export default function StandaardTekstenPage() {
                       <p className="text-sm font-semibold text-gray-800 leading-snug">{item.vraag}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => verplaats(item, -1)}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Omhoog"
+                      >
+                        <ArrowUp size={13} />
+                      </button>
+                      <button
+                        onClick={() => verplaats(item, 1)}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Omlaag"
+                      >
+                        <ArrowDown size={13} />
+                      </button>
                       <button
                         onClick={() => startBewerk(item)}
                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
