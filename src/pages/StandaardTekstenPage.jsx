@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Copy, Check, Pencil, Trash2, BookOpen, X, ChevronDown } from 'lucide-react';
+import { Plus, Copy, Check, Pencil, Trash2, BookOpen } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
@@ -25,6 +25,13 @@ export default function StandaardTekstenPage() {
     [...new Set(teksten.map(t => t.categorie || 'Overig'))].sort(),
     [teksten]
   );
+
+  // Reset filter when the active category no longer exists (e.g. after deleting its last item)
+  useEffect(() => {
+    if (actieveCategorie !== 'alle' && !categorieen.includes(actieveCategorie)) {
+      setActieve('alle');
+    }
+  }, [categorieen, actieveCategorie]);
 
   const gefilterd = useMemo(() =>
     actieveCategorie === 'alle'
