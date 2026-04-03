@@ -29,6 +29,60 @@ const defaultOndertekenaars = [
   'Drs G.O. Visser RA',
 ];
 
+// ── Seed-data standaard teksten ───────────────────────────────────────────────
+// Nieuw items worden bij elke start toegevoegd als ze nog niet bestaan (migratie-veilig).
+const SEED_STANDAARD_TEKSTEN = [
+  // ── Visionplanner (originele 8) ──
+  { categorie: 'Visionplanner', vraag: 'Voeg de documentatie voor cliëntacceptatie/continuatie (inclusief Wwft) toe', antwoord: 'Getoetst via Grub. Geen signalen integriteit of verhoogd Wwft-risico. Identificatie en verificatie vastgelegd conform art. 33 Wwft. Opdracht kan worden gecontinueerd.' },
+  { categorie: 'Visionplanner', vraag: 'Voeg de documentatie voor opdrachtacceptatie/continuatie toe', antwoord: 'Vanuit Grub en teambespreking vastgesteld dat geen bedreigingen of belemmeringen zijn geconstateerd. Opdrachtbevestiging actueel. Voldoende deskundigheid, tijd en capaciteit beschikbaar. Opdracht wordt gecontinueerd.' },
+  { categorie: 'Visionplanner', vraag: 'Wwft risicoprofiel', antwoord: 'Vastgesteld op gemiddeld. Geen indicatoren voor bijstelling naar verhoogd risico. Vastgelegd in Grub.' },
+  { categorie: 'Visionplanner', vraag: 'Opdrachtteam competentie', antwoord: 'Het opdrachtteam beschikt collectief over de passende competentie en capaciteiten. Vereiste branchekennis en kennis van Titel 9 BW2 zijn binnen het team aanwezig.' },
+  { categorie: 'Visionplanner', vraag: 'Stel vast welke significante aangelegenheden er zijn', antwoord: '1. Waardering MVA / afschrijvingen (fiscale grondslagen, bodemwaarde)\n2. Interne verhuur OG (zakelijkheid, indexatie)\n3. Huurovereenkomsten (actualiteit)\n4. Investeringsaftrek (geen FE, verhuur kwalificeert niet)\n5. Toerekening huisvestingskosten (eigenaar vs gebruiker)\n6. Deelneming NVW (aansluiting vermogen en resultaat)' },
+  { categorie: 'Visionplanner', vraag: 'Beoordeel continuïteit', antwoord: 'Resultaat en vermogen uitstekend. Geen aanwijzingen die de continuïteit in gevaar brengen. Geen significante aangelegenheid.' },
+  { categorie: 'Visionplanner', vraag: 'Controleer volledigheid aangeleverde administratie', antwoord: 'Saldibalans, jaarrekening deelneming, huurovereenkomsten, MVA-staat en overige bescheiden aanwezig en volledig. Voorraadlijsten niet van toepassing.' },
+  { categorie: 'Visionplanner', vraag: 'Zijn de grondslagen gewijzigd ten opzichte van vorig jaar?', antwoord: 'Geen wijziging in grondslagen. Geen stelsel- of schattingswijziging. Nadere toelichting in jaarrekening niet vereist.' },
+
+  // ── Debiteuren ──
+  { categorie: 'Debiteuren', vraag: 'Risico / motivatie', antwoord: 'Debiteuren zijn afhankelijk van schattingen door het management over de inbaarheid van openstaande vorderingen. Het risico bestaat dat oninbare of twijfelachtige debiteuren niet of onvoldoende zijn afgewaardeerd, waardoor de balanspost te hoog is gepresenteerd. Daarnaast kunnen concentratierisico\'s (grote klanten) en vorderingen op gelieerde partijen een kwalitatief significante aangelegenheid vormen, ook als de kwantitatieve omvang op zichzelf bescheiden is (zie NBA-handreiking 1136, Par. 3.4 en A50 Std. 4410).' },
+  { categorie: 'Debiteuren', vraag: 'Aansluiting postenlijst op balanspost', antwoord: 'Stel vast dat de openstaande postenlijst debiteuren per balansdatum aansluit op de balanspost en ga na of de aansluiting zonder onverklaard verschil sluit.' },
+  { categorie: 'Debiteuren', vraag: 'Betalingsachterstand — voorziening dubieuze debiteuren', antwoord: 'Ga na of er debiteuren zijn met een betalingsachterstand en bespreek met het management of hiervoor een voorziening dubieuze debiteuren is getroffen.' },
+  { categorie: 'Debiteuren', vraag: 'Debiteuren ouder dan 90 dagen', antwoord: 'Stel vast of debiteuren ouder dan 90 dagen specifiek zijn besproken met het management en ga na of de inschatting van inbaarheid aannemelijk is gezien de kennis van de onderneming.' },
+  { categorie: 'Debiteuren', vraag: 'Concentratierisico grote klanten', antwoord: 'Ga na of er sprake is van een concentratierisico (een of enkele grote debiteuren die een belangrijk deel van de post vertegenwoordigen) en bespreek dit met het management.' },
+  { categorie: 'Debiteuren', vraag: 'Vorderingen op gelieerde partijen', antwoord: 'Stel vast of vorderingen op gelieerde partijen (DGA, groepsmaatschappijen) afzonderlijk zijn gepresenteerd en ga na of de voorwaarden zakelijk zijn.' },
+  { categorie: 'Debiteuren', vraag: 'Documenteren voorziening dubieuze debiteuren', antwoord: 'Leg de uitgangspunten en berekening van de voorziening dubieuze debiteuren vast en bespreek de uitkomst met het management zodat zij de verantwoordelijkheid kunnen dragen.' },
+  { categorie: 'Debiteuren', vraag: 'Materiële afwijking — correctie of teruggave opdracht', antwoord: 'Stel vast of het management een correctie wil aanbrengen indien de afwijking materieel is; bij weigering: voorstel tot aanpassing vastleggen en zo nodig opdracht teruggeven (Par. 34 en 35 Std. 4410).' },
+  { categorie: 'Debiteuren', vraag: 'Consistentie waarderingsgrondslag', antwoord: 'Ga na of de gehanteerde grondslag voor de waardering van debiteuren consistent is toegepast ten opzichte van voorgaand jaar.' },
+  { categorie: 'Debiteuren', vraag: 'Toelichting in jaarrekening', antwoord: 'Stel vast of de debiteuren juist en volledig zijn toegelicht in de jaarrekening, inclusief eventuele zekerheden, pandrechten of vorderingen op gelieerde partijen.' },
+];
+
+function initStandaardTeksten() {
+  const nu = new Date().toISOString();
+  if (!fs.existsSync(standaardTekstenFile)) {
+    // Eerste keer: alles seeden
+    const items = SEED_STANDAARD_TEKSTEN.map(item => ({
+      ...item, id: randomUUID(), aangemaakt: nu, bijgewerkt: nu,
+    }));
+    fs.writeFileSync(standaardTekstenFile, JSON.stringify(items, null, 2));
+  } else {
+    // Bestaand bestand: alleen ontbrekende items toevoegen (migratie-veilig)
+    let bestaand;
+    try { bestaand = JSON.parse(fs.readFileSync(standaardTekstenFile, 'utf-8')); }
+    catch { bestaand = []; }
+    // Migratie: hernoem categorie 'Algemeen' → 'Visionplanner' voor de originele 8 items
+    let gewijzigd = false;
+    bestaand = bestaand.map(item => {
+      if (item.categorie === 'Algemeen') { gewijzigd = true; return { ...item, categorie: 'Visionplanner' }; }
+      return item;
+    });
+    const nieuw = SEED_STANDAARD_TEKSTEN
+      .filter(s => !bestaand.some(b => b.categorie === s.categorie && b.vraag === s.vraag))
+      .map(item => ({ ...item, id: randomUUID(), aangemaakt: nu, bijgewerkt: nu }));
+    if (nieuw.length > 0 || gewijzigd) {
+      fs.writeFileSync(standaardTekstenFile, JSON.stringify([...bestaand, ...nieuw], null, 2));
+    }
+  }
+}
+
 function ensureDirs() {
   [dataDir, veldDir, geschiedenisDir].forEach(d => {
     if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -37,20 +91,7 @@ function ensureDirs() {
   if (!fs.existsSync(historyFile)) fs.writeFileSync(historyFile, '[]');
   if (!fs.existsSync(klantenFile)) fs.writeFileSync(klantenFile, '[]');
   if (!fs.existsSync(conceptenFile)) fs.writeFileSync(conceptenFile, '[]');
-  if (!fs.existsSync(standaardTekstenFile)) {
-    const nu = new Date().toISOString();
-    const seed = [
-      { vraag: 'Voeg de documentatie voor cliëntacceptatie/continuatie (inclusief Wwft) toe', antwoord: 'Getoetst via Grub. Geen signalen integriteit of verhoogd Wwft-risico. Identificatie en verificatie vastgelegd conform art. 33 Wwft. Opdracht kan worden gecontinueerd.' },
-      { vraag: 'Voeg de documentatie voor opdrachtacceptatie/continuatie toe', antwoord: 'Vanuit Grub en teambespreking vastgesteld dat geen bedreigingen of belemmeringen zijn geconstateerd. Opdrachtbevestiging actueel. Voldoende deskundigheid, tijd en capaciteit beschikbaar. Opdracht wordt gecontinueerd.' },
-      { vraag: 'Wwft risicoprofiel', antwoord: 'Vastgesteld op gemiddeld. Geen indicatoren voor bijstelling naar verhoogd risico. Vastgelegd in Grub.' },
-      { vraag: 'Opdrachtteam competentie', antwoord: 'Het opdrachtteam beschikt collectief over de passende competentie en capaciteiten. Vereiste branchekennis en kennis van Titel 9 BW2 zijn binnen het team aanwezig.' },
-      { vraag: 'Stel vast welke significante aangelegenheden er zijn', antwoord: '1. Waardering MVA / afschrijvingen (fiscale grondslagen, bodemwaarde)\n2. Interne verhuur OG (zakelijkheid, indexatie)\n3. Huurovereenkomsten (actualiteit)\n4. Investeringsaftrek (geen FE, verhuur kwalificeert niet)\n5. Toerekening huisvestingskosten (eigenaar vs gebruiker)\n6. Deelneming NVW (aansluiting vermogen en resultaat)' },
-      { vraag: 'Beoordeel continuïteit', antwoord: 'Resultaat en vermogen uitstekend. Geen aanwijzingen die de continuïteit in gevaar brengen. Geen significante aangelegenheid.' },
-      { vraag: 'Controleer volledigheid aangeleverde administratie', antwoord: 'Saldibalans, jaarrekening deelneming, huurovereenkomsten, MVA-staat en overige bescheiden aanwezig en volledig. Voorraadlijsten niet van toepassing.' },
-      { vraag: 'Zijn de grondslagen gewijzigd ten opzichte van vorig jaar?', antwoord: 'Geen wijziging in grondslagen. Geen stelsel- of schattingswijziging. Nadere toelichting in jaarrekening niet vereist.' },
-    ].map(item => ({ ...item, id: randomUUID(), categorie: 'Algemeen', aangemaakt: nu, bijgewerkt: nu }));
-    fs.writeFileSync(standaardTekstenFile, JSON.stringify(seed, null, 2));
-  }
+  initStandaardTeksten();
   if (!fs.existsSync(settingsFile)) {
     fs.writeFileSync(settingsFile, JSON.stringify({
       templateDir: path.join(dataDir, 'docx'),
