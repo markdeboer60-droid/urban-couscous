@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Copy, Check, Pencil, Trash2, BookOpen, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Copy, Check, Pencil, Trash2, BookOpen, ArrowUp, ArrowDown, Star, Search, X } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
+
+function vindVariabelen(tekst) {
+  const matches = [...(tekst || '').matchAll(/\{([a-zA-Z_][a-zA-Z0-9_ ]*)\}/g)];
+  return [...new Set(matches.map(m => m[1]))];
+}
 
 export default function StandaardTekstenPage() {
   const showToast = useToast();
@@ -13,6 +18,8 @@ export default function StandaardTekstenPage() {
   const [nieuw, setNieuw]               = useState({ categorie: '', vraag: '', antwoord: '' });
   const [kopieerdId, setKopieerdId]     = useState(null);
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
+  const [zoekterm, setZoekterm]         = useState('');
+  const [vervangModal, setVervangModal] = useState(null); // { item } | null
 
   useEffect(() => { laad(); }, []);
 
@@ -33,20 +40,31 @@ export default function StandaardTekstenPage() {
     }
   }, [categorieen, actieveCategorie]);
 
-  const gefilterd = useMemo(() =>
-    actieveCategorie === 'alle'
+  const gefilterd = useMemo(() => {
+    let lijst = actieveCategorie === 'alle'
       ? teksten
-      : teksten.filter(t => (t.categorie || 'Overig') === actieveCategorie),
-    [teksten, actieveCategorie]
-  );
+      : teksten.filter(t => (t.categorie || 'Overig') === actieveCategorie);
+    if (zoekterm.trim()) {
+      const q = zoekterm.toLowerCase();
+      lijst = lijst.filter(t =>
+        (t.vraag || '').toLowerCase().includes(q) ||
+        (t.antwoord || '').toLowerCase().includes(q)
+      );
+    }
+    return lijst;
+  }, [teksten, actieveCategorie, zoekterm]);
 
-  // Group filtered items by category, categories sorted alphabetically
+  // Group filtered items by category; within each group favorites first
   const gegroepeerd = useMemo(() => {
     const map = new Map();
     for (const t of gefilterd) {
       const cat = t.categorie || 'Overig';
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat).push(t);
+    }
+    // Sort each group: favorites first, then original order
+    for (const [, items] of map) {
+      items.sort((a, b) => (b.favoriet ? 1 : 0) - (a.favoriet ? 1 : 0));
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, 'nl'));
   }, [gefilterd]);
@@ -88,8 +106,25 @@ export default function StandaardTekstenPage() {
     await window.api.standaardTeksten.reorderAll(nieuw);
   }
 
-  function kopieer(tekst, id) {
+  async function toggleFavoriet(item) {
+    await window.api.standaardTeksten.save({ ...item, favoriet: !item.favoriet });
+    laad();
+  }
+
+  function kopieer(item) {
+    const vars = vindVariabelen(item.antwoord);
+    if (vars.length > 0) {
+      setVervangModal({ item });
+    } else {
+      navigator.clipboard.writeText(item.antwoord).catch(() => {});
+      setKopieerdId(item.id);
+      setTimeout(() => setKopieerdId(id2 => id2 === item.id ? null : id2), 2000);
+    }
+  }
+
+  function kopieerTekst(tekst, id) {
     navigator.clipboard.writeText(tekst).catch(() => {});
+    setVervangModal(null);
     setKopieerdId(id);
     setTimeout(() => setKopieerdId(id2 => id2 === id ? null : id2), 2000);
   }
@@ -109,7 +144,7 @@ export default function StandaardTekstenPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       {/* ── header ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Standaard teksten</h1>
           <p className="text-gray-500 mt-1 text-sm">Dossiernotities voor Visionplanner — {teksten.length} tekst{teksten.length !== 1 ? 'en' : ''}</p>
@@ -121,6 +156,23 @@ export default function StandaardTekstenPage() {
           <Plus size={15} />
           Tekst toevoegen
         </button>
+      </div>
+
+      {/* ── zoekbalk ── */}
+      <div className="relative mb-5 max-w-md">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Zoeken in vraag of tekst..."
+          value={zoekterm}
+          onChange={e => setZoekterm(e.target.value)}
+          className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        />
+        {zoekterm && (
+          <button onClick={() => setZoekterm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-700 transition-colors">
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {/* ── category filter pills ── */}
@@ -284,35 +336,44 @@ export default function StandaardTekstenPage() {
                       )}
                       <p className="text-sm font-semibold text-gray-800 leading-snug">{item.vraag}</p>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => verplaats(item, -1)}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Omhoog"
+                        onClick={() => toggleFavoriet(item)}
+                        className={`p-1.5 rounded-lg transition-colors ${item.favoriet ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 hover:text-yellow-500 opacity-0 group-hover:opacity-100'}`}
+                        title={item.favoriet ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}
                       >
-                        <ArrowUp size={13} />
+                        <Star size={14} className={item.favoriet ? 'fill-yellow-400' : ''} />
                       </button>
-                      <button
-                        onClick={() => verplaats(item, 1)}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Omlaag"
-                      >
-                        <ArrowDown size={13} />
-                      </button>
-                      <button
-                        onClick={() => startBewerk(item)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Bewerken"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => setVerwijderBevestig(item.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Verwijderen"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => verplaats(item, -1)}
+                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Omhoog"
+                        >
+                          <ArrowUp size={13} />
+                        </button>
+                        <button
+                          onClick={() => verplaats(item, 1)}
+                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Omlaag"
+                        >
+                          <ArrowDown size={13} />
+                        </button>
+                        <button
+                          onClick={() => startBewerk(item)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Bewerken"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => setVerwijderBevestig(item.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Verwijderen"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -323,7 +384,7 @@ export default function StandaardTekstenPage() {
 
                   <div className="flex justify-end">
                     <button
-                      onClick={() => kopieer(item.antwoord, item.id)}
+                      onClick={() => kopieer(item)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                         kopieerdId === item.id
                           ? 'bg-green-100 text-green-700 border border-green-200'
@@ -352,6 +413,78 @@ export default function StandaardTekstenPage() {
           onAnnuleer={() => setVerwijderBevestig(null)}
         />
       )}
+
+      {vervangModal && (
+        <VervangModal
+          item={vervangModal.item}
+          onKopieer={(tekst) => kopieerTekst(tekst, vervangModal.item.id)}
+          onSluiten={() => setVervangModal(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function VervangModal({ item, onKopieer, onSluiten }) {
+  const variabelen = vindVariabelen(item.antwoord);
+  const [waarden, setWaarden] = useState(() => Object.fromEntries(variabelen.map(v => [v, ''])));
+
+  function stel(v, val) {
+    setWaarden(w => ({ ...w, [v]: val }));
+  }
+
+  function doeKopieer() {
+    let tekst = item.antwoord;
+    for (const [v, w] of Object.entries(waarden)) {
+      tekst = tekst.replace(new RegExp(`\\{${v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\}`, 'g'), w || `{${v}}`);
+    }
+    onKopieer(tekst);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onSluiten} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Variabelen invullen</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Vervang de variabelen voor het kopiëren</p>
+          </div>
+          <button onClick={onSluiten} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-6 space-y-3">
+          {variabelen.map((v, i) => (
+            <div key={v}>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                <span className="font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{`{${v}}`}</span>
+              </label>
+              <input
+                type="text"
+                value={waarden[v] || ''}
+                onChange={e => stel(v, e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && doeKopieer()}
+                className="invoer text-sm"
+                autoFocus={i === 0}
+                placeholder={`Waarde voor ${v}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+          <button onClick={onSluiten} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+            Annuleren
+          </button>
+          <button
+            onClick={doeKopieer}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <Copy size={13} />
+            Kopiëren
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

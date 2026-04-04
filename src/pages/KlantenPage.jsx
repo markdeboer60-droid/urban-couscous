@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { formatDatumTijd } from '../utils/formatDatum';
 
 // Sleutels die als standaardvelden worden behandeld (niet in "Overige velden" getoond)
-const STANDAARD_SLEUTELS = new Set(['adres', 'postcode', 'plaats', 'klantnummer']);
+const STANDAARD_SLEUTELS = new Set(['adres', 'postcode', 'plaats', 'klantnummer', 'kvk_nummer']);
 const CONTACT_REGEX = /^contactpersoon_(\d+)$/;
 
 function isContactSleutel(sleutel) {
@@ -29,7 +29,7 @@ export default function KlantenPage({ navigeer }) {
   function nieuw() {
     setBewerkKlant({
       naam: '',
-      velden: { klantnummer: '', adres: '', postcode: '', plaats: '', contactpersoon_1: '' },
+      velden: { klantnummer: '', kvk_nummer: '', adres: '', postcode: '', plaats: '', contactpersoon_1: '' },
     });
   }
 
@@ -37,6 +37,7 @@ export default function KlantenPage({ navigeer }) {
     // Zorg dat alle standaardvelden aanwezig zijn
     const velden = { ...klant.velden };
     if (!('klantnummer'    in velden)) velden.klantnummer    = '';
+    if (!('kvk_nummer'     in velden)) velden.kvk_nummer     = '';
     if (!('adres'          in velden)) velden.adres          = '';
     if (!('postcode'       in velden)) velden.postcode       = '';
     if (!('plaats'         in velden)) velden.plaats         = '';
@@ -236,9 +237,10 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
 
   function kiesBedrijf(rec) {
     const nieuwVelden = { ...velden };
-    if (rec.adres)    nieuwVelden.adres    = rec.adres;
-    if (rec.postcode) nieuwVelden.postcode = rec.postcode;
-    if (rec.plaats)   nieuwVelden.plaats   = rec.plaats;
+    if (rec.adres)     nieuwVelden.adres     = rec.adres;
+    if (rec.postcode)  nieuwVelden.postcode  = rec.postcode;
+    if (rec.plaats)    nieuwVelden.plaats    = rec.plaats;
+    if (rec.kvknummer) nieuwVelden.kvk_nummer = rec.kvknummer;
     const nieuwKlant = { ...klant, velden: nieuwVelden };
     if (rec.naam) nieuwKlant.naam = rec.naam;
     onChange(nieuwKlant);
@@ -358,15 +360,26 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
             autoFocus
           />
         </Invoerveld>
-        <Invoerveld label="Klantnummer">
-          <input
-            type="text"
-            value={velden.klantnummer || ''}
-            onChange={e => setVeld('klantnummer', e.target.value)}
-            placeholder="bijv. K-1042"
-            className="invoer"
-          />
-        </Invoerveld>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="Klantnummer">
+            <input
+              type="text"
+              value={velden.klantnummer || ''}
+              onChange={e => setVeld('klantnummer', e.target.value)}
+              placeholder="bijv. K-1042"
+              className="invoer"
+            />
+          </Invoerveld>
+          <Invoerveld label="KVK-nummer" variabele="{kvk_nummer}">
+            <input
+              type="text"
+              value={velden.kvk_nummer || ''}
+              onChange={e => setVeld('kvk_nummer', e.target.value)}
+              placeholder="12345678"
+              className="invoer"
+            />
+          </Invoerveld>
+        </div>
         <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer}">
           <input
             type="text"

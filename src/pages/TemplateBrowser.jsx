@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Search, FileText, ChevronRight, FolderOpen, LayoutGrid, List,
-  Star, Sheet, BookmarkCheck, ChevronDown, ChevronUp, ArrowRight, Settings,
+  Star, Sheet, BookmarkCheck, ChevronDown, ChevronUp, ArrowRight, Settings, Copy,
 } from 'lucide-react';
 import { formatDatum } from '../utils/formatDatum';
 import BulkModal from '../components/ui/BulkModal';
@@ -71,6 +71,12 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
   async function toggleFavoriet(e, id) {
     e.stopPropagation();
     await window.api.templates.toggleFavoriet(id);
+    laad();
+  }
+
+  async function dupliceer(e, id) {
+    e.stopPropagation();
+    await window.api.templates.duplicate(id);
     laad();
   }
 
@@ -278,6 +284,7 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
               onClick={() => openTemplate(t.id)}
               onToggleFavoriet={e => toggleFavoriet(e, t.id)}
               onBulk={e => { e.stopPropagation(); setBulkTemplate(t); }}
+              onDuplicate={e => dupliceer(e, t.id)}
             />
           ))}
         </div>
@@ -310,6 +317,7 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
               onClick={() => openTemplate(t.id)}
               onToggleFavoriet={e => toggleFavoriet(e, t.id)}
               onBulk={e => { e.stopPropagation(); setBulkTemplate(t); }}
+              onDuplicate={e => dupliceer(e, t.id)}
             />
           ))}
         </div>
@@ -349,7 +357,7 @@ function StapKaart({ nummer, titel, omschrijving, actieLabel, onClick, primair, 
 }
 
 // ── Sjabloonkaart (raster) ───────────────────────────────────────────────────
-function TemplateKaart({ template, heeftConcept, onClick, onToggleFavoriet, onBulk }) {
+function TemplateKaart({ template, heeftConcept, onClick, onToggleFavoriet, onBulk, onDuplicate }) {
   return (
     <button
       onClick={onClick}
@@ -367,6 +375,9 @@ function TemplateKaart({ template, heeftConcept, onClick, onToggleFavoriet, onBu
         <div className="flex items-center gap-1 mt-0.5">
           <span onClick={onBulk} className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer" title="Bulk opmaken">
             <Sheet size={13} className="text-gray-300 group-hover:text-gray-500" />
+          </span>
+          <span onClick={onDuplicate} className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer" title="Sjabloon kopiëren">
+            <Copy size={13} className="text-gray-300 group-hover:text-gray-500" />
           </span>
           <span onClick={onToggleFavoriet} className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer" title={template.favoriet ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}>
             <Star size={14} className={template.favoriet ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-gray-400'} />
@@ -387,7 +398,7 @@ function TemplateKaart({ template, heeftConcept, onClick, onToggleFavoriet, onBu
 }
 
 // ── Sjabloonrij (lijst) ──────────────────────────────────────────────────────
-function TemplateRij({ template, heeftConcept, laatste, kolBreedte, onClick, onToggleFavoriet, onBulk }) {
+function TemplateRij({ template, heeftConcept, laatste, kolBreedte, onClick, onToggleFavoriet, onBulk, onDuplicate }) {
   return (
     <button
       onClick={onClick}
@@ -418,6 +429,9 @@ function TemplateRij({ template, heeftConcept, laatste, kolBreedte, onClick, onT
         <div className="flex items-center gap-1">
           <span onClick={onBulk} className="p-1 rounded hover:bg-gray-100 transition-colors" title="Bulk opmaken">
             <Sheet size={13} className="text-gray-300 group-hover:text-gray-500" />
+          </span>
+          <span onClick={onDuplicate} className="p-1 rounded hover:bg-gray-100 transition-colors" title="Sjabloon kopiëren">
+            <Copy size={13} className="text-gray-300 group-hover:text-gray-500" />
           </span>
           <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
         </div>
