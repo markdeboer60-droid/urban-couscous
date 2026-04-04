@@ -239,3 +239,13 @@ body {
   padding: 4rem 1rem;
   color: #64748b;
 }
+
+/* Tax decoder spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tax decoder view */
+.tax-decoder {
+  padding-top: 1rem;
+}
