@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Copy, Check, Pencil, Trash2, BookOpen, ArrowUp, ArrowDown, Star, Search, X } from 'lucide-react';
+import { Plus, Copy, Check, Pencil, Trash2, BookOpen, ArrowUp, ArrowDown, Star, Search, X, FileText } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
@@ -20,6 +20,8 @@ export default function StandaardTekstenPage() {
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
   const [zoekterm, setZoekterm]         = useState('');
   const [vervangModal, setVervangModal] = useState(null); // { item } | null
+  const [selectie, setSelectie]         = useState(new Set());
+  const [risicoTekst, setRisicoTekst]   = useState(null); // string | null
 
   useEffect(() => { laad(); }, []);
 
@@ -127,6 +129,27 @@ export default function StandaardTekstenPage() {
     setVervangModal(null);
     setKopieerdId(id);
     setTimeout(() => setKopieerdId(id2 => id2 === id ? null : id2), 2000);
+  }
+
+  function toggleSelectie(id) {
+    setSelectie(s => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+
+  function genereerRisico() {
+    const geselecteerd = teksten.filter(t => selectie.has(t.id));
+    const isRisico = t => /risico.*motivatie|motivatie.*risico/i.test(t.vraag || '');
+    const risicoItem = geselecteerd.find(isRisico);
+    const werkstappen = geselecteerd.filter(t => !isRisico(t));
+
+    const delen = [];
+    if (risicoItem) delen.push(risicoItem.antwoord);
+    for (const w of werkstappen) delen.push(`${w.vraag}:\n${w.antwoord}`);
+    if (delen.length === 0) return;
+    setRisicoTekst(delen.join('\n\n'));
   }
 
   function startBewerk(item) {
@@ -326,8 +349,16 @@ export default function StandaardTekstenPage() {
                 </div>
               ) : (
                 /* ── View card ── */
-                <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors group">
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                <div key={item.id} className={`bg-white border rounded-xl p-5 transition-colors group ${selectie.has(item.id) ? 'border-blue-400 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <div className="flex items-start gap-2.5 mb-3">
+                    <input
+                      type="checkbox"
+                      checked={selectie.has(item.id)}
+                      onChange={() => toggleSelectie(item.id)}
+                      onClick={e => e.stopPropagation()}
+                      className="mt-0.5 w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
+                    />
+                    <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       {actieveCategorie === 'alle' && item.categorie && (
                         <span className="inline-block text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mb-1.5">
@@ -375,6 +406,7 @@ export default function StandaardTekstenPage() {
                         </button>
                       </div>
                     </div>
+                    </div>
                   </div>
 
                   {/* Answer text — read-only, selectable */}
@@ -421,6 +453,87 @@ export default function StandaardTekstenPage() {
           onSluiten={() => setVervangModal(null)}
         />
       )}
+
+      {risicoTekst !== null && (
+        <RisicoModal tekst={risicoTekst} onSluiten={() => setRisicoTekst(null)} />
+      )}
+
+      {/* ── Sticky selectiebalk ── */}
+      {selectie.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-4 px-6 py-3.5 bg-white border-t border-gray-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-800">
+              {selectie.size} item{selectie.size !== 1 ? 's' : ''} geselecteerd
+            </span>
+            <button
+              onClick={() => setSelectie(new Set())}
+              className="text-xs text-gray-400 hover:text-gray-700 transition-colors underline underline-offset-2"
+            >
+              Wissen
+            </button>
+          </div>
+          <button
+            onClick={genereerRisico}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <FileText size={15} />
+            Risico genereren
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RisicoModal({ tekst, onSluiten }) {
+  const [inhoud, setInhoud] = useState(tekst);
+  const [gekopieerd, setGekopieerd] = useState(false);
+
+  function kopieer() {
+    navigator.clipboard.writeText(inhoud).catch(() => {});
+    setGekopieerd(true);
+    setTimeout(() => setGekopieerd(false), 2000);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onSluiten} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Gegenereerde risicotekst</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Risico/motivatie eerst, daarna de geselecteerde werkstappen — bewerkbaar voor kopiëren</p>
+          </div>
+          <button onClick={onSluiten} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-hidden p-5">
+          <textarea
+            value={inhoud}
+            onChange={e => setInhoud(e.target.value)}
+            className="w-full h-full min-h-[360px] text-sm text-gray-700 border border-gray-200 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 leading-relaxed font-[inherit]"
+          />
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between shrink-0">
+          <span className="text-xs text-gray-400">{inhoud.length} tekens</span>
+          <div className="flex gap-2">
+            <button onClick={onSluiten} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+              Sluiten
+            </button>
+            <button
+              onClick={kopieer}
+              className={`flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-all ${
+                gekopieerd
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}
+            >
+              {gekopieerd ? <><Check size={13} /> Gekopieerd!</> : <><Copy size={13} /> Kopiëren</>}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
