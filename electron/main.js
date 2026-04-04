@@ -22,6 +22,14 @@ const geschiedenisDir = path.join(dataDir, 'geschiedenis');
 const klantenFile = path.join(dataDir, 'klanten.json');
 const conceptenFile = path.join(dataDir, 'concepten.json');
 const standaardTekstenFile = path.join(dataDir, 'standaard_teksten.json');
+const handtekeningDir = path.join(dataDir, 'handtekeningen');
+
+// 1×1 transparante PNG als fallback wanneer een sjabloon {%handtekening} bevat
+// maar er geen handtekening beschikbaar is — voorkomt render-fout.
+const TRANSPARENT_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64'
+);
 
 const defaultOndertekenaars = [
   'Drs M.R. de Boer AA',
@@ -186,7 +194,7 @@ function initStandaardTeksten() {
 }
 
 function ensureDirs() {
-  [dataDir, veldDir, geschiedenisDir].forEach(d => {
+  [dataDir, veldDir, geschiedenisDir, handtekeningDir].forEach(d => {
     if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
   });
   if (!fs.existsSync(metaFile)) fs.writeFileSync(metaFile, '[]');
@@ -452,8 +460,8 @@ function compacteerLegeAlineas(zip) {
   }
 }
 
-// ── Export handlers ───────────────────────────────────────────────────────────
-ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
+// ── Export helpers ────────────────────────────────────────────────────────────
+async function genereerDocxImpl({ templateId, values, ondertekekenaarNaam, skipVolgnummer }) {
   const all = readMeta();
   const meta = all.find(t => t.id === templateId);
   if (!meta) throw new Error('Template niet gevonden');
@@ -461,27 +469,49 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   const docxPath = getTemplateDocxPath(templateId, meta.versie);
   if (!fs.existsSync(docxPath)) throw new Error('DOCX bestand niet gevonden: ' + docxPath);
 
-  // Volgnummer ophogen en injecteren als {volgnummer}
   let renderValues = { ...values };
-  if (meta.volgnummerActief) {
+
+  // Volgnummer ophogen en injecteren als {volgnummer}
+  if (!skipVolgnummer && meta.volgnummerActief) {
     const prefix  = meta.volgnummerPrefix  || '';
     const padding = meta.volgnummerPadding || 4;
     const huidig  = meta.volgnummerHuidig  || 1;
     renderValues.volgnummer = `${prefix}${String(huidig).padStart(padding, '0')}`;
   }
 
+  // Handtekening-afbeelding bepalen voor {%handtekening}
+  const settings = readSettings();
+  const handtekeningPaden = settings.handtekeningPaden || {};
+  const sigPad = ondertekekenaarNaam && handtekeningPaden[ondertekekenaarNaam]
+    ? handtekeningPaden[ondertekekenaarNaam]
+    : null;
+  renderValues.handtekening = sigPad;
+
   const PizZip = require('pizzip');
   const Docxtemplater = require('docxtemplater');
+  const ImageModule = require('docxtemplater-image-module-free');
+
+  const imageModule = new ImageModule({
+    centered: false,
+    getImage(tagValue) {
+      if (!tagValue) return TRANSPARENT_PNG;
+      try { return fs.readFileSync(tagValue); } catch { return TRANSPARENT_PNG; }
+    },
+    getSize(img) {
+      if (img === TRANSPARENT_PNG) return [1, 1];
+      return [200, 80]; // breedte × hoogte in pixels
+    },
+  });
 
   const content = fs.readFileSync(docxPath, 'binary');
   let buf;
   try {
     const zip = fixSplitTemplateTags(new PizZip(content));
     const doc = new Docxtemplater(zip, {
+      modules: [imageModule],
       paragraphLoop: true,
       linebreaks: true,
       stripInvalidXMLChars: true,
-      // Lege string voor reguliere tags, lege array voor loop/conditie-modules
       nullGetter: (part) => part.module ? [] : '',
     });
     doc.render(renderValues);
@@ -504,18 +534,29 @@ ipcMain.handle('export:generateDocx', async (_, { templateId, values }) => {
   }
 
   // Na succesvolle render: volgnummer verhogen
-  if (meta.volgnummerActief) {
+  if (!skipVolgnummer && meta.volgnummerActief) {
     const idx = all.findIndex(t => t.id === templateId);
     if (idx >= 0) {
       all[idx].volgnummerHuidig = (meta.volgnummerHuidig || 1) + 1;
       writeMeta(all);
     }
   }
-  const outName = `${meta.naam.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.docx`;
+
+  const suffix = ondertekekenaarNaam ? '_getekend' : '';
+  const outName = `${meta.naam.replace(/[^a-zA-Z0-9]/g, '_')}${suffix}_${Date.now()}.docx`;
   const outPath = path.join(os.tmpdir(), outName);
   fs.writeFileSync(outPath, buf);
   return outPath;
-});
+}
+
+// ── Export handlers ───────────────────────────────────────────────────────────
+ipcMain.handle('export:generateDocx', async (_, payload) =>
+  genereerDocxImpl({ ...payload, skipVolgnummer: false })
+);
+
+ipcMain.handle('export:tekenDocument', async (_, { templateId, values, ondertekekenaarNaam }) =>
+  genereerDocxImpl({ templateId, values, ondertekekenaarNaam, skipVolgnummer: true })
+);
 
 ipcMain.handle('export:openInWord', (_, filePath) => {
   shell.openPath(filePath);
@@ -660,6 +701,21 @@ ipcMain.handle('settings:selectLogo', async () => {
     properties: ['openFile'],
   });
   return canceled ? null : filePaths[0];
+});
+
+ipcMain.handle('settings:selectHandtekening', async (_, naam) => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: `Handtekening selecteren voor ${naam}`,
+    filters: [{ name: 'Afbeelding', extensions: ['png', 'jpg', 'jpeg'] }],
+    properties: ['openFile'],
+  });
+  if (canceled) return null;
+  const src = filePaths[0];
+  const ext = path.extname(src).toLowerCase() || '.png';
+  const safe = naam.replace(/[^a-zA-Z0-9]/g, '_');
+  const dest = path.join(handtekeningDir, `${safe}${ext}`);
+  fs.copyFileSync(src, dest);
+  return dest;
 });
 
 ipcMain.handle('settings:getOneDrivePad', () => {

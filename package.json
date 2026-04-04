@@ -39,6 +39,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "cors": "^2.8.6",
     "docxtemplater": "^3.68.3",
+    "docxtemplater-image-module-free": "^1.1.1",
     "express": "^5.2.1",
     "lucide-react": "^1.7.0",
     "pdf-parse": "^2.4.5",

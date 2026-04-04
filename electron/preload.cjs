@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld('api', {
   // Export
   export: {
     generateDocx: (payload) => ipcRenderer.invoke('export:generateDocx', payload),
+    tekenDocument: (payload) => ipcRenderer.invoke('export:tekenDocument', payload),
     openInWord: (filePath) => ipcRenderer.invoke('export:openInWord', filePath),
     exportPdf: (docxPath) => ipcRenderer.invoke('export:exportPdf', docxPath),
     openPdf: (pdfPath) => ipcRenderer.invoke('export:openPdf', pdfPath),
@@ -51,6 +52,7 @@ contextBridge.exposeInMainWorld('api', {
     set: (updates) => ipcRenderer.invoke('settings:set', updates),
     selectDir: () => ipcRenderer.invoke('settings:selectDir'),
     selectLogo: () => ipcRenderer.invoke('settings:selectLogo'),
+    selectHandtekening: (naam) => ipcRenderer.invoke('settings:selectHandtekening', naam),
     getOneDrivePad: () => ipcRenderer.invoke('settings:getOneDrivePad'),
   },
   // Geschiedenis

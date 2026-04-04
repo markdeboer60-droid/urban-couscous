@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle,
-  AlertCircle, ExternalLink, Cloud, ArrowRight, Printer,
+  AlertCircle, ExternalLink, Cloud, ArrowRight, Printer, PenLine, User,
 } from 'lucide-react';
 
 function berekenBestandsnaam(patroon, templateNaam, values) {
@@ -27,7 +27,8 @@ function berekenBestandsnaam(patroon, templateNaam, values) {
 }
 
 export default function ExportPage({ exportData, navigeer }) {
-  const { docxPad, templateNaam, values = {}, bestandsnaamPatroon } = exportData;
+  const { templateId, templateNaam, values = {}, bestandsnaamPatroon } = exportData;
+  const [docxPad, setDocxPad] = useState(exportData.docxPad);
   const [pdfPad, setPdfPad] = useState(null);
   const [status, setStatus] = useState({});
   const [opgeslagenDocxPad, setOpgeslagenDocxPad] = useState(null);
@@ -35,12 +36,36 @@ export default function ExportPage({ exportData, navigeer }) {
   const [oneDrivePad, setOneDrivePad] = useState(null);
   const [alleTemplates, setAlleTemplates] = useState([]);
   const [vervolgTemplate, setVervolgTemplate] = useState('');
+  const [ondertekenaars, setOndertekenaars] = useState([]);
+  const [handtekeningPaden, setHandtekeningPaden] = useState({});
+  const [getekendDoor, setGetekendDoor] = useState(null);
+  const [tekeningBezig, setTekeningBezig] = useState(false);
   const standaardNaam = berekenBestandsnaam(bestandsnaamPatroon, templateNaam, values);
 
   useEffect(() => {
     window.api.settings.getOneDrivePad().then(p => setOneDrivePad(p));
     window.api.templates.getAll().then(setAlleTemplates);
+    window.api.settings.get().then(s => {
+      setOndertekenaars(s.ondertekenaars || []);
+      setHandtekeningPaden(s.handtekeningPaden || {});
+    });
   }, []);
+
+  async function tekenDocument(naam) {
+    if (!templateId) return;
+    setTekeningBezig(true);
+    try {
+      const nieuwPad = await window.api.export.tekenDocument({ templateId, values, ondertekekenaarNaam: naam });
+      setDocxPad(nieuwPad);
+      setPdfPad(null); // PDF opnieuw genereren na tekenen
+      setGetekendDoor(naam);
+      setStatus({});
+    } catch (e) {
+      alert('Ondertekenen mislukt: ' + (e.message || e));
+    } finally {
+      setTekeningBezig(false);
+    }
+  }
 
   async function voerUit(actie, fn) {
     setStatus(s => ({ ...s, [actie]: { bezig: true, fout: null, klaar: false } }));
@@ -115,6 +140,55 @@ export default function ExportPage({ exportData, navigeer }) {
           Kies hieronder wat je wilt doen.
         </p>
       </div>
+
+      {/* Ondertekenen sectie — alleen tonen als er ondertekenaars zijn geconfigureerd */}
+      {ondertekenaars.length > 0 && (
+        <Sectie
+          titel="Definitief ondertekenen"
+          icoon={<PenLine size={18} className="text-indigo-600" />}
+          className="mb-4"
+        >
+          {getekendDoor ? (
+            <div className="flex items-center gap-2.5 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-800">
+              <CheckCircle size={16} className="text-indigo-600 shrink-0" />
+              <div>
+                <span className="font-medium">Getekend door {getekendDoor}</span>
+                <span className="text-indigo-500 text-xs ml-2">— document opnieuw gegenereerd met handtekening</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 -mt-1 mb-1">
+              Kies de ondertekenaar. Het document wordt opnieuw gegenereerd met de handtekening op de plek van <code className="bg-gray-100 px-1 rounded text-gray-600">{'{%handtekening}'}</code> in het sjabloon.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {ondertekenaars.map(naam => {
+              const heeftHandtekening = !!handtekeningPaden[naam];
+              return (
+                <button
+                  key={naam}
+                  onClick={() => tekenDocument(naam)}
+                  disabled={tekeningBezig || !heeftHandtekening}
+                  title={!heeftHandtekening ? 'Geen handtekening geconfigureerd in Instellingen' : `Ondertekenen als ${naam}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
+                    getekendDoor === naam
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
+                  }`}
+                >
+                  {tekeningBezig && getekendDoor !== naam ? (
+                    <Loader2 size={14} className="animate-spin shrink-0" />
+                  ) : (
+                    <User size={14} className="shrink-0" />
+                  )}
+                  {naam}
+                  {!heeftHandtekening && <span className="text-xs opacity-60 ml-1">(geen handtekening)</span>}
+                </button>
+              );
+            })}
+          </div>
+        </Sectie>
+      )}
 
       {/* Word sectie */}
       <Sectie titel="Word-document" icoon={<FileText size={18} className="text-blue-600" />}>

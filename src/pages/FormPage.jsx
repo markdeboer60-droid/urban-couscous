@@ -255,7 +255,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       });
       // Concept verwijderen — fout hier mag genereren niet blokkeren
       try { await window.api.concepten.delete(templateId); } catch {}
-      navigeer('export', { docxPad, templateNaam: template.naam, values: waarden, bestandsnaamPatroon: template.bestandsnaamPatroon });
+      navigeer('export', { templateId, docxPad, templateNaam: template.naam, values: waarden, bestandsnaamPatroon: template.bestandsnaamPatroon });
     } catch (e) {
       setFout(e.message || 'Er is een fout opgetreden bij het genereren.');
     } finally {

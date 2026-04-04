@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, FolderOpen, Image, Loader2, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Image, Loader2, CheckCircle, Plus, Trash2, Pen } from 'lucide-react';
 
 export default function InstellingenPanel({ onTerug }) {
   const [instellingen, setInstellingen] = useState({
-    templateDir: '', kantoorNaam: '', logoPad: '', ondertekenaars: [],
+    templateDir: '', kantoorNaam: '', logoPad: '', ondertekenaars: [], handtekeningPaden: {},
   });
   const [bezig, setBezig] = useState(false);
   const [opgeslagen, setOpgeslagen] = useState(false);
@@ -16,6 +16,7 @@ export default function InstellingenPanel({ onTerug }) {
         kantoorNaam: s.kantoorNaam || '',
         logoPad: s.logoPad || '',
         ondertekenaars: s.ondertekenaars || [],
+        handtekeningPaden: s.handtekeningPaden || {},
       });
     });
   }, []);
@@ -44,6 +45,18 @@ export default function InstellingenPanel({ onTerug }) {
 
   function verwijderOndertekenaar(naam) {
     stelIn('ondertekenaars', instellingen.ondertekenaars.filter(o => o !== naam));
+    const { [naam]: _, ...rest } = instellingen.handtekeningPaden;
+    stelIn('handtekeningPaden', rest);
+  }
+
+  async function kiesHandtekening(naam) {
+    const pad = await window.api.settings.selectHandtekening(naam);
+    if (pad) stelIn('handtekeningPaden', { ...instellingen.handtekeningPaden, [naam]: pad });
+  }
+
+  function verwijderHandtekening(naam) {
+    const { [naam]: _, ...rest } = instellingen.handtekeningPaden;
+    stelIn('handtekeningPaden', rest);
   }
 
   async function opslaan() {
@@ -90,25 +103,67 @@ export default function InstellingenPanel({ onTerug }) {
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-1">Ondertekenaars</h2>
           <p className="text-xs text-gray-400 mb-4">
-            Beschikbaar als veldtype "Ondertekenaar kantoor" in sjablonen. Variabele in Word: <code className="bg-gray-100 px-1 rounded">{'{ondertekenaar}'}</code>
+            Variabele naam in Word: <code className="bg-gray-100 px-1 rounded">{'{ondertekenaar}'}</code> —
+            handtekening-afbeelding: <code className="bg-gray-100 px-1 rounded">{'{%handtekening}'}</code>
           </p>
-          <div className="space-y-2 mb-4">
-            {instellingen.ondertekenaars.map(naam => (
-              <div key={naam} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-700">{naam}</span>
-                <button
-                  onClick={() => verwijderOndertekenaar(naam)}
-                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+          <div className="space-y-3 mb-4">
+            {instellingen.ondertekenaars.map(naam => {
+              const pad = instellingen.handtekeningPaden[naam];
+              return (
+                <div key={naam} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-800">{naam}</span>
+                    <button
+                      onClick={() => verwijderOndertekenaar(naam)}
+                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Ondertekenaar verwijderen"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {pad ? (
+                      <div className="flex items-center gap-3 flex-1">
+                        <img
+                          src={`file://${pad}`}
+                          alt={`Handtekening ${naam}`}
+                          className="h-12 max-w-[180px] object-contain border border-gray-200 rounded-lg bg-white p-1"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => kiesHandtekening(naam)}
+                            className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                          >
+                            <Pen size={12} />
+                            Vervangen
+                          </button>
+                          <button
+                            onClick={() => verwijderHandtekening(naam)}
+                            className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            <Trash2 size={12} />
+                            Verwijderen
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => kiesHandtekening(naam)}
+                        className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 border-dashed px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                      >
+                        <Image size={13} />
+                        Handtekening uploaden (PNG/JPG)
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
             {instellingen.ondertekenaars.length === 0 && (
               <p className="text-xs text-gray-400 py-2">Nog geen ondertekenaars toegevoegd</p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-3 border-t border-gray-100">
             <input
               type="text"
               value={nieuweOndertekenaar}
