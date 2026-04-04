@@ -3,6 +3,7 @@ import { getEntries, saveEntry } from './api';
 import InputForm from './components/InputForm';
 import Charts from './components/Charts';
 import OverviewTable from './components/OverviewTable';
+import BetalingskenmerkDecoder from './components/BetalingskenmerkDecoder';
 import { calcTotaal, formatEur } from './utils';
 import './App.css';
 
@@ -37,6 +38,12 @@ export default function App() {
             onClick={() => setView('invoer')}
           >
             Invoer
+          </button>
+          <button
+            className={view === 'belasting' ? 'active' : ''}
+            onClick={() => setView('belasting')}
+          >
+            Betalingskenmerk
           </button>
         </nav>
       </header>
@@ -81,6 +88,12 @@ export default function App() {
       {view === 'invoer' && (
         <main className="invoer">
           <InputForm entries={entries} onSave={handleSave} />
+        </main>
+      )}
+
+      {view === 'belasting' && (
+        <main className="belasting">
+          <BetalingskenmerkDecoder />
         </main>
       )}
     </div>
