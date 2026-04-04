@@ -79,14 +79,21 @@ export function decodeerBetalingskenmerk(kenmerk) {
     omschrijving: 'Onbekende belastingsoort',
   };
 
-  // ── Stap 4: Jaar reconstrueren (huidig decennium voorplakken) ────────────
-  const huidigJaar = new Date().getFullYear();           // bijv. 2026
-  const decenniumPrefix = String(huidigJaar).slice(2, 3); // "2" voor 2020-2029
-  const jaarTweecijferig = decenniumPrefix + jaarDigit;   // bijv. "2" + "3" = "23"
+  // ── Stap 4: Jaar reconstrueren ───────────────────────────────────────────
+  // Het kenmerk bevat slechts 1 cijfer voor het jaar. We plakken de tientallen
+  // van het huidige jaar ervoor, en corrigeren daarna: als het resultaat meer
+  // dan 1 jaar in de toekomst ligt, trekken we 10 af (het gaat dan om het
+  // vorige decennium, bijv. digit "9" in 2026 → 2029 → corrigeer naar 2019).
+  const huidigJaar = new Date().getFullYear();
+  const tientallen = Math.floor((huidigJaar % 100) / 10); // bijv. 2026 → 2
+  const jaarTweecijferig = String(tientallen) + jaarDigit; // bijv. "2" + "3" = "23"
+  const volJaar = 2000 + parseInt(jaarTweecijferig, 10);
+  const gecorrigeerdeJaar = volJaar > huidigJaar + 1 ? volJaar - 10 : volJaar;
 
   // ── Stap 5: Aanslagnummer samenstellen ───────────────────────────────────
   // Formaat: [BSN9][MiddelLetter][Subnummer][JaarTweecijferig][Tijdvak][Volgnummer]
-  const aanslagnummer = `${bsn9}${middelInfo.letter}${subnummer}${jaarTweecijferig}${tijdvak}${volgnummer}`;
+  const jaarInAanslag = String(gecorrigeerdeJaar).slice(2); // 2-cijferig, bijv. "23"
+  const aanslagnummer = `${bsn9}${middelInfo.letter}${subnummer}${jaarInAanslag}${tijdvak}${volgnummer}`;
 
   return {
     // Ruwe velden
@@ -98,7 +105,7 @@ export function decodeerBetalingskenmerk(kenmerk) {
     middelLetter: middelInfo.letter,
     middelOmschrijving: middelInfo.omschrijving,
     jaarDigit,
-    jaarTweecijferig,
+    volJaar: gecorrigeerdeJaar,
     subnummer,
     tijdvak,
     volgnummer,

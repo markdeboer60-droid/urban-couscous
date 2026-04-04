@@ -378,6 +378,21 @@ body {
   margin-bottom: 0.4rem;
 }
 
+.kopieer-btn {
+  margin-top: 0.6rem;
+  padding: 0.3rem 1rem;
+  background: white;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.kopieer-btn:hover { background: #dbeafe; }
+
 .result-aanslagnummer-value {
   font-size: 1.8rem;
   font-weight: 700;

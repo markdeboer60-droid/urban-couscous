@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { decodeerBetalingskenmerk, MIDDELCODE_MAP } from '../decodeBelastingkenmerk';
 
+function useClipboard() {
+  const [gekopieerd, setGekopieerd] = useState(false);
+  function kopieer(tekst) {
+    navigator.clipboard.writeText(tekst).then(() => {
+      setGekopieerd(true);
+      setTimeout(() => setGekopieerd(false), 2000);
+    });
+  }
+  return { gekopieerd, kopieer };
+}
+
 const VOORBEELDEN = [
   { label: 'Voorbeeld (OB)', kenmerk: '0036000011302270' },
 ];
@@ -20,10 +31,17 @@ export default function BetalingskenmerkDecoder() {
   }
 
   function handleChange(e) {
-    // Sta alleen cijfers en spaties toe, max 16 cijfers
+    // Strip alle niet-cijfers (incl. spaties uit gekopieerde kenmerken) en
+    // beperk tot 16. maxLength op het <input> element wordt NIET gebruikt omdat
+    // de browser afkapt vóór spaties worden gestript, wat verkeerde resultaten geeft.
     const val = e.target.value.replace(/[^\d]/g, '').slice(0, 16);
     setInput(val);
-    if (resultaat) setResultaat(null);
+    // Automatisch decoderen zodra 16 cijfers zijn bereikt
+    if (val.length === 16) {
+      setResultaat(decodeerBetalingskenmerk(val));
+    } else {
+      setResultaat(null);
+    }
   }
 
   return (
@@ -43,7 +61,6 @@ export default function BetalingskenmerkDecoder() {
               placeholder="bijv. 0036000011302270"
               value={input}
               onChange={handleChange}
-              maxLength={16}
               className="decoder-input"
               aria-label="Betalingskenmerk"
             />
@@ -82,12 +99,21 @@ export default function BetalingskenmerkDecoder() {
 }
 
 function Resultaat({ data }) {
+  const { gekopieerd, kopieer } = useClipboard();
+
   return (
     <div className="decoder-result">
       {/* Aanslagnummer — prominent bovenaan */}
       <div className="result-aanslagnummer">
         <div className="result-aanslagnummer-label">Aanslagnummer</div>
         <div className="result-aanslagnummer-value">{data.aanslagnummer}</div>
+        <button
+          className="kopieer-btn"
+          onClick={() => kopieer(data.aanslagnummer)}
+          type="button"
+        >
+          {gekopieerd ? 'Gekopieerd!' : 'Kopieer'}
+        </button>
       </div>
 
       {data.bsnOngeldig && (
@@ -111,7 +137,7 @@ function Resultaat({ data }) {
           label={`Belastingsoort (middelcode ${data.middelCode})`}
           waarde={`${data.middelLetter} — ${data.middelOmschrijving}`}
         />
-        <Veld label="Jaar (2-cijferig)" waarde={`20${data.jaarTweecijferig} (positie: ${data.jaarDigit})`} />
+        <Veld label="Jaar" waarde={`${data.volJaar} (kenmerk-digit: ${data.jaarDigit})`} />
         <Veld label="Subnummer / aanslagsoort" waarde={data.subnummer} />
         <Veld label="Tijdvak" waarde={data.tijdvak} />
         <Veld label="Volgnummer" waarde={data.volgnummer} />
