@@ -88,10 +88,15 @@ function Resultaat({ data }) {
       <div className="result-aanslagnummer">
         <div className="result-aanslagnummer-label">Aanslagnummer</div>
         <div className="result-aanslagnummer-value">{data.aanslagnummer}</div>
-        <div className={`checksum-badge ${data.checksumGeldig ? 'ok' : 'warn'}`}>
-          Checksum {data.checksumGeldig ? 'geldig' : 'ongeldig / onbekend formaat'}
-        </div>
       </div>
+
+      {data.bsnOngeldig && (
+        <div className="decoder-error">
+          Waarschuwing: het 9e BSN/RSIN-cijfer kon niet worden bepaald (11-proef geeft
+          waarde 10, wat geen geldig cijfer is). Het kenmerk kan een RSIN bevatten of
+          is mogelijk onjuist ingevoerd.
+        </div>
+      )}
 
       {/* Losse onderdelen */}
       <div className="result-grid">
@@ -99,7 +104,8 @@ function Resultaat({ data }) {
         <Veld
           label="BSN / RSIN (9 cijfers, gereconstrueerd)"
           waarde={data.bsn9}
-          highlight
+          highlight={!data.bsnOngeldig}
+          fout={data.bsnOngeldig}
         />
         <Veld
           label={`Belastingsoort (middelcode ${data.middelCode})`}
@@ -118,9 +124,9 @@ function Resultaat({ data }) {
   );
 }
 
-function Veld({ label, waarde, highlight }) {
+function Veld({ label, waarde, highlight, fout }) {
   return (
-    <div className={`result-veld ${highlight ? 'highlight' : ''}`}>
+    <div className={`result-veld ${highlight ? 'highlight' : ''} ${fout ? 'fout' : ''}`}>
       <div className="veld-label">{label}</div>
       <div className="veld-waarde">{waarde}</div>
     </div>

@@ -387,17 +387,6 @@ body {
   word-break: break-all;
 }
 
-.checksum-badge {
-  display: inline-block;
-  margin-top: 0.6rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.checksum-badge.ok   { background: #dcfce7; color: #16a34a; }
-.checksum-badge.warn { background: #fef9c3; color: #a16207; }
 
 .result-grid {
   display: grid;
@@ -415,6 +404,11 @@ body {
 .result-veld.highlight {
   background: #eff6ff;
   border-color: #bfdbfe;
+}
+
+.result-veld.fout {
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
 .veld-label {

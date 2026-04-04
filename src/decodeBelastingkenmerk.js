@@ -35,26 +35,11 @@ export function bereken9ecijfer(digits8) {
   return som % 11;
 }
 
-// ── Checksum-validatie (mod-11 over het volledige kenmerk) ──────────────────
-/**
- * Valideert de checksum (positie 1) van een 16-cijferig betalingskenmerk.
- * Gewichten zijn 2 t/m 7, herhalend van rechts naar links over posities 2–16.
- * De som inclusief het checksum-cijfer (gewicht 2 t/m 7, herhalend) moet ≡ 0 (mod 11).
- *
- * Retourneert true als geldig, false als ongeldig.
- */
-export function valideerChecksum(kenmerk) {
-  if (kenmerk.length !== 16) return false;
-  // Standaard Belastingdienst: gewichten 2..7 herhalend van rechts (pos 16→1)
-  const gewichten = [2, 3, 4, 5, 6, 7];
-  let som = 0;
-  for (let i = 0; i < 16; i++) {
-    // positie vanuit rechts: 15-i → gewichtsindex
-    const gewicht = gewichten[(15 - i) % gewichten.length];
-    som += parseInt(kenmerk[i], 10) * gewicht;
-  }
-  return som % 11 === 0;
-}
+// ── Checksum ─────────────────────────────────────────────────────────────────
+// Het exacte gewichtenpatroon voor de checksum (positie 1) is niet publiek
+// gedocumenteerd door de Belastingdienst. We lezen het cijfer wel uit, maar
+// valideren het niet — om te voorkomen dat geldige kenmerken als ongeldig
+// worden weergegeven.
 
 // ── Hoofdfunctie ─────────────────────────────────────────────────────────────
 /**
@@ -82,8 +67,11 @@ export function decodeerBetalingskenmerk(kenmerk) {
   const volgnummer = cleaned[15];
 
   // ── Stap 2: BSN/RSIN reconstrueren via de 11-proef ───────────────────────
-  const c9 = bereken9ecijer_intern(bsn8digits);
-  const bsn9 = bsn8str + c9;
+  const c9 = bereken9ecijfer(bsn8digits);
+  // c9 = 10 betekent dat het BSN niet als geldig 9-cijferig getal te
+  // reconstrueren is (10 is geen enkel cijfer).
+  const bsnOngeldig = c9 === 10;
+  const bsn9 = bsnOngeldig ? bsn8str + '?' : bsn8str + c9;
 
   // ── Stap 3: Middelcode omzetten naar letter ───────────────────────────────
   const middelInfo = MIDDELCODE_MAP[middelCode] ?? {
@@ -96,19 +84,16 @@ export function decodeerBetalingskenmerk(kenmerk) {
   const decenniumPrefix = String(huidigJaar).slice(2, 3); // "2" voor 2020-2029
   const jaarTweecijferig = decenniumPrefix + jaarDigit;   // bijv. "2" + "3" = "23"
 
-  // ── Stap 5: Checksum valideren ────────────────────────────────────────────
-  const checksumGeldig = valideerChecksum(cleaned);
-
-  // ── Stap 6: Aanslagnummer samenstellen ────────────────────────────────────
+  // ── Stap 5: Aanslagnummer samenstellen ───────────────────────────────────
   // Formaat: [BSN9][MiddelLetter][Subnummer][JaarTweecijferig][Tijdvak][Volgnummer]
   const aanslagnummer = `${bsn9}${middelInfo.letter}${subnummer}${jaarTweecijferig}${tijdvak}${volgnummer}`;
 
   return {
     // Ruwe velden
     checksum,
-    checksumGeldig,
     bsn8: bsn8str,
     bsn9,
+    bsnOngeldig,
     middelCode,
     middelLetter: middelInfo.letter,
     middelOmschrijving: middelInfo.omschrijving,
@@ -122,7 +107,3 @@ export function decodeerBetalingskenmerk(kenmerk) {
   };
 }
 
-// Interne alias (vermijdt naam-conflict met export)
-function bereken9ecijer_intern(digits8) {
-  return bereken9ecijfer(digits8);
-}
