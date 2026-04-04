@@ -32,17 +32,16 @@ const MAANDEN = [
  * Bekende codes:
  *  00       → jaaraangifte
  *  01–12    → maand (jan–dec), universeel voor alle belastingsoorten
- *  21–24    → 1e t/m 4e kwartaal (alternatieve codering)
- *  25–28    → 1e t/m 4e kwartaal (Belastingdienst-spec: 27 = 3e kwartaal OB)
+ *  21,24,27,30 → 1e t/m 4e kwartaal OB (stap van 3: kwartaal = (code-21)/3 + 1)
  *
  * Alle andere codes worden ongewijzigd teruggegeven.
  */
 export function beschrijfTijdvak(tijdvak) {
   const t = parseInt(tijdvak, 10);
-  if (t === 0)              return 'jaaraangifte';
-  if (t >= 1  && t <= 12)  return MAANDEN[t - 1];
-  if (t >= 25 && t <= 28)  return `${t - 24}e kwartaal`;
-  if (t >= 21 && t <= 24)  return `${t - 20}e kwartaal`;
+  if (t === 0)                                    return 'jaaraangifte';
+  if (t >= 1 && t <= 12)                          return MAANDEN[t - 1];
+  // OB-kwartalen: 21=Q1, 24=Q2, 27=Q3, 30=Q4 (stap 3)
+  if (t >= 21 && t <= 30 && (t - 21) % 3 === 0)  return `${(t - 21) / 3 + 1}e kwartaal`;
   return tijdvak; // onbekende code: toon raw
 }
 
