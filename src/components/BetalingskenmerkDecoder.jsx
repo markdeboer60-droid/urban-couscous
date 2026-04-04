@@ -105,6 +105,7 @@ function Resultaat({ data }) {
     <div className="decoder-result">
       {/* Aanslagnummer — prominent bovenaan */}
       <div className="result-aanslagnummer">
+        <div className="result-samenvatting">{data.samenvatting}</div>
         <div className="result-aanslagnummer-label">Aanslagnummer</div>
         <div className="result-aanslagnummer-value">{data.aanslagnummer}</div>
         <button
@@ -139,7 +140,7 @@ function Resultaat({ data }) {
         />
         <Veld label="Jaar" waarde={`${data.volJaar} (kenmerk-digit: ${data.jaarDigit})`} />
         <Veld label="Subnummer / aanslagsoort" waarde={data.subnummer} />
-        <Veld label="Tijdvak" waarde={data.tijdvak} />
+        <Veld label="Tijdvak" waarde={`${data.tijdvak} – ${data.tijdvakOmschrijving}`} />
         <Veld label="Volgnummer" waarde={data.volgnummer} />
         <Veld label="Checksum (positie 1)" waarde={String(data.checksum)} />
       </div>

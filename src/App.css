@@ -369,6 +369,13 @@ body {
   text-align: center;
 }
 
+.result-samenvatting {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 0.75rem;
+}
+
 .result-aanslagnummer-label {
   font-size: 0.8rem;
   color: #3b82f6;

@@ -14,11 +14,37 @@
 // ── Middelcode-mapping ──────────────────────────────────────────────────────
 // Voeg hier nieuwe codes toe zonder iets anders aan te passen.
 export const MIDDELCODE_MAP = {
-  0: { letter: 'A', omschrijving: 'Naheffing Loonbelasting' },
-  1: { letter: 'B', omschrijving: 'Aangifte Omzetbelasting' },
-  5: { letter: 'F', omschrijving: 'Naheffing Omzetbelasting' },
-  6: { letter: 'L', omschrijving: 'Aangifte Loonbelasting' },
+  0: { letter: 'A', omschrijving: 'Naheffing Loonbelasting',  kortNaam: 'Loonbelasting naheffing' },
+  1: { letter: 'B', omschrijving: 'Aangifte Omzetbelasting',  kortNaam: 'BTW aangifte'            },
+  5: { letter: 'F', omschrijving: 'Naheffing Omzetbelasting', kortNaam: 'BTW naheffing'           },
+  6: { letter: 'L', omschrijving: 'Aangifte Loonbelasting',   kortNaam: 'Loonbelasting aangifte'  },
 };
+
+// ── Tijdvak-omschrijving ──────────────────────────────────────────────────────
+const MAANDEN = [
+  'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+  'juli', 'augustus', 'september', 'oktober', 'november', 'december',
+];
+
+/**
+ * Vertaalt een 2-cijferig tijdvak-code naar een leesbare omschrijving.
+ *
+ * Bekende codes:
+ *  00       → jaaraangifte
+ *  01–12    → maand (jan–dec), universeel voor alle belastingsoorten
+ *  21–24    → 1e t/m 4e kwartaal (alternatieve codering)
+ *  25–28    → 1e t/m 4e kwartaal (Belastingdienst-spec: 27 = 3e kwartaal OB)
+ *
+ * Alle andere codes worden ongewijzigd teruggegeven.
+ */
+export function beschrijfTijdvak(tijdvak) {
+  const t = parseInt(tijdvak, 10);
+  if (t === 0)              return 'jaaraangifte';
+  if (t >= 1  && t <= 12)  return MAANDEN[t - 1];
+  if (t >= 25 && t <= 28)  return `${t - 24}e kwartaal`;
+  if (t >= 21 && t <= 24)  return `${t - 20}e kwartaal`;
+  return tijdvak; // onbekende code: toon raw
+}
 
 // ── BSN/RSIN reconstructie via de 11-proef ──────────────────────────────────
 /**
@@ -95,6 +121,11 @@ export function decodeerBetalingskenmerk(kenmerk) {
   const jaarInAanslag = String(gecorrigeerdeJaar).slice(2); // 2-cijferig, bijv. "23"
   const aanslagnummer = `${bsn9}${middelInfo.letter}${subnummer}${jaarInAanslag}${tijdvak}${volgnummer}`;
 
+  // ── Stap 6: Leesbare samenvatting ────────────────────────────────────────
+  const tijdvakOmschrijving = beschrijfTijdvak(tijdvak);
+  const kortNaam = middelInfo.kortNaam ?? middelInfo.omschrijving;
+  const samenvatting = `${kortNaam} – ${tijdvakOmschrijving} ${gecorrigeerdeJaar}`;
+
   return {
     // Ruwe velden
     checksum,
@@ -108,9 +139,11 @@ export function decodeerBetalingskenmerk(kenmerk) {
     volJaar: gecorrigeerdeJaar,
     subnummer,
     tijdvak,
+    tijdvakOmschrijving,
     volgnummer,
     // Eindresultaat
     aanslagnummer,
+    samenvatting,
   };
 }
 
