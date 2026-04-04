@@ -6,6 +6,7 @@ import { formatDatumTijd } from '../utils/formatDatum';
 
 // Sleutels die als standaardvelden worden behandeld (niet in "Overige velden" getoond)
 const STANDAARD_SLEUTELS = new Set(['adres', 'postcode', 'plaats', 'klantnummer', 'kvk_nummer']);
+const STANDAARD_VELDEN_INIT = { klantnummer: '', kvk_nummer: '', adres: '', postcode: '', plaats: '', contactpersoon_1: '' };
 const CONTACT_REGEX = /^contactpersoon_(\d+)$/;
 
 function isContactSleutel(sleutel) {
@@ -27,22 +28,11 @@ export default function KlantenPage({ navigeer }) {
   }
 
   function nieuw() {
-    setBewerkKlant({
-      naam: '',
-      velden: { klantnummer: '', kvk_nummer: '', adres: '', postcode: '', plaats: '', contactpersoon_1: '' },
-    });
+    setBewerkKlant({ naam: '', velden: { ...STANDAARD_VELDEN_INIT } });
   }
 
   function bewerk(klant) {
-    // Zorg dat alle standaardvelden aanwezig zijn
-    const velden = { ...klant.velden };
-    if (!('klantnummer'    in velden)) velden.klantnummer    = '';
-    if (!('kvk_nummer'     in velden)) velden.kvk_nummer     = '';
-    if (!('adres'          in velden)) velden.adres          = '';
-    if (!('postcode'       in velden)) velden.postcode       = '';
-    if (!('plaats'         in velden)) velden.plaats         = '';
-    if (!('contactpersoon_1' in velden)) velden.contactpersoon_1 = '';
-    setBewerkKlant({ ...klant, velden });
+    setBewerkKlant({ ...klant, velden: { ...STANDAARD_VELDEN_INIT, ...klant.velden } });
   }
 
   async function sla() {

@@ -76,8 +76,10 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
 
   async function dupliceer(e, id) {
     e.stopPropagation();
-    await window.api.templates.duplicate(id);
-    laad();
+    try {
+      await window.api.templates.duplicate(id);
+      laad();
+    } catch {}
   }
 
   function openTemplate(id) {

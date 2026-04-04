@@ -44,9 +44,13 @@ export default function InstellingenPanel({ onTerug }) {
   }
 
   function verwijderOndertekenaar(naam) {
-    stelIn('ondertekenaars', instellingen.ondertekenaars.filter(o => o !== naam));
-    const { [naam]: _, ...rest } = instellingen.handtekeningPaden;
-    stelIn('handtekeningPaden', rest);
+    const { [naam]: _, ...restPaden } = instellingen.handtekeningPaden;
+    setInstellingen(s => ({
+      ...s,
+      ondertekenaars: s.ondertekenaars.filter(o => o !== naam),
+      handtekeningPaden: restPaden,
+    }));
+    setOpgeslagen(false);
   }
 
   async function kiesHandtekening(naam) {

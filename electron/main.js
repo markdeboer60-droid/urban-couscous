@@ -219,11 +219,16 @@ function readMeta() {
 function writeMeta(data) {
   fs.writeFileSync(metaFile, JSON.stringify(data, null, 2));
 }
+let _settingsCache = null;
 function readSettings() {
-  ensureDirs();
-  return JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
+  if (!_settingsCache) {
+    ensureDirs();
+    _settingsCache = JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
+  }
+  return _settingsCache;
 }
 function writeSettings(data) {
+  _settingsCache = data;
   fs.writeFileSync(settingsFile, JSON.stringify(data, null, 2));
 }
 function readVelden(templateId) {

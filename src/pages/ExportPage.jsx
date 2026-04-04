@@ -39,13 +39,17 @@ export default function ExportPage({ exportData, navigeer }) {
   const [ondertekenaars, setOndertekenaars] = useState([]);
   const [handtekeningPaden, setHandtekeningPaden] = useState({});
   const [getekendDoor, setGetekendDoor] = useState(null);
-  const [tekeningBezig, setTekeningBezig] = useState(false);
+  const [tekeningNaam, setTekeningNaam] = useState(null);
   const standaardNaam = berekenBestandsnaam(bestandsnaamPatroon, templateNaam, values);
 
   useEffect(() => {
-    window.api.settings.getOneDrivePad().then(p => setOneDrivePad(p));
-    window.api.templates.getAll().then(setAlleTemplates);
-    window.api.settings.get().then(s => {
+    Promise.all([
+      window.api.settings.getOneDrivePad(),
+      window.api.templates.getAll(),
+      window.api.settings.get(),
+    ]).then(([pad, templates, s]) => {
+      setOneDrivePad(pad);
+      setAlleTemplates(templates);
       setOndertekenaars(s.ondertekenaars || []);
       setHandtekeningPaden(s.handtekeningPaden || {});
     });
@@ -53,17 +57,17 @@ export default function ExportPage({ exportData, navigeer }) {
 
   async function tekenDocument(naam) {
     if (!templateId) return;
-    setTekeningBezig(true);
+    setTekeningNaam(naam);
     try {
       const nieuwPad = await window.api.export.tekenDocument({ templateId, values, ondertekekenaarNaam: naam });
       setDocxPad(nieuwPad);
-      setPdfPad(null); // PDF opnieuw genereren na tekenen
+      setPdfPad(null);
       setGetekendDoor(naam);
       setStatus({});
     } catch (e) {
-      alert('Ondertekenen mislukt: ' + (e.message || e));
+      setStatus(s => ({ ...s, ondertekenen: { bezig: false, fout: e.message || 'Ondertekenen mislukt', klaar: false } }));
     } finally {
-      setTekeningBezig(false);
+      setTekeningNaam(null);
     }
   }
 
@@ -168,7 +172,7 @@ export default function ExportPage({ exportData, navigeer }) {
                 <button
                   key={naam}
                   onClick={() => tekenDocument(naam)}
-                  disabled={tekeningBezig || !heeftHandtekening}
+                  disabled={!!tekeningNaam || !heeftHandtekening}
                   title={!heeftHandtekening ? 'Geen handtekening geconfigureerd in Instellingen' : `Ondertekenen als ${naam}`}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
                     getekendDoor === naam
@@ -176,7 +180,7 @@ export default function ExportPage({ exportData, navigeer }) {
                       : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
                   }`}
                 >
-                  {tekeningBezig && getekendDoor !== naam ? (
+                  {tekeningNaam === naam ? (
                     <Loader2 size={14} className="animate-spin shrink-0" />
                   ) : (
                     <User size={14} className="shrink-0" />
@@ -187,6 +191,12 @@ export default function ExportPage({ exportData, navigeer }) {
               );
             })}
           </div>
+          {status.ondertekenen?.fout && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-red-600">
+              <AlertCircle size={13} />
+              {status.ondertekenen.fout}
+            </div>
+          )}
         </Sectie>
       )}
 

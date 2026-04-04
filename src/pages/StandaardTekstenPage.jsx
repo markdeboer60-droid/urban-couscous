@@ -97,20 +97,20 @@ export default function StandaardTekstenPage() {
   }
 
   async function verplaats(item, richting) {
-    // Find global index in the full teksten array
     const idx = teksten.findIndex(t => t.id === item.id);
     if (idx < 0) return;
-    const nieuw = [...teksten];
+    const herschikt = [...teksten];
     const doelIdx = idx + richting;
-    if (doelIdx < 0 || doelIdx >= nieuw.length) return;
-    [nieuw[idx], nieuw[doelIdx]] = [nieuw[doelIdx], nieuw[idx]];
-    setTeksten(nieuw);
-    await window.api.standaardTeksten.reorderAll(nieuw);
+    if (doelIdx < 0 || doelIdx >= herschikt.length) return;
+    [herschikt[idx], herschikt[doelIdx]] = [herschikt[doelIdx], herschikt[idx]];
+    setTeksten(herschikt);
+    await window.api.standaardTeksten.reorderAll(herschikt);
   }
 
   async function toggleFavoriet(item) {
-    await window.api.standaardTeksten.save({ ...item, favoriet: !item.favoriet });
-    laad();
+    const bijgewerkt = { ...item, favoriet: !item.favoriet };
+    setTeksten(t => t.map(x => x.id === item.id ? bijgewerkt : x));
+    await window.api.standaardTeksten.save(bijgewerkt);
   }
 
   function kopieer(item) {
@@ -162,7 +162,11 @@ export default function StandaardTekstenPage() {
     setBewerkData({});
   }
 
-  const telPerCat = (cat) => teksten.filter(t => (t.categorie || 'Overig') === cat).length;
+  const telPerCat = useMemo(() => {
+    const counts = new Map();
+    for (const t of teksten) counts.set(t.categorie || 'Overig', (counts.get(t.categorie || 'Overig') || 0) + 1);
+    return cat => counts.get(cat) ?? 0;
+  }, [teksten]);
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -355,10 +359,8 @@ export default function StandaardTekstenPage() {
                       type="checkbox"
                       checked={selectie.has(item.id)}
                       onChange={() => toggleSelectie(item.id)}
-                      onClick={e => e.stopPropagation()}
-                      className="mt-0.5 w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
+                      className="mt-0.5 w-4 h-4 shrink-0 rounded border-gray-300 cursor-pointer accent-blue-600"
                     />
-                    <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       {actieveCategorie === 'alle' && item.categorie && (
                         <span className="inline-block text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mb-1.5">
@@ -376,36 +378,11 @@ export default function StandaardTekstenPage() {
                         <Star size={14} className={item.favoriet ? 'fill-yellow-400' : ''} />
                       </button>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => verplaats(item, -1)}
-                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Omhoog"
-                        >
-                          <ArrowUp size={13} />
-                        </button>
-                        <button
-                          onClick={() => verplaats(item, 1)}
-                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Omlaag"
-                        >
-                          <ArrowDown size={13} />
-                        </button>
-                        <button
-                          onClick={() => startBewerk(item)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Bewerken"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => setVerwijderBevestig(item.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Verwijderen"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <button onClick={() => verplaats(item, -1)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Omhoog"><ArrowUp size={13} /></button>
+                        <button onClick={() => verplaats(item, 1)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Omlaag"><ArrowDown size={13} /></button>
+                        <button onClick={() => startBewerk(item)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Bewerken"><Pencil size={14} /></button>
+                        <button onClick={() => setVerwijderBevestig(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Verwijderen"><Trash2 size={14} /></button>
                       </div>
-                    </div>
                     </div>
                   </div>
 
