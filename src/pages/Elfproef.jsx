@@ -296,7 +296,7 @@ export default function Elfproef() {
           <p style={{ ...s.p, marginTop: '0.875rem', marginBottom: 0 }}>
             De elfproef-berekening is voor beide nummers identiek.
             In een betalingskenmerk van de Belastingdienst zitten posities 2 tot en met 9 de eerste 8 cijfers van het BSN of RSIN.
-            De decoder berekent automatisch het 9e cijfer via de elfproef.
+            De tool berekent automatisch het 9e cijfer via de elfproef.
           </p>
         </section>
 
@@ -336,10 +336,10 @@ export default function Elfproef() {
         <section style={{ ...s.card, background: '#eff6ff', border: '1px solid #bfdbfe', textAlign: 'center' }}>
           <h2 style={{ ...s.h2, color: '#1d4ed8' }}>Betalingskenmerk omzetten?</h2>
           <p style={{ ...s.p, color: '#3b82f6', marginBottom: '1.25rem' }}>
-            De decoder gebruikt de elfproef automatisch om uw 16-cijferig betalingskenmerk
+            De omzetter gebruikt de elfproef automatisch om uw 16-cijferig betalingskenmerk
             om te zetten naar aanslagnummer, belastingsoort en periode.
           </p>
-          <a href="/" style={s.ctaBtn}>Naar de decoder</a>
+          <a href="/" style={s.ctaBtn}>Betalingskenmerk omzetten</a>
         </section>
 
       </main>

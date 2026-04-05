@@ -7,7 +7,7 @@ export default function NavBar() {
   return (
     <nav className="site-nav" aria-label="Hoofdnavigatie">
       <a href="/" className={`site-nav-link${isHome ? ' site-nav-active' : ''}`}>
-        Decoder
+        Omzetten
       </a>
       <a href="/belastingcodes/" className={`site-nav-link${isCodes ? ' site-nav-active' : ''}`}>
         Belastingcodes

@@ -508,7 +508,7 @@ export default function TaxDecoder() {
                   <button onClick={wisInput} style={styles.btnClear} title="Wis invoer">×</button>
                 )}
               </div>
-              <button onClick={decodeer} style={styles.btnPrimary}>Decodeer</button>
+              <button onClick={decodeer} style={styles.btnPrimary}>Omzetten</button>
             </div>
             {error && <p style={styles.errorText}>{error}</p>}
             <div style={{ marginTop: '0.6rem' }}>
@@ -543,7 +543,7 @@ export default function TaxDecoder() {
                     className="td-history-row"
                     style={styles.historyRow}
                     onClick={() => { setInputVal(item.kenmerkFormatted); setError(''); setResult(null); setBedrijf(null); setCopiedKey(null); }}
-                    title="Klik om opnieuw te decoderen"
+                    title="Klik om opnieuw om te zetten"
                   >
                     <div style={{ minWidth: 0 }}>
                       <div style={styles.historyKenmerk}>{item.kenmerkFormatted}</div>

@@ -160,7 +160,7 @@ export default function BelastingCodes() {
             Een aanslagnummer bestaat uit 17 tekens: 9 cijfers (uw BSN of RSIN), 1 letter en 7 cijfers.
             Die letter staat op positie 10 en bepaalt direct welk soort belasting het is.
             In een betalingskenmerk (16 cijfers) zit op positie 10 een cijfer van 0 tot 7.
-            Onze decoder vertaalt dat cijfer automatisch naar de bijbehorende letter en naam.
+            De omzetter zet dat cijfer automatisch om naar de bijbehorende letter en naam.
           </p>
           <div style={s.exampleRow}>
             <span style={s.exCode}>036000012</span>
@@ -278,10 +278,10 @@ export default function BelastingCodes() {
         <section style={{ ...s.card, background: '#eff6ff', border: '1px solid #bfdbfe', textAlign: 'center' }}>
           <h2 style={{ ...s.h2, color: '#1d4ed8' }}>Betalingskenmerk direct omzetten?</h2>
           <p style={{ ...s.p, color: '#3b82f6', marginBottom: '1.25rem' }}>
-            Gebruik de gratis decoder om een 16-cijferig kenmerk te vertalen naar het aanslagnummer
+            Gebruik de gratis omzetter om een 16-cijferig kenmerk om te zetten naar het aanslagnummer,
             inclusief belastingsoort, periode en boekhoudomschrijving.
           </p>
-          <a href="/" style={s.ctaBtn}>Naar de decoder</a>
+          <a href="/" style={s.ctaBtn}>Betalingskenmerk omzetten</a>
         </section>
 
       </main>
