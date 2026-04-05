@@ -240,12 +240,87 @@ body {
   color: #64748b;
 }
 
-/* Tax decoder spinner */
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* ── Tax decoder ───────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.tax-decoder { padding-top: 0.75rem; }
+
+.td-wrap {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 0 0 3rem;
 }
 
-/* Tax decoder view */
-.tax-decoder {
-  padding-top: 1rem;
+/* Tabs */
+.td-tabs {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+.td-tab {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.td-tab.active {
+  background: white;
+  color: #1e293b;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Input row */
+.td-input-row {
+  display: flex;
+  gap: 0.625rem;
+}
+.td-input-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+/* Detail grid: 2 kolommen naast elkaar op breed scherm */
+.td-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.td-detail-cell {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+}
+.td-detail-cell-full {
+  grid-column: 1 / -1;
+}
+
+/* History hover */
+.td-history-row { transition: background 0.12s; }
+.td-history-row:hover { background: #f1f5f9 !important; }
+
+/* ── Responsive: tablet & mobiel ───────────────────────────────────────── */
+@media (max-width: 540px) {
+  .td-wrap { padding: 0 0 2rem; }
+  .td-tab { font-size: 0.78rem; padding: 0.45rem 0.5rem; }
+  .td-input-row { flex-wrap: wrap; }
+  .td-input-wrap { flex: 1 1 100%; }
+  .td-detail-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 380px) {
+  .td-tabs { flex-direction: column; }
+  .td-tab { text-align: center; }
 }

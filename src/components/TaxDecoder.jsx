@@ -446,37 +446,26 @@ export default function TaxDecoder() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: '1rem 0 3rem' }}>
+    <div className="td-wrap">
 
       {/* ── Modus-tabs ─────────────────────────────────────────────────── */}
-      <div style={styles.tabBar}>
-        <button
-          style={{ ...styles.tab, ...(mode === 'decode' ? styles.tabActive : {}) }}
-          onClick={() => switchMode('decode')}
-        >
+      <div className="td-tabs">
+        <button className={`td-tab${mode === 'decode' ? ' active' : ''}`} onClick={() => switchMode('decode')}>
           Kenmerk → Aanslagnummer
         </button>
-        <button
-          style={{ ...styles.tab, ...(mode === 'reverse' ? styles.tabActive : {}) }}
-          onClick={() => switchMode('reverse')}
-        >
+        <button className={`td-tab${mode === 'reverse' ? ' active' : ''}`} onClick={() => switchMode('reverse')}>
           Aanslagnummer → Kenmerk
         </button>
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════
-          MODUS: DECODEER
-      ════════════════════════════════════════════════════════════════ */}
+      {/* ════════════ MODUS: DECODEER ════════════ */}
       {mode === 'decode' && (
         <>
+          {/* Invoer */}
           <div style={styles.card}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h2 style={styles.cardTitle}>Betalingskenmerk invoeren</h2>
-              <p style={styles.cardSub}>16-cijferig kenmerk van de Belastingdienst.</p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
+            <p style={styles.cardLabel}>Betalingskenmerk</p>
+            <div className="td-input-row">
+              <div className="td-input-wrap">
                 <input
                   ref={inputRef}
                   type="text"
@@ -486,7 +475,7 @@ export default function TaxDecoder() {
                   onKeyDown={handleKeyDown}
                   maxLength={19}
                   placeholder="XXXX XXXX XXXX XXXX"
-                  style={{ ...styles.input, width: '100%', paddingRight: inputVal ? '2.5rem' : '0.875rem' }}
+                  style={{ ...styles.input, paddingRight: inputVal ? '2.4rem' : '0.875rem' }}
                 />
                 {inputVal && (
                   <button onClick={wisInput} style={styles.btnClear} title="Wis invoer">×</button>
@@ -494,47 +483,31 @@ export default function TaxDecoder() {
               </div>
               <button onClick={decodeer} style={styles.btnPrimary}>Decodeer</button>
             </div>
-
             {error && <p style={styles.errorText}>{error}</p>}
-
             <p style={styles.hint}>
               Voorbeeld:&nbsp;
-              <span
-                style={styles.hintCode}
-                onClick={() => {
-                  setInputVal('2036 0000 1630 1110');
-                  setError(''); setResult(null); setBedrijf(null);
-                }}
-              >
+              <span style={styles.hintCode} onClick={() => { setInputVal('2036 0000 1630 1110'); setError(''); setResult(null); setBedrijf(null); }}>
                 2036 0000 1630 1110
               </span>
             </p>
           </div>
 
-          {/* ── Sessie-historiek ─────────────────────────────────────────── */}
+          {/* Historiek */}
           {history.length > 0 && (
             <div style={styles.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <h2 style={{ ...styles.cardTitle, marginBottom: 0 }}>Historiek sessie</h2>
-                <button
-                  onClick={() => setHistory([])}
-                  style={{ ...styles.btnCopy, color: '#dc2626', borderColor: '#fecaca' }}
-                >
-                  Wis alles
+                <p style={{ ...styles.cardLabel, marginBottom: 0 }}>Recente kenmerken</p>
+                <button onClick={() => setHistory([])} style={{ ...styles.btnGhost, color: '#dc2626' }}>
+                  Wis
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {history.map(item => (
                   <div
                     key={item.id}
+                    className="td-history-row"
                     style={styles.historyRow}
-                    onClick={() => {
-                      setInputVal(item.kenmerkFormatted);
-                      setError('');
-                      setResult(null);
-                      setBedrijf(null);
-                      setCopiedKey(null);
-                    }}
+                    onClick={() => { setInputVal(item.kenmerkFormatted); setError(''); setResult(null); setBedrijf(null); setCopiedKey(null); }}
                     title="Klik om opnieuw te decoderen"
                   >
                     <div style={{ minWidth: 0 }}>
@@ -543,7 +516,7 @@ export default function TaxDecoder() {
                     </div>
                     <button
                       onClick={e => { e.stopPropagation(); kopieer(item.boekhoudingtekst, 'hist-' + item.id); }}
-                      style={{ ...styles.btnCopy, flexShrink: 0 }}
+                      style={styles.btnGhost}
                     >
                       {copiedKey === 'hist-' + item.id ? '✓' : 'Kopieer'}
                     </button>
@@ -553,78 +526,59 @@ export default function TaxDecoder() {
             </div>
           )}
 
+          {/* Resultaat */}
           {result && (
             <>
               <div style={styles.card}>
-                <h2 style={{ ...styles.cardTitle, marginBottom: '1rem' }}>Decoderingsresultaat</h2>
+                <p style={styles.cardLabel}>Resultaat</p>
 
-                {/* Boekhoudingtekst */}
+                {/* Boekhoudomschrijving */}
                 <div style={styles.boekhoudingBox}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                     <div>
                       <div style={styles.boekhoudingLabel}>Boekhoudomschrijving</div>
                       <div style={styles.boekhoudingValue}>{result.boekhoudingtekst}</div>
                     </div>
-                    <button
-                      onClick={() => kopieer(result.boekhoudingtekst, 'boekhouding')}
-                      style={styles.btnCopy}
-                    >
-                      {copiedKey === 'boekhouding' ? '✓ Gekopieerd' : 'Kopieer'}
+                    <button onClick={() => kopieer(result.boekhoudingtekst, 'boekhouding')} style={styles.btnGhost}>
+                      {copiedKey === 'boekhouding' ? '✓' : 'Kopieer'}
                     </button>
                   </div>
                 </div>
 
-                {/* Aanslagnummer highlight + kopieerknop */}
+                {/* Aanslagnummer */}
                 <div style={styles.aanslagnummerBox}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div style={{ minWidth: 0 }}>
                       <div style={styles.aanslagnummerLabel}>Aanslagnummer</div>
                       <div style={styles.aanslagnummerValue}>{result.aanslagnummer}</div>
                     </div>
-                    <button
-                      onClick={() => kopieer(result.aanslagnummer, 'aanslagnummer')}
-                      style={styles.btnCopy}
-                      title="Kopieer aanslagnummer"
-                    >
-                      {copiedKey === 'aanslagnummer' ? '✓ Gekopieerd' : 'Kopieer'}
+                    <button onClick={() => kopieer(result.aanslagnummer, 'aanslagnummer')} style={styles.btnGhost}>
+                      {copiedKey === 'aanslagnummer' ? '✓' : 'Kopieer'}
                     </button>
                   </div>
                 </div>
 
-                <div style={styles.detailGrid}>
-                  <DetailRow label="RSIN / BSN" value={result.rsinVolledig} mono />
-                  <DetailRow
-                    label="Belastingsoort"
-                    value={`${result.middelcodeInfo.letter} — ${result.middelcodeInfo.naam}`}
-                  />
-                  <DetailRow label="Jaar" value={result.jaarVolledig} />
-                  <DetailRow label="Tijdvak" value={formatTijdvak(result.tijdvak)} />
-                  <DetailRow label="Subnummer" value={result.subnummer} mono />
-                  <DetailRow
-                    label="Aanslagstatus"
-                    value={`${result.volgnummer} — ${formatStatusCode(result.volgnummer)}`}
-                  />
+                {/* Details 2-koloms grid */}
+                <div className="td-detail-grid">
+                  <DetailCell label="RSIN / BSN" value={result.rsinVolledig} mono />
+                  <DetailCell label="Belastingsoort" value={`${result.middelcodeInfo.letter} — ${result.middelcodeInfo.naam}`} />
+                  <DetailCell label="Jaar" value={result.jaarVolledig} />
+                  <DetailCell label="Tijdvak" value={formatTijdvak(result.tijdvak)} />
                   {result.middelcodeInfo.letter === 'T' && (() => {
                     const sub = formatToeslagSubtype(result.subnummer);
-                    return sub ? <DetailRow label="Toeslag type" value={sub} /> : null;
+                    return sub ? <DetailCell label="Toeslag type" value={sub} full /> : null;
                   })()}
-                  <DetailRow
-                    label="Controlecijfer (pos. 1)"
-                    value={`${result.controleCijfer} — intern Belastingdienst`}
-                  />
                 </div>
               </div>
 
               {/* Bedrijfsgegevens */}
               <div style={styles.card}>
-                <h2 style={styles.cardTitle}>Bedrijfsgegevens (KvK/Handelsregister)</h2>
+                <p style={styles.cardLabel}>Bedrijfsgegevens</p>
 
                 {bedrijf === 'loading' && (
                   <div style={styles.statusRow}>
                     <span style={styles.spinner} />
-                    <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
-                      Zoeken in het openbare handelsregister…
-                    </span>
+                    <span style={{ color: '#64748b', fontSize: '0.875rem' }}>Zoeken in handelsregister…</span>
                   </div>
                 )}
 
@@ -632,21 +586,11 @@ export default function TaxDecoder() {
                   <div>
                     <div style={styles.statusRow}>
                       <span style={{ ...styles.dot, background: '#f59e0b' }} />
-                      <span style={{ color: '#92400e', fontWeight: 600, fontSize: '0.85rem' }}>
-                        Niet gevonden in openbaar register
-                      </span>
+                      <span style={{ color: '#92400e', fontWeight: 600, fontSize: '0.85rem' }}>Niet gevonden in openbaar register</span>
                     </div>
-                    <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6, marginTop: '0.5rem' }}>
-                      Dit nummer is niet gevonden in het openbare handelsregister. Het betreft
-                      waarschijnlijk een{' '}
-                      <strong style={{ color: '#475569' }}>particulier of eenmanszaak (BSN)</strong>{' '}
-                      waarvan de gegevens wegens privacywetgeving (AVG) zijn afgeschermd.
+                    <p style={{ color: '#64748b', fontSize: '0.875rem', lineHeight: 1.6, marginTop: '0.5rem' }}>
+                      Waarschijnlijk een <strong style={{ color: '#475569' }}>particulier of eenmanszaak (BSN)</strong> waarvan gegevens wegens de AVG zijn afgeschermd.
                     </p>
-                    {!KVK_API_KEY && (
-                      <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                        Tip: voeg een KvK API-sleutel toe aan <code>TaxDecoder.jsx</code> voor nauwkeurigere resultaten.
-                      </p>
-                    )}
                   </div>
                 )}
 
@@ -654,15 +598,11 @@ export default function TaxDecoder() {
                   <div>
                     <div style={styles.statusRow}>
                       <span style={{ ...styles.dot, background: '#16a34a' }} />
-                      <span style={{ color: '#166534', fontWeight: 600, fontSize: '0.85rem' }}>
-                        Gevonden in handelsregister
-                      </span>
+                      <span style={{ color: '#166534', fontWeight: 600, fontSize: '0.85rem' }}>Gevonden in handelsregister</span>
                     </div>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '0.5rem', color: '#1e293b' }}>
-                      {bedrijf.naam}
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                      {bedrijf.kvkNummer && <span style={styles.badge}>KvK: {bedrijf.kvkNummer}</span>}
+                    <p style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '0.5rem', color: '#1e293b' }}>{bedrijf.naam}</p>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                      {bedrijf.kvkNummer && <span style={styles.badge}>KvK {bedrijf.kvkNummer}</span>}
                       {bedrijf.type && <span style={styles.badge}>{bedrijf.type}</span>}
                     </div>
                   </div>
@@ -673,40 +613,28 @@ export default function TaxDecoder() {
         </>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════
-          MODUS: OMGEKEERD (aanslagnummer → betalingskenmerk)
-      ════════════════════════════════════════════════════════════════ */}
+      {/* ════════════ MODUS: OMGEKEERD ════════════ */}
       {mode === 'reverse' && (
         <>
           <div style={styles.card}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h2 style={styles.cardTitle}>Aanslagnummer invoeren</h2>
-              <p style={styles.cardSub}>
-                17 tekens: 9 cijfers (RSIN) + 1 letter (belastingsoort) + 7 cijfers.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <p style={styles.cardLabel}>Aanslagnummer</p>
+            <p style={{ ...styles.hint, marginBottom: '0.75rem' }}>17 tekens: 9 cijfers (RSIN/BSN) + 1 letter + 7 cijfers</p>
+            <div className="td-input-row">
               <input
                 type="text"
                 value={revInputVal}
-                onChange={e => { setRevInputVal(e.target.value.toUpperCase()); setRevError(''); setRevResult(null); setCopied(false); }}
+                onChange={e => { setRevInputVal(e.target.value.toUpperCase()); setRevError(''); setRevResult(null); setCopiedKey(null); }}
                 onKeyDown={handleRevKeyDown}
                 maxLength={17}
                 placeholder="036000012L0123110"
-                style={{ ...styles.input, letterSpacing: '0.06em' }}
+                style={{ ...styles.input, flex: 1, letterSpacing: '0.06em' }}
               />
               <button onClick={genereer} style={styles.btnPrimary}>Genereer</button>
             </div>
-
             {revError && <p style={styles.errorText}>{revError}</p>}
-
             <p style={styles.hint}>
               Voorbeeld:&nbsp;
-              <span
-                style={styles.hintCode}
-                onClick={() => { setRevInputVal('036000012L0123110'); setRevError(''); setRevResult(null); setCopied(false); }}
-              >
+              <span style={styles.hintCode} onClick={() => { setRevInputVal('036000012L0123110'); setRevError(''); setRevResult(null); setCopiedKey(null); }}>
                 036000012L0123110
               </span>
             </p>
@@ -714,63 +642,43 @@ export default function TaxDecoder() {
 
           {revResult && (
             <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Betalingskenmerk</h2>
+              <p style={styles.cardLabel}>Resultaat</p>
 
               <div style={styles.aanslagnummerBox}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <div style={{ minWidth: 0 }}>
                     <div style={styles.aanslagnummerLabel}>Betalingskenmerk</div>
                     <div style={styles.aanslagnummerValue}>{revResult.kenmerkFormatted}</div>
                   </div>
-                  <button
-                    onClick={() => kopieer(revResult.kenmerkFormatted, 'revkenmerk')}
-                    style={styles.btnCopy}
-                    title="Kopieer betalingskenmerk"
-                  >
-                    {copiedKey === 'revkenmerk' ? '✓ Gekopieerd' : 'Kopieer'}
+                  <button onClick={() => kopieer(revResult.kenmerkFormatted, 'revkenmerk')} style={styles.btnGhost}>
+                    {copiedKey === 'revkenmerk' ? '✓' : 'Kopieer'}
                   </button>
                 </div>
               </div>
 
-              <p style={{ fontSize: '0.8rem', color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 6, padding: '0.5rem 0.75rem', marginBottom: '1rem' }}>
-                Let op: het eerste cijfer (controlecijfer) is ingesteld op <strong>0</strong>. Het juiste cijfer wordt door de Belastingdienst intern bepaald en is niet openbaar gedocumenteerd.
+              <p style={{ fontSize: '0.8rem', color: '#92400e', background: '#fef9ec', border: '1px solid #fde68a', borderRadius: 6, padding: '0.5rem 0.75rem', marginBottom: '0.75rem' }}>
+                Het eerste cijfer (controlecijfer) is <strong>0</strong> als placeholder — de Belastingdienst bepaalt dit intern.
               </p>
-              <div style={styles.detailGrid}>
-                <DetailRow label="Zonder spaties" value={revResult.kenmerk} mono />
-                <DetailRow label="RSIN / BSN" value={revResult.rsinVolledig} mono />
-                <DetailRow
-                  label="Belastingsoort"
-                  value={`${revResult.middelcodeInfo.letter} — ${revResult.middelcodeInfo.naam}`}
-                />
-                <DetailRow label="Jaar" value={revResult.jaarVolledig} />
-                <DetailRow label="Tijdvak" value={formatTijdvak(revResult.tijdvak)} />
-                <DetailRow label="Subnummer" value={revResult.subnummer} mono />
-                <DetailRow
-                  label="Aanslagstatus"
-                  value={`${revResult.volgnummer} — ${formatStatusCode(revResult.volgnummer)}`}
-                />
+
+              <div className="td-detail-grid">
+                <DetailCell label="RSIN / BSN" value={revResult.rsinVolledig} mono />
+                <DetailCell label="Belastingsoort" value={`${revResult.middelcodeInfo.letter} — ${revResult.middelcodeInfo.naam}`} />
+                <DetailCell label="Jaar" value={revResult.jaarVolledig} />
+                <DetailCell label="Tijdvak" value={formatTijdvak(revResult.tijdvak)} />
+                <DetailCell label="Zonder spaties" value={revResult.kenmerk} mono full />
               </div>
             </div>
           )}
         </>
       )}
 
-      {/* ── Privacy-disclaimer ──────────────────────────────────────────── */}
-      <div style={{ ...styles.card, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-          <span style={{ fontSize: '1.1rem', marginTop: '0.1rem' }}>🔒</span>
-          <div>
-            <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.3rem', color: '#374151' }}>
-              Privacyverklaring
-            </p>
-            <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6 }}>
-              Alle berekeningen worden <strong>lokaal in uw browser</strong> uitgevoerd. Er worden geen
-              betalingskenmerken of persoonsgegevens verzonden naar of opgeslagen op onze servers.
-              Bedrijfsnamen worden uitsluitend opgevraagd uit het openbare handelsregister (KvK). BSN-nummers
-              van particulieren zijn wettelijk beschermd onder de AVG en worden nooit publiekelijk weergegeven.
-            </p>
-          </div>
-        </div>
+      {/* Privacy */}
+      <div style={{ ...styles.card, background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: 0 }}>
+        <p style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+          <strong style={{ color: '#475569' }}>Privacy:</strong> alle berekeningen verlopen volledig lokaal in uw browser.
+          Geen gegevens worden opgeslagen of doorgestuurd. Bedrijfsnamen komen uit het openbare KvK-handelsregister.
+          BSN-nummers zijn beschermd onder de AVG.
+        </p>
       </div>
     </div>
   );
@@ -778,13 +686,13 @@ export default function TaxDecoder() {
 
 // ─── Sub-componenten ───────────────────────────────────────────────────────────
 
-function DetailRow({ label, value, mono }) {
+function DetailCell({ label, value, mono, full }) {
   return (
-    <div style={styles.detailRow}>
-      <span style={styles.detailLabel}>{label}</span>
-      <span style={{ ...styles.detailValue, fontFamily: mono ? 'monospace' : 'inherit' }}>
+    <div className={`td-detail-cell${full ? ' td-detail-cell-full' : ''}`}>
+      <div style={styles.detailLabel}>{label}</div>
+      <div style={{ ...styles.detailValue, fontFamily: mono ? 'monospace' : 'inherit' }}>
         {value}
-      </span>
+      </div>
     </div>
   );
 }
@@ -792,151 +700,81 @@ function DetailRow({ label, value, mono }) {
 // ─── Stijlen ──────────────────────────────────────────────────────────────────
 
 const styles = {
-  tabBar: {
-    display: 'flex',
-    gap: '0.5rem',
-    marginBottom: '1.25rem',
-  },
-  tab: {
-    flex: 1,
-    padding: '0.6rem 1rem',
-    border: '1px solid #cbd5e1',
+  card: {
     background: 'white',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#475569',
-    transition: 'all 0.15s',
+    borderRadius: 10,
+    padding: '1.25rem',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)',
+    marginBottom: '1rem',
   },
-  tabActive: {
+  cardLabel: {
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: '0.09em',
+    marginBottom: '0.75rem',
+  },
+  input: {
+    width: '100%',
+    padding: '0.7rem 0.875rem',
+    border: '1.5px solid #e2e8f0',
+    borderRadius: 8,
+    fontSize: '1.1rem',
+    fontFamily: 'monospace',
+    letterSpacing: '0.1em',
+    outline: 'none',
+    color: '#1e293b',
+    background: '#f8fafc',
+    transition: 'border-color 0.15s, background 0.15s',
+    boxSizing: 'border-box',
+  },
+  btnPrimary: {
+    padding: '0.7rem 1.25rem',
     background: '#2563eb',
     color: 'white',
-    borderColor: '#2563eb',
+    border: 'none',
+    borderRadius: 8,
+    fontSize: '0.9rem',
     fontWeight: 600,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+  },
+  btnGhost: {
+    padding: '0.3rem 0.65rem',
+    background: 'transparent',
+    border: '1px solid #e2e8f0',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    color: '#64748b',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
   btnClear: {
     position: 'absolute',
-    right: '0.6rem',
+    right: '0.625rem',
     top: '50%',
     transform: 'translateY(-50%)',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
     color: '#94a3b8',
-    fontSize: '1.2rem',
+    fontSize: '1.25rem',
     lineHeight: 1,
-    padding: '0.2rem',
-  },
-  boekhoudingBox: {
-    background: '#f0fdf4',
-    border: '1px solid #bbf7d0',
-    borderRadius: 6,
-    padding: '0.75rem 1rem',
-    marginBottom: '0.75rem',
-  },
-  boekhoudingLabel: {
-    fontSize: '0.72rem',
-    fontWeight: 600,
-    color: '#16a34a',
-    textTransform: 'uppercase',
-    letterSpacing: '0.07em',
-    marginBottom: '0.25rem',
-  },
-  boekhoudingValue: {
-    fontSize: '1.1rem',
-    fontWeight: 700,
-    color: '#15803d',
-  },
-  historyRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '0.75rem',
-    padding: '0.5rem 0.75rem',
-    borderRadius: 6,
-    background: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    cursor: 'pointer',
-    transition: 'background 0.12s',
-  },
-  historyKenmerk: {
-    fontFamily: 'monospace',
-    fontSize: '0.875rem',
-    color: '#1e293b',
-    fontWeight: 600,
-  },
-  historyLabel: {
-    fontSize: '0.78rem',
-    color: '#64748b',
-    marginTop: '0.1rem',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  btnCopy: {
-    padding: '0.35rem 0.75rem',
-    background: 'white',
-    border: '1px solid #bfdbfe',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: '0.8rem',
-    fontWeight: 600,
-    color: '#2563eb',
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-    transition: 'all 0.15s',
-  },
-  card: {
-    background: 'white',
-    borderRadius: 8,
-    padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
-    marginBottom: '1.25rem',
-  },
-  cardTitle: {
-    fontSize: '1.05rem',
-    fontWeight: 700,
-    color: '#1e293b',
-    marginBottom: '0.25rem',
-  },
-  cardSub: {
-    fontSize: '0.875rem',
-    color: '#64748b',
-  },
-  input: {
-    flex: 1,
-    padding: '0.65rem 0.875rem',
-    border: '1px solid #cbd5e1',
-    borderRadius: 6,
-    fontSize: '1.1rem',
-    fontFamily: 'monospace',
-    letterSpacing: '0.08em',
-    outline: 'none',
-    color: '#1e293b',
-    transition: 'border-color 0.15s',
-  },
-  btnPrimary: {
-    padding: '0.65rem 1.25rem',
-    background: '#2563eb',
-    color: 'white',
-    border: 'none',
-    borderRadius: 6,
-    fontSize: '0.95rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    transition: 'background 0.15s',
+    padding: '0.15rem 0.3rem',
   },
   errorText: {
     marginTop: '0.5rem',
-    fontSize: '0.875rem',
+    fontSize: '0.85rem',
     color: '#dc2626',
     fontWeight: 500,
   },
   hint: {
-    marginTop: '0.75rem',
-    fontSize: '0.8rem',
+    marginTop: '0.6rem',
+    fontSize: '0.78rem',
     color: '#94a3b8',
   },
   hintCode: {
@@ -946,69 +784,104 @@ const styles = {
     textDecoration: 'underline',
     textDecorationStyle: 'dotted',
   },
+  boekhoudingBox: {
+    background: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: 8,
+    padding: '0.75rem 0.875rem',
+    marginBottom: '0.625rem',
+  },
+  boekhoudingLabel: {
+    fontSize: '0.68rem',
+    fontWeight: 700,
+    color: '#16a34a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: '0.2rem',
+  },
+  boekhoudingValue: {
+    fontSize: '1.05rem',
+    fontWeight: 700,
+    color: '#15803d',
+  },
   aanslagnummerBox: {
-    background: '#eff6ff',
+    background: '#f0f6ff',
     border: '1px solid #bfdbfe',
-    borderRadius: 6,
-    padding: '0.875rem 1rem',
-    marginBottom: '1rem',
+    borderRadius: 8,
+    padding: '0.75rem 0.875rem',
+    marginBottom: '0.75rem',
   },
   aanslagnummerLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 600,
+    fontSize: '0.68rem',
+    fontWeight: 700,
     color: '#3b82f6',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    marginBottom: '0.35rem',
+    marginBottom: '0.2rem',
   },
   aanslagnummerValue: {
     fontFamily: 'monospace',
-    fontSize: '1.3rem',
+    fontSize: '1.15rem',
     fontWeight: 700,
     color: '#1d4ed8',
-    letterSpacing: '0.05em',
+    letterSpacing: '0.04em',
     wordBreak: 'break-all',
   },
-  detailGrid: {
-    display: 'grid',
-    gap: '0.5rem',
-  },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0.5rem 0',
-    borderBottom: '1px solid #f1f5f9',
-    gap: '1rem',
-  },
   detailLabel: {
-    fontSize: '0.85rem',
-    color: '#64748b',
-    fontWeight: 500,
-    flexShrink: 0,
+    fontSize: '0.72rem',
+    fontWeight: 600,
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: '0.2rem',
   },
   detailValue: {
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     color: '#1e293b',
     fontWeight: 600,
-    textAlign: 'right',
+    lineHeight: 1.3,
+  },
+  historyRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '0.75rem',
+    padding: '0.5rem 0.625rem',
+    borderRadius: 6,
+    background: '#f8fafc',
+    border: '1px solid #f1f5f9',
+    cursor: 'pointer',
+  },
+  historyKenmerk: {
+    fontFamily: 'monospace',
+    fontSize: '0.825rem',
+    color: '#334155',
+    fontWeight: 600,
+  },
+  historyLabel: {
+    fontSize: '0.75rem',
+    color: '#94a3b8',
+    marginTop: '0.1rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   statusRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    marginBottom: '0.5rem',
+    marginBottom: '0.4rem',
   },
   dot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: '50%',
     flexShrink: 0,
   },
   spinner: {
     display: 'inline-block',
-    width: 16,
-    height: 16,
+    width: 15,
+    height: 15,
     border: '2px solid #e2e8f0',
     borderTopColor: '#2563eb',
     borderRadius: '50%',
@@ -1016,10 +889,10 @@ const styles = {
     flexShrink: 0,
   },
   badge: {
-    fontSize: '0.78rem',
+    fontSize: '0.75rem',
     background: '#f1f5f9',
     color: '#475569',
-    padding: '0.2rem 0.6rem',
+    padding: '0.2rem 0.5rem',
     borderRadius: 4,
     fontWeight: 500,
   },
