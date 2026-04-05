@@ -96,6 +96,36 @@ function formatTijdvak(code) {
 }
 
 /**
+ * Maakt een leesbare boekhoudingtekst, bijv. "Loonheffing dec 2024"
+ */
+function maakBoekhoudingtekst({ middelcodeInfo, jaarVolledig, tijdvak, volgnummer, subnummer }) {
+  const kortNaam = {
+    A: 'Naheffing loonheffing', B: 'Omzetbelasting', F: 'Naheffing omzetbelasting',
+    H: 'Inkomstenbelasting', J: 'Teruggave loonheffingen', L: 'Loonheffing',
+    M: 'MRB', N: 'Inkomstenbelasting', O: 'Teruggave omzetbelasting',
+    V: 'VPB', W: 'ZVW', Y: 'Naheffing MRB', Z: 'Overige',
+  };
+  let naam = kortNaam[middelcodeInfo.letter] ?? middelcodeInfo.naam;
+  if (middelcodeInfo.letter === 'T') {
+    naam = formatToeslagSubtype(subnummer) ?? 'Toeslagen';
+  }
+  const num = parseInt(tijdvak, 10);
+  let periode = '';
+  if (tijdvak !== '00') {
+    if (num >= 1 && num <= 12) {
+      const afk = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+      periode = ' ' + afk[num - 1];
+    } else {
+      const kw = { 21: 'Q1', 24: 'Q2', 27: 'Q3', 30: 'Q4' };
+      if (kw[num]) periode = ' ' + kw[num];
+    }
+  }
+  const n = parseInt(volgnummer, 10);
+  const suffix = n <= 5 ? ' (voorlopig)' : n >= 7 ? ' (navordering)' : '';
+  return `${naam}${periode} ${jaarVolledig}${suffix}`;
+}
+
+/**
  * Berekent het 9e cijfer van een BSN/RSIN via de elfproef.
  * @param {number[]} digits8 – de eerste 8 cijfers van het BSN/RSIN
  * @returns {number|null} – het 9e cijfer, of null als ongeldig (rest === 10)
@@ -184,7 +214,8 @@ export default function TaxDecoder() {
   const [result, setResult] = useState(null);
   const [revResult, setRevResult] = useState(null);
   const [bedrijf, setBedrijf] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(null);   // welke knop is zojuist gekopieerd
+  const [history, setHistory] = useState([]);          // sessie-historiek (max 20)
   const inputRef = useRef(null);
 
   function switchMode(m) {
@@ -194,18 +225,26 @@ export default function TaxDecoder() {
     setResult(null);
     setRevResult(null);
     setBedrijf(null);
-    setCopied(false);
+    setCopiedKey(null);
   }
 
-  // ── Clipboard ────────────────────────────────────────────────────────────
-  async function kopieer(tekst) {
+  // ── Clipboard ─────────────────────────────────────────────────────────────
+  async function kopieer(tekst, key) {
     try {
       await navigator.clipboard.writeText(tekst);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // fallback: selecteer tekst
-    }
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch { /* ignore */ }
+  }
+
+  // ── Wis invoerveld ────────────────────────────────────────────────────────
+  function wisInput() {
+    setInputVal('');
+    setError('');
+    setResult(null);
+    setBedrijf(null);
+    setCopiedKey(null);
+    inputRef.current?.focus();
   }
 
   // ── Decode: input handler ─────────────────────────────────────────────────
@@ -214,7 +253,7 @@ export default function TaxDecoder() {
     setError('');
     setResult(null);
     setBedrijf(null);
-    setCopied(false);
+    setCopiedKey(null);
   }
 
   // ── Decode ───────────────────────────────────────────────────────────────
@@ -222,7 +261,7 @@ export default function TaxDecoder() {
     setError('');
     setResult(null);
     setBedrijf(null);
-    setCopied(false);
+    setCopiedKey(null);
 
     const raw = inputVal.replace(/\D/g, '');
 
@@ -269,6 +308,10 @@ export default function TaxDecoder() {
     const aanslagnummer =
       rsinVolledig + middelcodeInfo.letter + subnummer + jaarCode + tijdvak + volgnummer;
 
+    const boekhoudingtekst = maakBoekhoudingtekst({
+      middelcodeInfo, jaarVolledig, tijdvak, volgnummer, subnummer,
+    });
+
     setResult({
       aanslagnummer,
       rsinVolledig,
@@ -278,6 +321,21 @@ export default function TaxDecoder() {
       subnummer,
       volgnummer,
       controleCijfer,
+      boekhoudingtekst,
+    });
+
+    // Voeg toe aan sessie-historiek (nieuwste bovenaan, max 20)
+    setHistory(prev => {
+      const nieuw = {
+        id: Date.now(),
+        kenmerkFormatted: inputVal.trim(),
+        kenmerkRaw: raw,
+        boekhoudingtekst,
+        aanslagnummer,
+      };
+      // Geen duplicaten op basis van raw kenmerk
+      const gefilterd = prev.filter(h => h.kenmerkRaw !== raw);
+      return [nieuw, ...gefilterd].slice(0, 20);
     });
 
     // ── Bedrijfscheck ────────────────────────────────────────────────────
@@ -290,7 +348,7 @@ export default function TaxDecoder() {
   function genereer() {
     setRevError('');
     setRevResult(null);
-    setCopied(false);
+    setCopiedKey(null);
 
     // Normaliseer: strip spaties, punten, koppeltekens; uppercase
     const raw = revInputVal.replace(/[\s.-]/g, '').toUpperCase();
@@ -418,17 +476,22 @@ export default function TaxDecoder() {
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="numeric"
-                value={inputVal}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                maxLength={19}
-                placeholder="XXXX XXXX XXXX XXXX"
-                style={styles.input}
-              />
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  inputMode="numeric"
+                  value={inputVal}
+                  onChange={handleInput}
+                  onKeyDown={handleKeyDown}
+                  maxLength={19}
+                  placeholder="XXXX XXXX XXXX XXXX"
+                  style={{ ...styles.input, width: '100%', paddingRight: inputVal ? '2.5rem' : '0.875rem' }}
+                />
+                {inputVal && (
+                  <button onClick={wisInput} style={styles.btnClear} title="Wis invoer">×</button>
+                )}
+              </div>
               <button onClick={decodeer} style={styles.btnPrimary}>Decodeer</button>
             </div>
 
@@ -448,10 +511,68 @@ export default function TaxDecoder() {
             </p>
           </div>
 
+          {/* ── Sessie-historiek ─────────────────────────────────────────── */}
+          {history.length > 0 && (
+            <div style={styles.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <h2 style={{ ...styles.cardTitle, marginBottom: 0 }}>Historiek sessie</h2>
+                <button
+                  onClick={() => setHistory([])}
+                  style={{ ...styles.btnCopy, color: '#dc2626', borderColor: '#fecaca' }}
+                >
+                  Wis alles
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {history.map(item => (
+                  <div
+                    key={item.id}
+                    style={styles.historyRow}
+                    onClick={() => {
+                      setInputVal(item.kenmerkFormatted);
+                      setError('');
+                      setResult(null);
+                      setBedrijf(null);
+                      setCopiedKey(null);
+                    }}
+                    title="Klik om opnieuw te decoderen"
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={styles.historyKenmerk}>{item.kenmerkFormatted}</div>
+                      <div style={styles.historyLabel}>{item.boekhoudingtekst}</div>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); kopieer(item.boekhoudingtekst, 'hist-' + item.id); }}
+                      style={{ ...styles.btnCopy, flexShrink: 0 }}
+                    >
+                      {copiedKey === 'hist-' + item.id ? '✓' : 'Kopieer'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {result && (
             <>
               <div style={styles.card}>
                 <h2 style={{ ...styles.cardTitle, marginBottom: '1rem' }}>Decoderingsresultaat</h2>
+
+                {/* Boekhoudingtekst */}
+                <div style={styles.boekhoudingBox}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+                    <div>
+                      <div style={styles.boekhoudingLabel}>Boekhoudomschrijving</div>
+                      <div style={styles.boekhoudingValue}>{result.boekhoudingtekst}</div>
+                    </div>
+                    <button
+                      onClick={() => kopieer(result.boekhoudingtekst, 'boekhouding')}
+                      style={styles.btnCopy}
+                    >
+                      {copiedKey === 'boekhouding' ? '✓ Gekopieerd' : 'Kopieer'}
+                    </button>
+                  </div>
+                </div>
 
                 {/* Aanslagnummer highlight + kopieerknop */}
                 <div style={styles.aanslagnummerBox}>
@@ -461,11 +582,11 @@ export default function TaxDecoder() {
                       <div style={styles.aanslagnummerValue}>{result.aanslagnummer}</div>
                     </div>
                     <button
-                      onClick={() => kopieer(result.aanslagnummer)}
+                      onClick={() => kopieer(result.aanslagnummer, 'aanslagnummer')}
                       style={styles.btnCopy}
                       title="Kopieer aanslagnummer"
                     >
-                      {copied ? '✓ Gekopieerd' : 'Kopieer'}
+                      {copiedKey === 'aanslagnummer' ? '✓ Gekopieerd' : 'Kopieer'}
                     </button>
                   </div>
                 </div>
@@ -602,11 +723,11 @@ export default function TaxDecoder() {
                     <div style={styles.aanslagnummerValue}>{revResult.kenmerkFormatted}</div>
                   </div>
                   <button
-                    onClick={() => kopieer(revResult.kenmerkFormatted)}
+                    onClick={() => kopieer(revResult.kenmerkFormatted, 'revkenmerk')}
                     style={styles.btnCopy}
                     title="Kopieer betalingskenmerk"
                   >
-                    {copied ? '✓ Gekopieerd' : 'Kopieer'}
+                    {copiedKey === 'revkenmerk' ? '✓ Gekopieerd' : 'Kopieer'}
                   </button>
                 </div>
               </div>
@@ -693,6 +814,65 @@ const styles = {
     color: 'white',
     borderColor: '#2563eb',
     fontWeight: 600,
+  },
+  btnClear: {
+    position: 'absolute',
+    right: '0.6rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#94a3b8',
+    fontSize: '1.2rem',
+    lineHeight: 1,
+    padding: '0.2rem',
+  },
+  boekhoudingBox: {
+    background: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: 6,
+    padding: '0.75rem 1rem',
+    marginBottom: '0.75rem',
+  },
+  boekhoudingLabel: {
+    fontSize: '0.72rem',
+    fontWeight: 600,
+    color: '#16a34a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.07em',
+    marginBottom: '0.25rem',
+  },
+  boekhoudingValue: {
+    fontSize: '1.1rem',
+    fontWeight: 700,
+    color: '#15803d',
+  },
+  historyRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '0.75rem',
+    padding: '0.5rem 0.75rem',
+    borderRadius: 6,
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    cursor: 'pointer',
+    transition: 'background 0.12s',
+  },
+  historyKenmerk: {
+    fontFamily: 'monospace',
+    fontSize: '0.875rem',
+    color: '#1e293b',
+    fontWeight: 600,
+  },
+  historyLabel: {
+    fontSize: '0.78rem',
+    color: '#64748b',
+    marginTop: '0.1rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   btnCopy: {
     padding: '0.35rem 0.75rem',
