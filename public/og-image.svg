@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <rect x="0" y="0" width="8" height="630" fill="#2563eb"/>
+
+  <!-- Background grid lines -->
+  <line x1="80" y1="0" x2="80" y2="630" stroke="#1e293b" stroke-width="1"/>
+  <line x1="0" y1="80" x2="1200" y2="80" stroke="#1e293b" stroke-width="1"/>
+
+  <!-- Badge -->
+  <rect x="80" y="120" width="130" height="32" rx="6" fill="#1e3a6e"/>
+  <text x="145" y="141" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#60a5fa" text-anchor="middle">GRATIS TOOL</text>
+
+  <!-- Main heading -->
+  <text x="80" y="240" font-family="system-ui, sans-serif" font-size="56" font-weight="700" fill="#f8fafc">Betalingskenmerk</text>
+  <text x="80" y="308" font-family="system-ui, sans-serif" font-size="56" font-weight="700" fill="#2563eb">omzetten</text>
+
+  <!-- Sub -->
+  <text x="80" y="380" font-family="system-ui, sans-serif" font-size="26" fill="#94a3b8">16-cijferig kenmerk naar aanslagnummer</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="420" x2="480" y2="420" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Features -->
+  <text x="80" y="460" font-family="system-ui, sans-serif" font-size="19" fill="#64748b">Geen registratie  |  Direct in browser  |  Data niet opgeslagen</text>
+
+  <!-- Example kenmerk -->
+  <rect x="80" y="490" width="500" height="58" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="108" y="525" font-family="monospace, monospace" font-size="26" font-weight="600" fill="#2563eb" letter-spacing="6">2036 0000 1630 1110</text>
+
+  <!-- URL -->
+  <text x="1120" y="580" font-family="system-ui, sans-serif" font-size="18" fill="#475569" text-anchor="end">betalingskenmerk.nl</text>
+</svg>

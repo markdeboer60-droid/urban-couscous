@@ -13,6 +13,36 @@ body {
   padding: 0 1rem 3rem;
 }
 
+/* Site-navigatie */
+.site-nav {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.site-nav-link {
+  padding: 0.35rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.site-nav-link:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.site-nav-active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  font-weight: 600;
+}
+
 /* Header */
 .app-header {
   padding: 2rem 0 1.75rem;
