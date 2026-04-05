@@ -33,11 +33,12 @@ function formatTijdvak(code) {
     ];
     return `${maanden[num - 1]} (maand ${code})`;
   }
+  // Kwartaalcodes: Q-einde maand (3,6,9,12) + 18 = 21,24,27,30
   const specials = {
-    10: 'Kwartaal 1 (Q1)',
-    20: 'Kwartaal 2 (Q2)',
+    21: 'Kwartaal 1 (Q1)',
+    24: 'Kwartaal 2 (Q2)',
+    27: 'Kwartaal 3 (Q3)',
     30: 'Kwartaal 4 (Q4)',
-    40: 'Kwartaal 4 (Q4)',
   };
   return specials[num] ?? `Tijdvak ${code}`;
 }
@@ -55,27 +56,10 @@ function berekenElfproef(digits8) {
 }
 
 /**
- * Valideert het controlecijfer (positie 1) van een 16-cijferig betalingskenmerk.
- * Gewichten [9,8,7,6,5,4,3,2] herhaald over alle 16 posities; som mod 11 = 0.
+ * Het algoritme voor het controlecijfer (positie 1) is niet openbaar
+ * gedocumenteerd door de Belastingdienst. De waarde wordt getoond als
+ * informatie, maar niet gevalideerd.
  */
-function validateControleCijfer(digits16) {
-  const gewichten = [9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const som = digits16.reduce((acc, d, i) => acc + d * gewichten[i], 0);
-  return som % 11 === 0;
-}
-
-/**
- * Berekent het controlecijfer voor posities 2–16 (15 cijfers).
- * Geeft null terug als geen geldig enkel cijfer berekend kan worden.
- */
-function berekenControleCijfer(digits15) {
-  const gewichten = [8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const som = digits15.reduce((acc, d, i) => acc + d * gewichten[i], 0);
-  const needed = (11 - (som % 11)) % 11;
-  // modInverse(9, 11) = 5  →  9 × 5 = 45 ≡ 1 (mod 11)
-  const d1 = (needed * 5) % 11;
-  return d1 <= 9 ? d1 : null; // 10 = ongeldig combinatie
-}
 
 /**
  * Formatteer invoer naar "XXXX XXXX XXXX XXXX".
@@ -197,10 +181,8 @@ export default function TaxDecoder() {
 
     const allDigits = raw.split('').map(Number);
 
-    // ── Controlecijfer validatie ──
-    const controleGeldig = validateControleCijfer(allDigits);
-
     // ── Posities (1-indexed zoals in de specificatie) ──
+    const controleCijfer = allDigits[0]; // weergave-only, algoritme niet openbaar
     const rsinDigits = allDigits.slice(1, 9);   // pos 2-9
     const middelcodeChar = raw[9];              // pos 10
     const jaarDigit = raw[10];                  // pos 11
@@ -243,7 +225,7 @@ export default function TaxDecoder() {
       tijdvak,
       subnummer,
       volgnummer,
-      controleGeldig,
+      controleCijfer,
     });
 
     // ── Bedrijfscheck ────────────────────────────────────────────────────
@@ -319,12 +301,9 @@ export default function TaxDecoder() {
       Number(volgnummer),                         // 1 cijfer
     ]; // totaal 15
 
-    const controleCijfer = berekenControleCijfer(digits15);
-    if (controleCijfer === null) {
-      setRevError('Dit aanslagnummer kan niet worden omgezet naar een geldig betalingskenmerk (controlecijfer = 10).');
-      return;
-    }
-
+    // Controlecijfer (positie 1) is niet openbaar gedocumenteerd.
+    // We gebruiken '0' als placeholder; de Belastingdienst berekent dit intern.
+    const controleCijfer = 0;
     const kenmerkRaw = String(controleCijfer) + digits15.join('');
     const kenmerkFormatted = kenmerkRaw.replace(/(.{4})(?=.)/g, '$1 ');
 
@@ -412,18 +391,7 @@ export default function TaxDecoder() {
           {result && (
             <>
               <div style={styles.card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <h2 style={{ ...styles.cardTitle, marginBottom: 0 }}>Decoderingsresultaat</h2>
-                  {/* Controlecijfer badge */}
-                  <span style={{
-                    ...styles.badge,
-                    background: result.controleGeldig ? '#dcfce7' : '#fee2e2',
-                    color: result.controleGeldig ? '#166534' : '#991b1b',
-                    fontWeight: 600,
-                  }}>
-                    {result.controleGeldig ? '✓ Controlecijfer geldig' : '✗ Controlecijfer ongeldig'}
-                  </span>
-                </div>
+                <h2 style={{ ...styles.cardTitle, marginBottom: '1rem' }}>Decoderingsresultaat</h2>
 
                 {/* Aanslagnummer highlight + kopieerknop */}
                 <div style={styles.aanslagnummerBox}>
@@ -452,6 +420,10 @@ export default function TaxDecoder() {
                   <DetailRow label="Tijdvak" value={formatTijdvak(result.tijdvak)} />
                   <DetailRow label="Subnummer" value={result.subnummer} mono />
                   <DetailRow label="Volgnummer" value={result.volgnummer} mono />
+                  <DetailRow
+                    label="Controlecijfer (pos. 1)"
+                    value={`${result.controleCijfer} — intern Belastingdienst`}
+                  />
                 </div>
               </div>
 
@@ -572,6 +544,9 @@ export default function TaxDecoder() {
                 </div>
               </div>
 
+              <p style={{ fontSize: '0.8rem', color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 6, padding: '0.5rem 0.75rem', marginBottom: '1rem' }}>
+                Let op: het eerste cijfer (controlecijfer) is ingesteld op <strong>0</strong>. Het juiste cijfer wordt door de Belastingdienst intern bepaald en is niet openbaar gedocumenteerd.
+              </p>
               <div style={styles.detailGrid}>
                 <DetailRow label="Zonder spaties" value={revResult.kenmerk} mono />
                 <DetailRow label="RSIN / BSN" value={revResult.rsinVolledig} mono />
