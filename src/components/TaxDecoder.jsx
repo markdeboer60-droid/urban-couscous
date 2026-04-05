@@ -35,12 +35,13 @@ function formatTijdvak(code) {
   }
   // Kwartaalcodes: Q-einde maand (3,6,9,12) + 18 = 21,24,27,30
   const specials = {
+    13: '13e periode (4-wekelijks)',
     21: 'Kwartaal 1 (Q1)',
     24: 'Kwartaal 2 (Q2)',
     27: 'Kwartaal 3 (Q3)',
     30: 'Kwartaal 4 (Q4)',
   };
-  return specials[num] ?? `Tijdvak ${code}`;
+  return specials[num] ?? `Periode ${code} (onbekend — neem contact op)`;
 }
 
 /**
