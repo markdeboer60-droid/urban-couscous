@@ -2,18 +2,44 @@ import { useState, useRef } from 'react';
 
 // ─── Constanten ────────────────────────────────────────────────────────────────
 
+// Middelcode-cijfer (positie 10 betalingskenmerk) → letter + officiële naam
 const MIDDELCODE = {
-  0: { letter: 'A', naam: 'Naheffing Loonbelasting' },
-  1: { letter: 'B', naam: 'Omzetbelasting (BTW)' },
+  0: { letter: 'A', naam: 'Naheffingsaanslag loonheffing' },
+  1: { letter: 'B', naam: 'Omzetbelasting' },
   2: { letter: 'M', naam: 'Motorrijtuigenbelasting' },
-  3: { letter: 'H', naam: 'Inkomstenbelasting' },
+  3: { letter: 'H', naam: 'Inkomstenbelasting en premie volksverzekeringen' },
   4: { letter: 'V', naam: 'Vennootschapsbelasting' },
-  5: { letter: 'F', naam: 'Naheffing Omzetbelasting' },
-  6: { letter: 'L', naam: 'Loonbelasting' },
+  5: { letter: 'F', naam: 'Naheffingsaanslag omzetbelasting' },
+  6: { letter: 'L', naam: 'Loonheffing' },
   7: { letter: 'T', naam: 'Toeslagen' },
+  // Overige letters (alleen aanslagnummer, geen betalingskenmerk-middelcode):
+  // O = Teruggave omzetbelasting
+  // J = Teruggave loonheffingen / bijdrage zorgverzekeringswet
+  // N = Inkomstenbelasting (gemoedsbezwaarden)
+  // W = Zorgverzekeringswet
+  // Y = Naheffingsaanslag motorrijtuigenbelasting
+  // Z = Overige
 };
 
-// Omgekeerde mapping: letter → middelcode-cijfer
+// Volledige letter → naam mapping (inclusief aanslagnummer-only codes)
+const LETTER_NAAM = {
+  A: 'Naheffingsaanslag loonheffing',
+  B: 'Omzetbelasting',
+  F: 'Naheffingsaanslag omzetbelasting',
+  H: 'Inkomstenbelasting en premie volksverzekeringen',
+  J: 'Teruggave loonheffingen / bijdrage zorgverzekeringswet',
+  L: 'Loonheffing',
+  M: 'Motorrijtuigenbelasting',
+  N: 'Inkomstenbelasting (gemoedsbezwaarden)',
+  O: 'Teruggave omzetbelasting',
+  T: 'Toeslagen',
+  V: 'Vennootschapsbelasting',
+  W: 'Zorgverzekeringswet',
+  Y: 'Naheffingsaanslag motorrijtuigenbelasting',
+  Z: 'Overige',
+};
+
+// Omgekeerde mapping: letter → middelcode-cijfer (alleen voor codes met betalingskenmerk)
 const LETTER_NAAR_DIGIT = Object.fromEntries(
   Object.entries(MIDDELCODE).map(([digit, { letter }]) => [letter, Number(digit)])
 );
@@ -22,6 +48,31 @@ const LETTER_NAAR_DIGIT = Object.fromEntries(
 const KVK_API_KEY = '';
 
 // ─── Hulpfuncties ──────────────────────────────────────────────────────────────
+
+/**
+ * Statuscode (positie 16 = volgnummer in betalingskenmerk = laatste cijfer aanslagnummer)
+ * 0-5: voorlopige aanslag, 6: definitief, 7-9: navorderingsaanslag
+ */
+function formatStatusCode(digit) {
+  const n = parseInt(digit, 10);
+  if (n >= 0 && n <= 5) {
+    return n === 0
+      ? 'Voorlopige aanslag (initieel)'
+      : `Voorlopige aanslag (${n}e bijstelling)`;
+  }
+  if (n === 6) return 'Definitieve aanslag';
+  if (n >= 7 && n <= 9) return `${n - 6}e navorderingsaanslag`;
+  return digit;
+}
+
+/**
+ * Toeslagen-subtype op basis van subnummer (laatste cijfer)
+ */
+function formatToeslagSubtype(subnummer) {
+  const last = subnummer.slice(-1);
+  const subtypes = { '1': 'Kinderopvangtoeslag', '2': 'Huurtoeslag', '3': 'Zorgtoeslag' };
+  return subtypes[last] ?? null;
+}
 
 function formatTijdvak(code) {
   const num = parseInt(code, 10);
@@ -263,8 +314,16 @@ export default function TaxDecoder() {
       return;
     }
     // Valideer: positie 10 = geldige letter
+    if (!(letter in LETTER_NAAM)) {
+      setRevError(`Onbekende lettercode: "${letter}". Bekende codes: ${Object.keys(LETTER_NAAM).sort().join(', ')}.`);
+      return;
+    }
+    // Letters zonder betalingskenmerk-middelcode (teruggave / overig)
     if (!(letter in LETTER_NAAR_DIGIT)) {
-      setRevError(`Onbekende lettercode: "${letter}". Geldig: ${Object.keys(LETTER_NAAR_DIGIT).join(', ')}.`);
+      setRevError(
+        `Letter "${letter}" (${LETTER_NAAM[letter]}) heeft geen betalingskenmerk. ` +
+        `Dit type aanslag resulteert in een teruggave of valt buiten het standaard betaalsysteem.`
+      );
       return;
     }
     // Valideer: rest = cijfers
@@ -420,7 +479,14 @@ export default function TaxDecoder() {
                   <DetailRow label="Jaar" value={result.jaarVolledig} />
                   <DetailRow label="Tijdvak" value={formatTijdvak(result.tijdvak)} />
                   <DetailRow label="Subnummer" value={result.subnummer} mono />
-                  <DetailRow label="Volgnummer" value={result.volgnummer} mono />
+                  <DetailRow
+                    label="Aanslagstatus"
+                    value={`${result.volgnummer} — ${formatStatusCode(result.volgnummer)}`}
+                  />
+                  {result.middelcodeInfo.letter === 'T' && (() => {
+                    const sub = formatToeslagSubtype(result.subnummer);
+                    return sub ? <DetailRow label="Toeslag type" value={sub} /> : null;
+                  })()}
                   <DetailRow
                     label="Controlecijfer (pos. 1)"
                     value={`${result.controleCijfer} — intern Belastingdienst`}
@@ -558,7 +624,10 @@ export default function TaxDecoder() {
                 <DetailRow label="Jaar" value={revResult.jaarVolledig} />
                 <DetailRow label="Tijdvak" value={formatTijdvak(revResult.tijdvak)} />
                 <DetailRow label="Subnummer" value={revResult.subnummer} mono />
-                <DetailRow label="Volgnummer" value={revResult.volgnummer} mono />
+                <DetailRow
+                  label="Aanslagstatus"
+                  value={`${revResult.volgnummer} — ${formatStatusCode(revResult.volgnummer)}`}
+                />
               </div>
             </div>
           )}
