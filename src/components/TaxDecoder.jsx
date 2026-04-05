@@ -673,18 +673,100 @@ export default function TaxDecoder() {
       )}
 
       {/* Privacy */}
-      <div style={{ ...styles.card, background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: 0 }}>
+      <div style={{ ...styles.card, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
         <p style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
           <strong style={{ color: '#475569' }}>Privacy:</strong> alle berekeningen verlopen volledig lokaal in uw browser.
           Geen gegevens worden opgeslagen of doorgestuurd. Bedrijfsnamen komen uit het openbare KvK-handelsregister.
           BSN-nummers zijn beschermd onder de AVG.
         </p>
       </div>
+
+      {/* Uitleg: opbouw betalingskenmerk */}
+      <section style={styles.uitlegSection}>
+        <h2 style={styles.sectionH2}>Hoe werkt een betalingskenmerk?</h2>
+        <p style={styles.uitlegP}>
+          Een betalingskenmerk van de Belastingdienst bestaat altijd uit precies 16 cijfers.
+          Elk cijfer heeft een vaste betekenis. De tool leest die posities en berekent het bijbehorende aanslagnummer.
+        </p>
+
+        <div style={styles.posTable}>
+          {[
+            { pos: '1',     label: 'Controlecijfer',     desc: 'Intern gebruik Belastingdienst. Algoritme is niet openbaar.' },
+            { pos: '2-9',   label: 'RSIN / BSN (8 cijfers)', desc: 'De eerste 8 cijfers van uw fiscaal nummer. Het 9e cijfer volgt uit de elfproef.' },
+            { pos: '10',    label: 'Middelcode',          desc: 'Geeft de belastingsoort aan: 0=A, 1=B (BTW), 3=H (IB), 4=V (VPB), 6=L (LH), 7=T (Toeslagen).' },
+            { pos: '11',    label: 'Jaarcode',            desc: 'Laatste cijfer van het belastingjaar. Bijv. 4 = 2024.' },
+            { pos: '12-13', label: 'Subnummer',           desc: 'Onderverdeling binnen de aanslag, bijv. voor toeslagtypes.' },
+            { pos: '14-15', label: 'Tijdvak',             desc: 'Periode van de aanslag: 01-12 = maand, 21=Q1, 24=Q2, 27=Q3, 30=Q4, 00=jaar.' },
+            { pos: '16',    label: 'Volgnummer',          desc: '0-5 = voorlopige aanslag, 6 = definitief, 7-9 = navorderingsaanslag.' },
+          ].map(row => (
+            <div key={row.pos} style={styles.posRow}>
+              <span style={styles.posNum}>{row.pos}</span>
+              <span style={styles.posLabel}>{row.label}</span>
+              <span style={styles.posDesc}>{row.desc}</span>
+            </div>
+          ))}
+        </div>
+
+        <h3 style={styles.sectionH3}>Elfproef voor BSN en RSIN</h3>
+        <p style={styles.uitlegP}>
+          De Belastingdienst gebruikt de elfproef om te controleren of een BSN of RSIN geldig is.
+          De 8 bekende cijfers worden vermenigvuldigd met de gewichten 9, 8, 7, 6, 5, 4, 3 en 2.
+          De som van die producten gedeeld door 11 geeft een rest. Dat restgetal is het 9e cijfer.
+          Als de rest 10 is, klopt het nummer niet.
+        </p>
+
+        <h3 style={styles.sectionH3}>Kwartaalcodes</h3>
+        <p style={styles.uitlegP}>
+          De tijdvakcodes voor kwartalen zijn niet 10, 20, 30 en 40.
+          De Belastingdienst gebruikt de eindmaand van het kwartaal plus 18:
+          kwartaal 1 eindigt in maart (maand 3), dus 3 + 18 = 21.
+          Kwartaal 2 = 24, kwartaal 3 = 27, kwartaal 4 = 30.
+        </p>
+      </section>
+
+      {/* FAQ */}
+      <section style={styles.uitlegSection}>
+        <h2 style={styles.sectionH2}>Veelgestelde vragen</h2>
+        <FaqItem
+          v="Wat is een betalingskenmerk?"
+          a="Een betalingskenmerk is een 16-cijferig nummer dat de Belastingdienst meegeeft bij elk verzoek tot betaling. U vindt het op acceptgiro's, in uw MijnBelastingdienst-account en op aanslagbiljetten. Met dit nummer koppelt de Belastingdienst uw overschrijving automatisch aan de juiste aanslag of aangifte."
+        />
+        <FaqItem
+          v="Wat is het verschil tussen een betalingskenmerk en een aanslagnummer?"
+          a="Het aanslagnummer is het officiële identificatienummer van uw belastingaanslag, zichtbaar op het aanslagbiljet. Het betalingskenmerk is een versleutelde versie van datzelfde nummer. Boekhouders en accountants gebruiken het aanslagnummer om journaalposten te verantwoorden."
+        />
+        <FaqItem
+          v="Welke belastingsoorten zijn er?"
+          a="De letter in het aanslagnummer geeft de belastingsoort aan. De meest voorkomende zijn: B = omzetbelasting (btw), L = loonheffing, H = inkomstenbelasting en premie volksverzekeringen, V = vennootschapsbelasting, A = naheffingsaanslag loonheffing en F = naheffingsaanslag omzetbelasting."
+        />
+        <FaqItem
+          v="Wat betekenen de kwartaalcodes 21, 24, 27 en 30?"
+          a="De Belastingdienst codeert kwartalen als volgt: 21 is het eerste kwartaal (januari tot en met maart), 24 is het tweede kwartaal (april tot en met juni), 27 is het derde kwartaal (juli tot en met september) en 30 is het vierde kwartaal (oktober tot en met december). Maanden lopen van 01 tot 12. Code 00 staat voor een jaaraangifte."
+        />
+        <FaqItem
+          v="Is het gebruik van deze tool gratis?"
+          a="Ja, de tool is volledig gratis. Er is geen registratie nodig en er worden geen kosten in rekening gebracht. De tool is gemaakt om ondernemers, boekhouders en particulieren te helpen om snel inzicht te krijgen in hun betalingskenmerken."
+        />
+        <FaqItem
+          v="Wat gebeurt er met mijn gegevens?"
+          a="Alle berekeningen worden lokaal in uw browser uitgevoerd. Uw betalingskenmerk, BSN of RSIN wordt nooit naar een server gestuurd en nergens opgeslagen of verkocht. De enige externe verbinding is een opzoeking in het openbare KvK-handelsregister om de bedrijfsnaam op te halen bij een RSIN."
+          last
+        />
+      </section>
     </div>
   );
 }
 
 // ─── Sub-componenten ───────────────────────────────────────────────────────────
+
+function FaqItem({ v, a, last }) {
+  return (
+    <div style={{ borderBottom: last ? 'none' : '1px solid #f1f5f9', paddingBottom: last ? 0 : '1rem', marginBottom: last ? 0 : '1rem' }}>
+      <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>{v}</h3>
+      <p style={{ fontSize: '0.875rem', color: '#475569', lineHeight: 1.65, margin: 0 }}>{a}</p>
+    </div>
+  );
+}
 
 function DetailCell({ label, value, mono, full }) {
   return (
@@ -895,5 +977,63 @@ const styles = {
     padding: '0.2rem 0.5rem',
     borderRadius: 4,
     fontWeight: 500,
+  },
+  uitlegSection: {
+    background: 'white',
+    borderRadius: 10,
+    padding: '1.5rem',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)',
+    marginBottom: '1rem',
+  },
+  sectionH2: {
+    fontSize: '1.1rem',
+    fontWeight: 700,
+    color: '#1e293b',
+    marginBottom: '0.75rem',
+    marginTop: 0,
+  },
+  sectionH3: {
+    fontSize: '0.95rem',
+    fontWeight: 700,
+    color: '#334155',
+    marginTop: '1.25rem',
+    marginBottom: '0.4rem',
+  },
+  uitlegP: {
+    fontSize: '0.875rem',
+    color: '#475569',
+    lineHeight: 1.65,
+    margin: '0 0 0.25rem',
+  },
+  posTable: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    marginTop: '0.75rem',
+  },
+  posRow: {
+    display: 'grid',
+    gridTemplateColumns: '3.5rem 11rem 1fr',
+    gap: '0.5rem',
+    fontSize: '0.82rem',
+    alignItems: 'baseline',
+  },
+  posNum: {
+    fontFamily: 'monospace',
+    fontWeight: 700,
+    color: '#2563eb',
+    background: '#eff6ff',
+    padding: '0.1rem 0.35rem',
+    borderRadius: 4,
+    textAlign: 'center',
+    whiteSpace: 'nowrap',
+  },
+  posLabel: {
+    fontWeight: 600,
+    color: '#334155',
+  },
+  posDesc: {
+    color: '#64748b',
+    lineHeight: 1.5,
   },
 };
