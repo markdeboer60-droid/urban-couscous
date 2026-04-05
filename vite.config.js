@@ -14,6 +14,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         belastingcodes: resolve(__dirname, 'belastingcodes/index.html'),
+        elfproef: resolve(__dirname, 'elfproef/index.html'),
       },
     },
   },

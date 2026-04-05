@@ -1,4 +1,13 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+// Klikbare voorbeelden per belastingsoort
+// Posities: 1=controlecijfer | 2-9=RSIN eerste 8 | 10=middelcode | 11=jaarcode | 12-13=subnummer | 14-15=tijdvak | 16=volgnummer
+const VOORBEELDEN = [
+  { label: 'LH nov 2023 (voorlopig)', kenmerk: '2036 0000 1630 1110' }, // middelcode 6=L, jaar '3'=2023, tijdvak 11=nov
+  { label: 'VPB 2025 (definitief)',   kenmerk: '0036 0000 1450 1006' }, // middelcode 4=V, jaar '5'=2025, tijdvak 00=jaar
+  { label: 'IB 2024 (voorlopig)',     kenmerk: '0036 0000 1340 1000' }, // middelcode 3=H, jaar '4'=2024, tijdvak 00=jaar
+  { label: 'BTW Q2 2024',            kenmerk: '0036 0000 1141 2246' }, // middelcode 1=B, jaar '4'=2024, tijdvak 24=Q2
+];
 
 // ─── Constanten ────────────────────────────────────────────────────────────────
 
@@ -218,6 +227,19 @@ export default function TaxDecoder() {
   const [history, setHistory] = useState([]);          // sessie-historiek (max 20)
   const inputRef = useRef(null);
 
+  // ── Deelbare URL: lees ?k= bij opstarten ──────────────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const k = params.get('k');
+    if (k) {
+      const raw = k.replace(/\D/g, '');
+      if (raw.length === 16) {
+        setInputVal(autoFormat(raw));
+        decodeer(raw);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   function switchMode(m) {
     setMode(m);
     setError('');
@@ -257,13 +279,13 @@ export default function TaxDecoder() {
   }
 
   // ── Decode ───────────────────────────────────────────────────────────────
-  async function decodeer() {
+  async function decodeer(rawOverride) {
     setError('');
     setResult(null);
     setBedrijf(null);
     setCopiedKey(null);
 
-    const raw = inputVal.replace(/\D/g, '');
+    const raw = (rawOverride ?? inputVal).replace(/\D/g, '');
 
     if (raw.length !== 16) {
       setError(`Ongeldig aantal cijfers: ${raw.length} (verwacht: 16).`);
@@ -323,6 +345,11 @@ export default function TaxDecoder() {
       controleCijfer,
       boekhoudingtekst,
     });
+
+    // Deelbare URL: zet ?k= in de adresbalk zonder pagina-herlaad
+    const url = new URL(window.location.href);
+    url.searchParams.set('k', raw);
+    window.history.replaceState({}, '', url.toString());
 
     // Voeg toe aan sessie-historiek (nieuwste bovenaan, max 20)
     setHistory(prev => {
@@ -484,12 +511,20 @@ export default function TaxDecoder() {
               <button onClick={decodeer} style={styles.btnPrimary}>Decodeer</button>
             </div>
             {error && <p style={styles.errorText}>{error}</p>}
-            <p style={styles.hint}>
-              Voorbeeld:&nbsp;
-              <span style={styles.hintCode} onClick={() => { setInputVal('2036 0000 1630 1110'); setError(''); setResult(null); setBedrijf(null); }}>
-                2036 0000 1630 1110
-              </span>
-            </p>
+            <div style={{ marginTop: '0.6rem' }}>
+              <span style={{ ...styles.hint, marginTop: 0, display: 'inline' }}>Voorbeelden: </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.35rem' }}>
+                {VOORBEELDEN.map(vb => (
+                  <button
+                    key={vb.kenmerk}
+                    style={styles.btnVoorbeeld}
+                    onClick={() => { setInputVal(vb.kenmerk); setError(''); setResult(null); setBedrijf(null); setCopiedKey(null); }}
+                  >
+                    {vb.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Historiek */}
@@ -530,7 +565,16 @@ export default function TaxDecoder() {
           {result && (
             <>
               <div style={styles.card}>
-                <p style={styles.cardLabel}>Resultaat</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <p style={{ ...styles.cardLabel, marginBottom: 0 }}>Resultaat</p>
+                  <button
+                    onClick={() => kopieer(window.location.href, 'url')}
+                    style={styles.btnGhost}
+                    title="Kopieer deelbare link"
+                  >
+                    {copiedKey === 'url' ? '✓ Link gekopieerd' : 'Deel'}
+                  </button>
+                </div>
 
                 {/* Boekhoudomschrijving */}
                 <div style={styles.boekhoudingBox}>
@@ -834,6 +878,16 @@ const styles = {
     color: '#64748b',
     whiteSpace: 'nowrap',
     flexShrink: 0,
+  },
+  btnVoorbeeld: {
+    padding: '0.2rem 0.6rem',
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: 5,
+    cursor: 'pointer',
+    fontSize: '0.78rem',
+    color: '#475569',
+    whiteSpace: 'nowrap',
   },
   btnClear: {
     position: 'absolute',

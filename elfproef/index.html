@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO -->
+    <title>Elfproef berekenen voor BSN en RSIN | Gratis controleren</title>
+    <meta name="description" content="Bereken of valideer de elfproef van een BSN of RSIN. Voer 8 cijfers in en zie direct het 9e controlegetal, stap voor stap uitgelegd." />
+    <meta name="keywords" content="elfproef berekenen, elfproef BSN, elfproef RSIN, BSN controleren elfproef, RSIN valideren, elfproef uitleg, negende cijfer BSN berekenen" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://betalingskenmerk.nl/elfproef/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Elfproef berekenen voor BSN en RSIN" />
+    <meta property="og:description" content="Bereken of controleer het 9e cijfer van een BSN of RSIN via de elfproef. Gratis, stap voor stap, direct in uw browser." />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:image" content="https://betalingskenmerk.nl/og-image.svg" />
+    <meta property="og:url" content="https://betalingskenmerk.nl/elfproef/" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Elfproef berekenen voor BSN en RSIN" />
+    <meta name="twitter:description" content="Bereken of controleer het 9e cijfer van een BSN of RSIN via de elfproef. Gratis, stap voor stap." />
+    <meta name="twitter:image" content="https://betalingskenmerk.nl/og-image.svg" />
+
+    <!-- Structured data: BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Betalingskenmerk Decoder",
+          "item": "https://betalingskenmerk.nl/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Elfproef berekenen",
+          "item": "https://betalingskenmerk.nl/elfproef/"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured data: FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Wat is de elfproef?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "De elfproef is een wiskundige controle waarmee de Belastingdienst en andere instanties controleren of een BSN of RSIN geldig is. De eerste 8 cijfers worden vermenigvuldigd met de gewichten 9, 8, 7, 6, 5, 4, 3 en 2. De som van die producten gedeeld door 11 geeft de rest, en dat restgetal is het 9e cijfer. Als de rest 10 is, is het nummer ongeldig."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Hoe bereken ik het 9e cijfer van een BSN?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Neem de eerste 8 cijfers van het BSN. Vermenigvuldig het eerste cijfer met 9, het tweede met 8, enzovoort tot het achtste cijfer maal 2. Tel alle uitkomsten op. Deel de som door 11 en neem de rest. Die rest is het 9e cijfer van het BSN. Als de rest 10 is, is het BSN ongeldig."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Werkt de elfproef hetzelfde voor BSN en RSIN?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja, de berekening is identiek voor BSN en RSIN. Beide bestaan uit 9 cijfers waarbij het 9e cijfer via dezelfde elfproef wordt bepaald. Het verschil zit in het gebruik: een BSN is een persoonsnummer voor particulieren, een RSIN is een rechtspersoonsnummer voor bedrijven en organisaties."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Wat als de elfproef uitkomt op 10?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Als de berekening een rest van 10 geeft, is er geen geldig 9e cijfer mogelijk. Het opgegeven nummer is dan ongeldig. Een correct BSN of RSIN kan nooit een elfproef-rest van 10 hebben."
+          }
+        }
+      ]
+    }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/elfproef-main.jsx"></script>
+  </body>
+</html>
