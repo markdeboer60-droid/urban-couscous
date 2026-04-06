@@ -2,20 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.6">
   <url>
     <loc>https://betalingskenmerk.nl/</loc>
-    <lastmod>2026-04-05</lastmod>
+    <lastmod>2026-04-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://betalingskenmerk.nl/belastingcodes/</loc>
-    <lastmod>2026-04-05</lastmod>
+    <lastmod>2026-04-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://betalingskenmerk.nl/elfproef/</loc>
-    <lastmod>2026-04-05</lastmod>
+    <lastmod>2026-04-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://betalingskenmerk.nl/aanslagnummer/</loc>
+    <lastmod>2026-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://betalingskenmerk.nl/navorderingsaanslag/</loc>
+    <lastmod>2026-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

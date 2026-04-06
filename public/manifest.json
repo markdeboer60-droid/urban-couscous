@@ -1,0 +1,26 @@
+{
+  "name": "Betalingskenmerk Omzetter",
+  "short_name": "BK Omzetter",
+  "description": "Zet een 16-cijferig betalingskenmerk van de Belastingdienst om naar het aanslagnummer. Gratis, geen registratie.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#2563eb",
+  "lang": "nl",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml"
+    }
+  ]
+}

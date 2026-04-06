@@ -1,4 +1,5 @@
 import NavBar from '../components/NavBar.jsx';
+import Footer from '../components/Footer.jsx';
 
 // Alle 14 officiële belastingcodes van de Belastingdienst
 const CODES = [
@@ -285,6 +286,7 @@ export default function BelastingCodes() {
         </section>
 
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import NavBar from '../components/NavBar.jsx';
+import Footer from '../components/Footer.jsx';
 
 const GEWICHTEN = [9, 8, 7, 6, 5, 4, 3, 2];
 
@@ -343,6 +344,7 @@ export default function Elfproef() {
         </section>
 
       </main>
+      <Footer />
     </div>
   );
 }

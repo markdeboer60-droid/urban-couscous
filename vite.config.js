@@ -15,6 +15,8 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         belastingcodes: resolve(__dirname, 'belastingcodes/index.html'),
         elfproef: resolve(__dirname, 'elfproef/index.html'),
+        aanslagnummer: resolve(__dirname, 'aanslagnummer/index.html'),
+        navorderingsaanslag: resolve(__dirname, 'navorderingsaanslag/index.html'),
       },
     },
   },

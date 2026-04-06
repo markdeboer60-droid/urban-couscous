@@ -1,5 +1,6 @@
 import TaxDecoder from './components/TaxDecoder';
 import NavBar from './components/NavBar';
+import Footer from './components/Footer';
 import './App.css';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
       <main>
         <TaxDecoder />
       </main>
+      <Footer />
     </div>
   );
 }
