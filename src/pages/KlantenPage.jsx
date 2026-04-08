@@ -5,8 +5,16 @@ import { useToast } from '../context/ToastContext';
 import { formatDatumTijd } from '../utils/formatDatum';
 
 // Sleutels die als standaardvelden worden behandeld (niet in "Overige velden" getoond)
-const STANDAARD_SLEUTELS = new Set(['adres', 'postcode', 'plaats', 'klantnummer', 'kvk_nummer']);
-const STANDAARD_VELDEN_INIT = { klantnummer: '', kvk_nummer: '', adres: '', postcode: '', plaats: '', contactpersoon_1: '' };
+const STANDAARD_SLEUTELS = new Set([
+  'aanhef', 'geboortedatum', 'adres_contactpersoon', 'postcode_contactpersoon', 'plaats_contactpersoon',
+  'adres', 'postcode', 'plaats', 'klantnummer', 'kvk_nummer',
+]);
+const STANDAARD_VELDEN_INIT = {
+  aanhef: '', geboortedatum: '',
+  adres_contactpersoon: '', postcode_contactpersoon: '', plaats_contactpersoon: '',
+  klantnummer: '', kvk_nummer: '', adres: '', postcode: '', plaats: '',
+  contactpersoon_1: '',
+};
 const CONTACT_REGEX = /^contactpersoon_(\d+)$/;
 
 function isContactSleutel(sleutel) {
@@ -280,8 +288,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
     .filter(Boolean)
     .sort((a, b) => a - b);
   const hoogsteContact = contactIndices.length > 0 ? Math.max(...contactIndices) : 1;
-  // Altijd minstens contactpersoon_1 tonen
-  const contactLijst = contactIndices.length > 0 ? contactIndices : [1];
+  // Extrapersonen = contactpersoon_2 en hoger
+  const extraContactLijst = contactIndices.filter(n => n > 1);
 
   function voegContactToe() {
     setVeld(`contactpersoon_${hoogsteContact + 1}`, '');
@@ -323,10 +331,125 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         {klant.id ? klant.naam || 'Klant bewerken' : 'Klant toevoegen'}
       </h1>
 
-      {/* Naam */}
+      {/* 1. Contactpersoon */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
+        <h2 className="text-sm font-semibold text-gray-700">Contactpersoon</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="Aanhef" variabele="{Aanhef}">
+            <select
+              value={velden.aanhef || ''}
+              onChange={e => setVeld('aanhef', e.target.value)}
+              className="invoer"
+            >
+              <option value="">— kies aanhef —</option>
+              <option value="De Heer">De Heer</option>
+              <option value="Mevrouw">Mevrouw</option>
+            </select>
+          </Invoerveld>
+          <Invoerveld label="Naam contactpersoon" variabele="{Naam contactpersoon}">
+            <input
+              type="text"
+              value={velden.contactpersoon_1 || ''}
+              onChange={e => setVeld('contactpersoon_1', e.target.value)}
+              placeholder="Volledige naam"
+              className="invoer"
+              autoFocus
+            />
+          </Invoerveld>
+        </div>
+        <Invoerveld label="Geboortedatum" variabele="{Geboortedatum contactpersoon}">
+          <input
+            type="text"
+            value={velden.geboortedatum || ''}
+            onChange={e => setVeld('geboortedatum', e.target.value)}
+            placeholder="bijv. 1 januari 1980"
+            className="invoer"
+          />
+        </Invoerveld>
+        <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer contactpersoon}">
+          <input
+            type="text"
+            value={velden.adres_contactpersoon || ''}
+            onChange={e => setVeld('adres_contactpersoon', e.target.value)}
+            placeholder="Straat en huisnummer"
+            className="invoer"
+          />
+        </Invoerveld>
+        <div>
+          <div className="grid grid-cols-3 gap-3">
+            <Invoerveld label="Postcode">
+              <input
+                type="text"
+                value={velden.postcode_contactpersoon || ''}
+                onChange={e => setVeld('postcode_contactpersoon', e.target.value)}
+                placeholder="1234 AB"
+                className="invoer"
+              />
+            </Invoerveld>
+            <div className="col-span-2">
+              <Invoerveld label="Plaats">
+                <input
+                  type="text"
+                  value={velden.plaats_contactpersoon || ''}
+                  onChange={e => setVeld('plaats_contactpersoon', e.target.value)}
+                  placeholder="Amsterdam"
+                  className="invoer"
+                />
+              </Invoerveld>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam contactpersoon}'}</span> in sjablonen
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Extra contactpersonen */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-700">Extra contactpersonen</h2>
+          <button
+            onClick={voegContactToe}
+            className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <UserPlus size={13} />
+            Toevoegen
+          </button>
+        </div>
+        {extraContactLijst.length === 0 ? (
+          <p className="text-xs text-gray-400">Nog geen extra contactpersonen.</p>
+        ) : (
+          <div className="space-y-3">
+            {extraContactLijst.map(n => (
+              <div key={n} className="flex items-center gap-2">
+                <div className="w-28 shrink-0">
+                  <span className="text-xs text-gray-500 block leading-tight">Contactpersoon {n}</span>
+                  <span className="text-xs font-mono text-blue-500 leading-tight">{`{Naam contactpersoon${n}}`}</span>
+                </div>
+                <input
+                  type="text"
+                  value={velden[`contactpersoon_${n}`] || ''}
+                  onChange={e => setVeld(`contactpersoon_${n}`, e.target.value)}
+                  placeholder="Naam contactpersoon"
+                  className="invoer flex-1"
+                />
+                <button
+                  onClick={() => verwijderContact(n)}
+                  className="p-1.5 text-gray-400 hover:text-red-600 transition-colors shrink-0"
+                  title="Verwijderen"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 3. Onderneming */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">Klantgegevens</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Onderneming</h2>
           <button
             type="button"
             onClick={zoekBedrijfGegevens}
@@ -334,20 +457,17 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
             title="Adresgegevens opzoeken via bedrijvenmonitor.info"
             className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {bedrijfLaden
-              ? <Loader2 size={13} className="animate-spin" />
-              : <Building2 size={13} />}
+            {bedrijfLaden ? <Loader2 size={13} className="animate-spin" /> : <Building2 size={13} />}
             {bedrijfLaden ? 'Bezig...' : 'Gegevens opzoeken'}
           </button>
         </div>
-        <Invoerveld label="Naam" verplicht variabele="{Naam onderneming}">
+        <Invoerveld label="Naam onderneming" verplicht variabele="{Naam onderneming}">
           <input
             type="text"
             value={klant.naam}
             onChange={e => onChange({ ...klant, naam: e.target.value })}
-            placeholder="Naam klant of bedrijf"
+            placeholder="Naam bedrijf of onderneming"
             className="invoer"
-            autoFocus
           />
         </Invoerveld>
         <div className="grid grid-cols-2 gap-3">
@@ -391,7 +511,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
               />
             </Invoerveld>
             <div className="col-span-2">
-              <Invoerveld label="Plaats">
+              <Invoerveld label="Vestigingsplaats" variabele="{Vestigingsplaats}">
                 <input
                   type="text"
                   value={velden.plaats || ''}
@@ -408,50 +528,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         </div>
       </div>
 
-      {/* Contactpersonen */}
+      {/* 4. Overige velden */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-700">Contactpersonen</h2>
-          <button
-            onClick={voegContactToe}
-            className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <UserPlus size={13} />
-            Contactpersoon toevoegen
-          </button>
-        </div>
-        <div className="space-y-3">
-          {contactLijst.map(n => (
-            <div key={n} className="flex items-center gap-2">
-              <div className="w-28 shrink-0">
-                <span className="text-xs text-gray-500 block leading-tight">Contactpersoon {n}</span>
-                <span className="text-xs font-mono text-blue-500 leading-tight">
-                  {n === 1 ? '{Naam contactpersoon}' : `{Naam contactpersoon${n}}`}
-                </span>
-              </div>
-              <input
-                type="text"
-                value={velden[`contactpersoon_${n}`] || ''}
-                onChange={e => setVeld(`contactpersoon_${n}`, e.target.value)}
-                placeholder="Naam contactpersoon"
-                className="invoer flex-1"
-              />
-              {(n > 1 || contactLijst.length > 1) && (
-                <button
-                  onClick={() => verwijderContact(n)}
-                  className="p-1.5 text-gray-400 hover:text-red-600 transition-colors shrink-0"
-                  title="Verwijderen"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Overige velden */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-1">Overige velden</h2>
         <p className="text-xs text-gray-400 mb-4">
           Extra velden die overeenkomen met variabelenamen in sjablonen (bijv. <code className="bg-gray-100 px-1 rounded">btw_nummer</code>).
@@ -503,8 +581,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         </div>
       </div>
 
-      {/* Notities */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mt-4">
+      {/* 5. Notities */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-1">Notities</h2>
         <p className="text-xs text-gray-400 mb-3">Interne aantekeningen en bijzonderheden over deze klant.</p>
         <textarea
@@ -516,9 +594,9 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         />
       </div>
 
-      {/* Overeenkomsten — alleen tonen voor bestaande klanten */}
+      {/* 6. Overeenkomsten — alleen tonen voor bestaande klanten */}
       {klant.id && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mt-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Overeenkomsten</h2>
           {overeenkomstenLaden ? (
             <div className="flex items-center gap-2 text-gray-400 py-1">
@@ -571,7 +649,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         </div>
       )}
 
-      <div className="mt-6 flex justify-end gap-3">
+      <div className="mt-2 flex justify-end gap-3">
         <button onClick={onAnnuleer} className="px-5 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
           Annuleren
         </button>
