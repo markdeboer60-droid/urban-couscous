@@ -340,7 +340,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
             {bedrijfLaden ? 'Bezig...' : 'Gegevens opzoeken'}
           </button>
         </div>
-        <Invoerveld label="Naam" verplicht variabele="{Klantnaam}">
+        <Invoerveld label="Naam" verplicht variabele="{Naam onderneming}">
           <input
             type="text"
             value={klant.naam}
@@ -360,7 +360,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
               className="invoer"
             />
           </Invoerveld>
-          <Invoerveld label="KVK-nummer" variabele="{kvk_nummer}">
+          <Invoerveld label="KVK-nummer" variabele="{KVK nummer}">
             <input
               type="text"
               value={velden.kvk_nummer || ''}
@@ -370,7 +370,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
             />
           </Invoerveld>
         </div>
-        <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer}">
+        <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer onderneming}">
           <input
             type="text"
             value={velden.adres || ''}
@@ -403,7 +403,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam}'}</span> in sjablonen
+            Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam onderneming}'}</span> in sjablonen
           </p>
         </div>
       </div>

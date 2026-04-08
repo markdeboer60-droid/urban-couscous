@@ -6,13 +6,20 @@ import { useToast } from '../context/ToastContext';
 
 // Koppeling van standaard sjabloontags naar klantgegevens in het adresboek
 const STANDAARD_VARIABELEN = {
-  'Klantnaam':             (k) => k.naam || '',
-  'klantnaam':             (k) => k.naam || '',  // backwards compat
-  'Naam contactpersoon':   (k) => k.velden?.contactpersoon_1 || '',
-  'Naam contactpersoon2':  (k) => k.velden?.contactpersoon_2 || '',
-  'Naam contactpersoon3':  (k) => k.velden?.contactpersoon_3 || '',
-  'Adres + huisnummer':    (k) => k.velden?.adres || '',
-  'Postcode + plaatsnaam': (k) => [k.velden?.postcode, k.velden?.plaats].filter(Boolean).join('  '),
+  // Huidige namen
+  'Naam onderneming':                  (k) => k.naam || '',
+  'Naam contactpersoon':               (k) => k.velden?.contactpersoon_1 || '',
+  'Naam contactpersoon2':              (k) => k.velden?.contactpersoon_2 || '',
+  'Naam contactpersoon3':              (k) => k.velden?.contactpersoon_3 || '',
+  'Adres + huisnummer onderneming':    (k) => k.velden?.adres || '',
+  'Postcode + plaatsnaam onderneming': (k) => [k.velden?.postcode, k.velden?.plaats].filter(Boolean).join('  '),
+  'Vestigingsplaats':                  (k) => k.velden?.plaats || '',
+  'KVK nummer':                        (k) => k.velden?.kvk_nummer || '',
+  // Backwards compat (oude sjablonen)
+  'Klantnaam':                         (k) => k.naam || '',
+  'klantnaam':                         (k) => k.naam || '',
+  'Adres + huisnummer':                (k) => k.velden?.adres || '',
+  'Postcode + plaatsnaam':             (k) => [k.velden?.postcode, k.velden?.plaats].filter(Boolean).join('  '),
 };
 
 export default function FormPage({ templateId, initieleWaarden, navigeer }) {
