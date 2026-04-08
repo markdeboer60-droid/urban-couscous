@@ -1,19 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, Users, Search, X, Check, UserPlus, FileText, RotateCcw, FolderOpen, Loader2, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Search, X, Check, UserPlus, FileText, RotateCcw, FolderOpen, Loader2, Building2, FileUp } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 import { formatDatumTijd } from '../utils/formatDatum';
 
 // Sleutels die als standaardvelden worden behandeld (niet in "Overige velden" getoond)
 const STANDAARD_SLEUTELS = new Set([
-  'aanhef', 'geboortedatum', 'adres_contactpersoon', 'postcode_contactpersoon', 'plaats_contactpersoon',
-  'adres', 'postcode', 'plaats', 'klantnummer', 'kvk_nummer',
+  // Contactpersoon
+  'aanhef', 'bsn_nummer', 'geboortedatum', 'email_contactpersoon', 'telefoonnummer_contactpersoon',
+  'adres_contactpersoon', 'postcode_contactpersoon', 'plaats_contactpersoon',
+  // Onderneming
+  'rechtsvorm', 'klantnummer', 'kvk_nummer', 'btw_nummer', 'iban',
+  'oprichtingsdatum', 'sbi_code', 'omschrijving_activiteiten',
+  'adres', 'postcode', 'plaats',
+  // Opdracht & kantoor
+  'startjaar_opdracht', 'naam_behandelaar', 'plaats_ondertekening', 'bedragsalaris',
 ]);
 const STANDAARD_VELDEN_INIT = {
-  aanhef: '', geboortedatum: '',
+  // Contactpersoon
+  aanhef: '', bsn_nummer: '', geboortedatum: '',
+  email_contactpersoon: '', telefoonnummer_contactpersoon: '',
   adres_contactpersoon: '', postcode_contactpersoon: '', plaats_contactpersoon: '',
-  klantnummer: '', kvk_nummer: '', adres: '', postcode: '', plaats: '',
   contactpersoon_1: '',
+  // Onderneming
+  rechtsvorm: '', klantnummer: '', kvk_nummer: '', btw_nummer: '', iban: '',
+  oprichtingsdatum: '', sbi_code: '', omschrijving_activiteiten: '',
+  adres: '', postcode: '', plaats: '',
+  // Opdracht & kantoor
+  startjaar_opdracht: '', naam_behandelaar: '', plaats_ondertekening: '', bedragsalaris: '',
 };
 const CONTACT_REGEX = /^contactpersoon_(\d+)$/;
 
@@ -210,7 +224,38 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
   const [verwijderDoc, setVerwijderDoc] = useState(null);
   const [bedrijfLaden, setBedrijfLaden] = useState(false);
   const [bedrijfKeuzes, setBedrijfKeuzes] = useState(null); // null | []
+  const [kvkLaden, setKvkLaden] = useState(false);
   const initialKlant = useRef(klant);
+
+  async function scanKvkUittreksel() {
+    setKvkLaden(true);
+    try {
+      const pad = await window.api.kvk.selectPdf();
+      if (!pad) return;
+      const gevonden = await window.api.kvk.scanPdf(pad);
+      const nieuwVelden = { ...velden };
+      let n = 0;
+      const stel = (key, val) => { if (val) { nieuwVelden[key] = val; n++; } };
+      stel('kvk_nummer',      gevonden.kvk_nummer);
+      stel('rechtsvorm',      gevonden.rechtsvorm);
+      stel('adres',           gevonden.adres);
+      stel('postcode',        gevonden.postcode);
+      stel('plaats',          gevonden.plaats);
+      stel('oprichtingsdatum',gevonden.oprichtingsdatum);
+      stel('sbi_code',        gevonden.sbi_code);
+      stel('btw_nummer',      gevonden.btw_nummer);
+      if (gevonden.geboortedatum && !velden.geboortedatum)     { nieuwVelden.geboortedatum    = gevonden.geboortedatum;    n++; }
+      if (gevonden.naam_bestuurder && !velden.contactpersoon_1){ nieuwVelden.contactpersoon_1 = gevonden.naam_bestuurder; n++; }
+      const nieuwKlant = { ...klant, velden: nieuwVelden };
+      if (gevonden.bedrijfsnaam && !klant.naam) { nieuwKlant.naam = gevonden.bedrijfsnaam; n++; }
+      onChange(nieuwKlant);
+      showToast(n > 0 ? `${n} veld${n !== 1 ? 'en' : ''} ingevuld vanuit KVK uittreksel` : 'Geen gegevens herkend in dit uittreksel', n > 0 ? undefined : 'info');
+    } catch {
+      showToast('Scannen mislukt', 'error');
+    } finally {
+      setKvkLaden(false);
+    }
+  }
 
   async function zoekBedrijfGegevens() {
     if (!klant.naam.trim()) return;
@@ -321,6 +366,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
     setNieuwWaarde('');
   }
 
+  const RECHTSVORMEN = ['Besloten Vennootschap (BV)', 'Eenmanszaak', 'Vennootschap onder Firma (VOF)', 'Commanditaire Vennootschap (CV)', 'Naamloze Vennootschap (NV)', 'Maatschap', 'Stichting', 'Vereniging', 'Coöperatie'];
+
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <button onClick={onAnnuleer} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors">
@@ -334,73 +381,51 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
       {/* 1. Contactpersoon */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
         <h2 className="text-sm font-semibold text-gray-700">Contactpersoon</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Invoerveld label="Aanhef" variabele="{Aanhef}">
-            <select
-              value={velden.aanhef || ''}
-              onChange={e => setVeld('aanhef', e.target.value)}
-              className="invoer"
-            >
-              <option value="">— kies aanhef —</option>
+            <select value={velden.aanhef || ''} onChange={e => setVeld('aanhef', e.target.value)} className="invoer">
+              <option value="">— kies —</option>
               <option value="De Heer">De Heer</option>
               <option value="Mevrouw">Mevrouw</option>
             </select>
           </Invoerveld>
-          <Invoerveld label="Naam contactpersoon" variabele="{Naam contactpersoon}">
-            <input
-              type="text"
-              value={velden.contactpersoon_1 || ''}
-              onChange={e => setVeld('contactpersoon_1', e.target.value)}
-              placeholder="Volledige naam"
-              className="invoer"
-              autoFocus
-            />
+          <div className="col-span-2">
+            <Invoerveld label="Naam contactpersoon" variabele="{Naam contactpersoon}">
+              <input type="text" value={velden.contactpersoon_1 || ''} onChange={e => setVeld('contactpersoon_1', e.target.value)} placeholder="Volledige naam" className="invoer" autoFocus />
+            </Invoerveld>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="Geboortedatum" variabele="{Geboortedatum contactpersoon}">
+            <input type="text" value={velden.geboortedatum || ''} onChange={e => setVeld('geboortedatum', e.target.value)} placeholder="bijv. 1 januari 1980" className="invoer" />
+          </Invoerveld>
+          <Invoerveld label="BSN-nummer" variabele="{BSN nummer}">
+            <input type="text" value={velden.bsn_nummer || ''} onChange={e => setVeld('bsn_nummer', e.target.value)} placeholder="123456789" className="invoer" />
           </Invoerveld>
         </div>
-        <Invoerveld label="Geboortedatum" variabele="{Geboortedatum contactpersoon}">
-          <input
-            type="text"
-            value={velden.geboortedatum || ''}
-            onChange={e => setVeld('geboortedatum', e.target.value)}
-            placeholder="bijv. 1 januari 1980"
-            className="invoer"
-          />
-        </Invoerveld>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="E-mailadres" variabele="{Email contactpersoon}">
+            <input type="email" value={velden.email_contactpersoon || ''} onChange={e => setVeld('email_contactpersoon', e.target.value)} placeholder="naam@voorbeeld.nl" className="invoer" />
+          </Invoerveld>
+          <Invoerveld label="Telefoonnummer" variabele="{Telefoonnummer contactpersoon}">
+            <input type="text" value={velden.telefoonnummer_contactpersoon || ''} onChange={e => setVeld('telefoonnummer_contactpersoon', e.target.value)} placeholder="06-12345678" className="invoer" />
+          </Invoerveld>
+        </div>
         <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer contactpersoon}">
-          <input
-            type="text"
-            value={velden.adres_contactpersoon || ''}
-            onChange={e => setVeld('adres_contactpersoon', e.target.value)}
-            placeholder="Straat en huisnummer"
-            className="invoer"
-          />
+          <input type="text" value={velden.adres_contactpersoon || ''} onChange={e => setVeld('adres_contactpersoon', e.target.value)} placeholder="Straat en huisnummer" className="invoer" />
         </Invoerveld>
         <div>
           <div className="grid grid-cols-3 gap-3">
             <Invoerveld label="Postcode">
-              <input
-                type="text"
-                value={velden.postcode_contactpersoon || ''}
-                onChange={e => setVeld('postcode_contactpersoon', e.target.value)}
-                placeholder="1234 AB"
-                className="invoer"
-              />
+              <input type="text" value={velden.postcode_contactpersoon || ''} onChange={e => setVeld('postcode_contactpersoon', e.target.value)} placeholder="1234 AB" className="invoer" />
             </Invoerveld>
             <div className="col-span-2">
               <Invoerveld label="Plaats">
-                <input
-                  type="text"
-                  value={velden.plaats_contactpersoon || ''}
-                  onChange={e => setVeld('plaats_contactpersoon', e.target.value)}
-                  placeholder="Amsterdam"
-                  className="invoer"
-                />
+                <input type="text" value={velden.plaats_contactpersoon || ''} onChange={e => setVeld('plaats_contactpersoon', e.target.value)} placeholder="Amsterdam" className="invoer" />
               </Invoerveld>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam contactpersoon}'}</span> in sjablonen
-          </p>
+          <p className="text-xs text-gray-400 mt-1">Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam contactpersoon}'}</span></p>
         </div>
       </div>
 
@@ -450,81 +475,101 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-700">Onderneming</h2>
-          <button
-            type="button"
-            onClick={zoekBedrijfGegevens}
-            disabled={!klant.naam.trim() || bedrijfLaden}
-            title="Adresgegevens opzoeken via bedrijvenmonitor.info"
-            className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {bedrijfLaden ? <Loader2 size={13} className="animate-spin" /> : <Building2 size={13} />}
-            {bedrijfLaden ? 'Bezig...' : 'Gegevens opzoeken'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={scanKvkUittreksel}
+              disabled={kvkLaden}
+              title="KVK uittreksel uploaden en automatisch inlezen"
+              className="flex items-center gap-1.5 text-xs text-green-700 border border-green-200 bg-green-50 px-2.5 py-1.5 rounded-lg hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {kvkLaden ? <Loader2 size={13} className="animate-spin" /> : <FileUp size={13} />}
+              {kvkLaden ? 'Inlezen...' : 'KVK uittreksel'}
+            </button>
+            <button
+              type="button"
+              onClick={zoekBedrijfGegevens}
+              disabled={!klant.naam.trim() || bedrijfLaden}
+              title="Adresgegevens opzoeken via bedrijvenmonitor.info"
+              className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {bedrijfLaden ? <Loader2 size={13} className="animate-spin" /> : <Building2 size={13} />}
+              {bedrijfLaden ? 'Bezig...' : 'Gegevens opzoeken'}
+            </button>
+          </div>
         </div>
         <Invoerveld label="Naam onderneming" verplicht variabele="{Naam onderneming}">
-          <input
-            type="text"
-            value={klant.naam}
-            onChange={e => onChange({ ...klant, naam: e.target.value })}
-            placeholder="Naam bedrijf of onderneming"
-            className="invoer"
-          />
+          <input type="text" value={klant.naam} onChange={e => onChange({ ...klant, naam: e.target.value })} placeholder="Naam bedrijf of onderneming" className="invoer" />
         </Invoerveld>
         <div className="grid grid-cols-2 gap-3">
-          <Invoerveld label="Klantnummer">
-            <input
-              type="text"
-              value={velden.klantnummer || ''}
-              onChange={e => setVeld('klantnummer', e.target.value)}
-              placeholder="bijv. K-1042"
-              className="invoer"
-            />
+          <Invoerveld label="Rechtsvorm" variabele="{Rechtsvorm}">
+            <select value={velden.rechtsvorm || ''} onChange={e => setVeld('rechtsvorm', e.target.value)} className="invoer">
+              <option value="">— kies rechtsvorm —</option>
+              {RECHTSVORMEN.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
           </Invoerveld>
-          <Invoerveld label="KVK-nummer" variabele="{KVK nummer}">
-            <input
-              type="text"
-              value={velden.kvk_nummer || ''}
-              onChange={e => setVeld('kvk_nummer', e.target.value)}
-              placeholder="12345678"
-              className="invoer"
-            />
+          <Invoerveld label="Klantnummer">
+            <input type="text" value={velden.klantnummer || ''} onChange={e => setVeld('klantnummer', e.target.value)} placeholder="bijv. K-1042" className="invoer" />
           </Invoerveld>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="KVK-nummer" variabele="{KVK nummer}">
+            <input type="text" value={velden.kvk_nummer || ''} onChange={e => setVeld('kvk_nummer', e.target.value)} placeholder="12345678" className="invoer" />
+          </Invoerveld>
+          <Invoerveld label="BTW-nummer" variabele="{BTW nummer}">
+            <input type="text" value={velden.btw_nummer || ''} onChange={e => setVeld('btw_nummer', e.target.value)} placeholder="NL123456789B01" className="invoer" />
+          </Invoerveld>
+        </div>
+        <Invoerveld label="IBAN (bankrekeningnummer)" variabele="{IBAN}">
+          <input type="text" value={velden.iban || ''} onChange={e => setVeld('iban', e.target.value)} placeholder="NL00 BANK 0000 0000 00" className="invoer" />
+        </Invoerveld>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="Oprichtingsdatum" variabele="{Oprichtingsdatum}">
+            <input type="text" value={velden.oprichtingsdatum || ''} onChange={e => setVeld('oprichtingsdatum', e.target.value)} placeholder="bijv. 1 januari 2020" className="invoer" />
+          </Invoerveld>
+          <Invoerveld label="SBI-code" variabele="{SBI code}">
+            <input type="text" value={velden.sbi_code || ''} onChange={e => setVeld('sbi_code', e.target.value)} placeholder="bijv. 6920" className="invoer" />
+          </Invoerveld>
+        </div>
+        <Invoerveld label="Omschrijving activiteiten" variabele="{Omschrijving activiteiten onderneming}">
+          <textarea value={velden.omschrijving_activiteiten || ''} onChange={e => setVeld('omschrijving_activiteiten', e.target.value)} rows={2} placeholder="Korte omschrijving van de ondernemingsactiviteiten" className="invoer w-full resize-y" />
+        </Invoerveld>
         <Invoerveld label="Adres en huisnummer" variabele="{Adres + huisnummer onderneming}">
-          <input
-            type="text"
-            value={velden.adres || ''}
-            onChange={e => setVeld('adres', e.target.value)}
-            placeholder="Straat en huisnummer"
-            className="invoer"
-          />
+          <input type="text" value={velden.adres || ''} onChange={e => setVeld('adres', e.target.value)} placeholder="Straat en huisnummer" className="invoer" />
         </Invoerveld>
         <div>
           <div className="grid grid-cols-3 gap-3">
             <Invoerveld label="Postcode">
-              <input
-                type="text"
-                value={velden.postcode || ''}
-                onChange={e => setVeld('postcode', e.target.value)}
-                placeholder="1234 AB"
-                className="invoer"
-              />
+              <input type="text" value={velden.postcode || ''} onChange={e => setVeld('postcode', e.target.value)} placeholder="1234 AB" className="invoer" />
             </Invoerveld>
             <div className="col-span-2">
               <Invoerveld label="Vestigingsplaats" variabele="{Vestigingsplaats}">
-                <input
-                  type="text"
-                  value={velden.plaats || ''}
-                  onChange={e => setVeld('plaats', e.target.value)}
-                  placeholder="Amsterdam"
-                  className="invoer"
-                />
+                <input type="text" value={velden.plaats || ''} onChange={e => setVeld('plaats', e.target.value)} placeholder="Amsterdam" className="invoer" />
               </Invoerveld>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam onderneming}'}</span> in sjablonen
-          </p>
+          <p className="text-xs text-gray-400 mt-1">Samen gebruikt als <span className="font-mono text-blue-500">{'{Postcode + plaatsnaam onderneming}'}</span></p>
+        </div>
+      </div>
+
+      {/* 4. Opdracht & Kantoor */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
+        <h2 className="text-sm font-semibold text-gray-700">Opdracht &amp; kantoor</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="Startjaar opdracht" variabele="{Startjaar opdracht}">
+            <input type="text" value={velden.startjaar_opdracht || ''} onChange={e => setVeld('startjaar_opdracht', e.target.value)} placeholder="bijv. 2024" className="invoer" />
+          </Invoerveld>
+          <Invoerveld label="Behandelaar / accountant" variabele="{Behandelaar}">
+            <input type="text" value={velden.naam_behandelaar || ''} onChange={e => setVeld('naam_behandelaar', e.target.value)} placeholder="Naam behandelaar" className="invoer" />
+          </Invoerveld>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Invoerveld label="Plaats ondertekening" variabele="{Plaats ondertekening}">
+            <input type="text" value={velden.plaats_ondertekening || ''} onChange={e => setVeld('plaats_ondertekening', e.target.value)} placeholder="bijv. Amsterdam" className="invoer" />
+          </Invoerveld>
+          <Invoerveld label="DGA-salaris" variabele="{Bedragsalaris}">
+            <input type="text" value={velden.bedragsalaris || ''} onChange={e => setVeld('bedragsalaris', e.target.value)} placeholder="bijv. 56.000" className="invoer" />
+          </Invoerveld>
         </div>
       </div>
 

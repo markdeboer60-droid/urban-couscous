@@ -6,20 +6,35 @@ import { useToast } from '../context/ToastContext';
 
 // Koppeling van standaard sjabloontags naar klantgegevens in het adresboek
 const STANDAARD_VARIABELEN = {
-  // Huidige namen
+  // ── Contactpersoon ──
   'Naam onderneming':                      (k) => k.naam || '',
   'Aanhef':                                (k) => k.velden?.aanhef || '',
   'Naam contactpersoon':                   (k) => k.velden?.contactpersoon_1 || '',
   'Naam contactpersoon2':                  (k) => k.velden?.contactpersoon_2 || '',
   'Naam contactpersoon3':                  (k) => k.velden?.contactpersoon_3 || '',
   'Geboortedatum contactpersoon':          (k) => k.velden?.geboortedatum || '',
+  'BSN nummer':                            (k) => k.velden?.bsn_nummer || '',
+  'Email contactpersoon':                  (k) => k.velden?.email_contactpersoon || '',
+  'Telefoonnummer contactpersoon':         (k) => k.velden?.telefoonnummer_contactpersoon || '',
   'Adres + huisnummer contactpersoon':     (k) => k.velden?.adres_contactpersoon || '',
   'Postcode + plaatsnaam contactpersoon':  (k) => [k.velden?.postcode_contactpersoon, k.velden?.plaats_contactpersoon].filter(Boolean).join('  '),
+  // ── Onderneming ──
+  'Rechtsvorm':                            (k) => k.velden?.rechtsvorm || '',
+  'KVK nummer':                            (k) => k.velden?.kvk_nummer || '',
+  'BTW nummer':                            (k) => k.velden?.btw_nummer || '',
+  'IBAN':                                  (k) => k.velden?.iban || '',
+  'Oprichtingsdatum':                      (k) => k.velden?.oprichtingsdatum || '',
+  'SBI code':                              (k) => k.velden?.sbi_code || '',
+  'Omschrijving activiteiten onderneming': (k) => k.velden?.omschrijving_activiteiten || '',
   'Adres + huisnummer onderneming':        (k) => k.velden?.adres || '',
   'Postcode + plaatsnaam onderneming':     (k) => [k.velden?.postcode, k.velden?.plaats].filter(Boolean).join('  '),
   'Vestigingsplaats':                      (k) => k.velden?.plaats || '',
-  'KVK nummer':                            (k) => k.velden?.kvk_nummer || '',
-  // Backwards compat (oude sjablonen)
+  // ── Opdracht & kantoor ──
+  'Startjaar opdracht':                    (k) => k.velden?.startjaar_opdracht || '',
+  'Behandelaar':                           (k) => k.velden?.naam_behandelaar || '',
+  'Plaats ondertekening':                  (k) => k.velden?.plaats_ondertekening || '',
+  'Bedragsalaris':                         (k) => k.velden?.bedragsalaris || '',
+  // ── Backwards compat (oude sjablonen) ──
   'Klantnaam':                             (k) => k.naam || '',
   'klantnaam':                             (k) => k.naam || '',
   'Adres + huisnummer':                    (k) => k.velden?.adres || '',

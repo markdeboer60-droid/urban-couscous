@@ -885,6 +885,23 @@ ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
   const geboortedatum = zoek(/Geboortedatum\s*[:\n\r]+(\d{1,2}[-\s]\d{1,2}[-\s]\d{4}|\d{1,2}\s+\w+\s+\d{4})/i);
   if (geboortedatum) result.geboortedatum = geboortedatum;
 
+  const oprichtingsdatum = zoek(/Datum\s*oprichting\s*[:\n\r]+(\d{1,2}[-.\s]\d{1,2}[-.\s]\d{4}|\d{1,2}\s+\w+\s+\d{4})/i)
+    || zoek(/Oprichtingsdatum\s*[:\n\r]+(\d{1,2}[-.\s]\d{1,2}[-.\s]\d{4}|\d{1,2}\s+\w+\s+\d{4})/i);
+  if (oprichtingsdatum) result.oprichtingsdatum = oprichtingsdatum;
+
+  // Postcode (4 cijfers + 2 letters) + plaatsnaam op zelfde of volgende regel
+  const postcodeMatch = t.match(/(\d{4}\s*[A-Z]{2})\s+([A-Za-zÀ-ÿ][^\n\r]{1,30})/);
+  if (postcodeMatch) {
+    result.postcode = postcodeMatch[1].replace(/(\d{4})\s*([A-Z]{2})/, '$1 $2');
+    result.plaats = postcodeMatch[2].trim();
+  }
+
+  const sbi_code = zoek(/SBI[- ]?code\s*[:\n\r]+(\d[\d\s\/\-]*)/i);
+  if (sbi_code) result.sbi_code = sbi_code.replace(/\s+/g, '');
+
+  const btw_nummer = zoek(/(?:BTW[- ]?nummer|Omzetbelasting[- ]?nummer)\s*[:\n\r]+([A-Za-z]{2}[\d]+B\d+)/i);
+  if (btw_nummer) result.btw_nummer = btw_nummer;
+
   return result;
 });
 
