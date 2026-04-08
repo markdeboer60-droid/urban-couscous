@@ -280,12 +280,14 @@ export default function TaxDecoder() {
 
   // ── Decode ───────────────────────────────────────────────────────────────
   async function decodeer(rawOverride) {
+    // rawOverride mag alleen een string zijn (vanuit URL-param of useEffect).
+    // Bij onClick komt een MouseEvent binnen — die negeren we.
     setError('');
     setResult(null);
     setBedrijf(null);
     setCopiedKey(null);
 
-    const raw = (rawOverride ?? inputVal).replace(/\D/g, '');
+    const raw = (typeof rawOverride === 'string' ? rawOverride : inputVal).replace(/\D/g, '');
 
     if (raw.length !== 16) {
       setError(`Ongeldig aantal cijfers: ${raw.length} (verwacht: 16).`);
