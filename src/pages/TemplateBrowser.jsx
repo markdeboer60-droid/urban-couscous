@@ -341,8 +341,8 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
       {bulkTemplate && (
         <BulkModal template={bulkTemplate} onSluit={() => setBulkTemplate(null)} />
       )}
-      </div> {/* einde hoofdinhoud */}
-    </div> {/* einde flex container */}
+      </div>
+    </div>
   );
 }
 
