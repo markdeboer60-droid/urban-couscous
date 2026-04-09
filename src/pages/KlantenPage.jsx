@@ -30,6 +30,7 @@ const STANDAARD_VELDEN_INIT = {
   startjaar_opdracht: '', naam_behandelaar: '', plaats_ondertekening: '', bedragsalaris: '',
 };
 const CONTACT_REGEX = /^contactpersoon_(\d+)$/;
+const RECHTSVORMEN = ['Besloten Vennootschap (BV)', 'Eenmanszaak', 'Vennootschap onder Firma (VOF)', 'Commanditaire Vennootschap (CV)', 'Naamloze Vennootschap (NV)', 'Maatschap', 'Stichting', 'Vereniging', 'Coöperatie'];
 
 function isContactSleutel(sleutel) {
   return CONTACT_REGEX.test(sleutel);
@@ -301,7 +302,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         const vals = e.values || {};
         const matchNaam = naamLc && (
           (vals['Klantnaam'] || '').toLowerCase().trim() === naamLc ||
-          (vals['klantnaam'] || '').toLowerCase().trim() === naamLc
+          (vals['klantnaam'] || '').toLowerCase().trim() === naamLc ||
+          (vals['Naam onderneming'] || '').toLowerCase().trim() === naamLc
         );
         const matchNr = nr && (
           (vals['Klantnummer'] || '').toLowerCase().trim() === nr ||
@@ -365,8 +367,6 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
     setNieuwSleutel('');
     setNieuwWaarde('');
   }
-
-  const RECHTSVORMEN = ['Besloten Vennootschap (BV)', 'Eenmanszaak', 'Vennootschap onder Firma (VOF)', 'Commanditaire Vennootschap (CV)', 'Naamloze Vennootschap (NV)', 'Maatschap', 'Stichting', 'Vereniging', 'Coöperatie'];
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -573,11 +573,11 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         </div>
       </div>
 
-      {/* 4. Overige velden */}
+      {/* 5. Overige velden */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-1">Overige velden</h2>
         <p className="text-xs text-gray-400 mb-4">
-          Extra velden die overeenkomen met variabelenamen in sjablonen (bijv. <code className="bg-gray-100 px-1 rounded">btw_nummer</code>).
+          Extra velden die overeenkomen met variabelenamen in sjablonen (bijv. <code className="bg-gray-100 px-1 rounded">aandelen_percentage</code>).
         </p>
         <div className="space-y-2 mb-4">
           {overigeVelden.map(([key, val]) => (
