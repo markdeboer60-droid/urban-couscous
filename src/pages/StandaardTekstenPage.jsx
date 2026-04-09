@@ -169,271 +169,297 @@ export default function StandaardTekstenPage() {
   }, [teksten]);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      {/* ── header ── */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Standaard teksten</h1>
-          <p className="text-gray-500 mt-1 text-sm">Dossiernotities voor Visionplanner — {teksten.length} tekst{teksten.length !== 1 ? 'en' : ''}</p>
-        </div>
+    <div className="flex min-h-full">
+      {/* ── zijmenu ── */}
+      <aside className="w-52 shrink-0 bg-gray-50 border-r border-gray-200 p-3 space-y-0.5">
         <button
-          onClick={() => { setToevoegOpen(true); setNieuw({ categorie: actieveCategorie === 'alle' ? '' : actieveCategorie, vraag: '', antwoord: '' }); }}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          onClick={() => setActieve('alle')}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            actieveCategorie === 'alle'
+              ? 'bg-blue-600 text-white font-medium'
+              : 'text-gray-600 hover:bg-gray-200'
+          }`}
         >
-          <Plus size={15} />
-          Tekst toevoegen
+          <span>Alle teksten</span>
+          <span className={`text-xs ${actieveCategorie === 'alle' ? 'text-blue-200' : 'text-gray-400'}`}>
+            {teksten.length}
+          </span>
         </button>
-      </div>
-
-      {/* ── zoekbalk ── */}
-      <div className="relative mb-5 max-w-md">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Zoeken in vraag of tekst..."
-          value={zoekterm}
-          onChange={e => setZoekterm(e.target.value)}
-          className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-        />
-        {zoekterm && (
-          <button onClick={() => setZoekterm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-700 transition-colors">
-            <X size={14} />
-          </button>
-        )}
-      </div>
-
-      {/* ── category filter pills ── */}
-      {categorieen.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Pill actief={actieveCategorie === 'alle'} onClick={() => setActieve('alle')}>
-            Alle <span className="opacity-60">({teksten.length})</span>
-          </Pill>
-          {categorieen.map(cat => (
-            <Pill key={cat} actief={actieveCategorie === cat} onClick={() => setActieve(cat)}>
-              {cat} <span className="opacity-60">({telPerCat(cat)})</span>
-            </Pill>
-          ))}
-        </div>
-      )}
-
-      {/* ── add form (inline, at top) ── */}
-      {toevoegOpen && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
-          <h2 className="text-sm font-semibold text-blue-800 mb-4">Nieuwe tekst toevoegen</h2>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Categorie</label>
-              <input
-                list="categorie-lijst"
-                value={nieuw.categorie}
-                onChange={e => setNieuw(n => ({ ...n, categorie: e.target.value }))}
-                placeholder="bijv. Acceptatie, Continuïteit..."
-                className="invoer text-sm"
-              />
-              <datalist id="categorie-lijst">
-                {categorieen.map(c => <option key={c} value={c} />)}
-              </datalist>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Vraag / onderwerp <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={nieuw.vraag}
-                onChange={e => setNieuw(n => ({ ...n, vraag: e.target.value }))}
-                placeholder="Bijv. Beoordeel continuïteit"
-                className="invoer text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Standaard antwoord / dossiernotitie <span className="text-red-500">*</span></label>
-              <textarea
-                value={nieuw.antwoord}
-                onChange={e => setNieuw(n => ({ ...n, antwoord: e.target.value }))}
-                rows={4}
-                placeholder="Typ de standaard tekst..."
-                className="invoer text-sm resize-y"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <button
-              onClick={() => setToevoegOpen(false)}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
-            >
-              Annuleren
-            </button>
-            <button
-              onClick={voegToe}
-              disabled={!nieuw.vraag.trim() || !nieuw.antwoord.trim()}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40"
-            >
-              <Plus size={14} />
-              Toevoegen
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── empty state ── */}
-      {teksten.length === 0 && !toevoegOpen && (
-        <div className="flex flex-col items-center py-20 text-gray-400">
-          <BookOpen size={40} className="mb-3 opacity-40" />
-          <p className="text-sm mb-4">Nog geen standaard teksten</p>
+        {categorieen.map(cat => (
           <button
-            onClick={() => setToevoegOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            key={cat}
+            onClick={() => setActieve(cat)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+              actieveCategorie === cat
+                ? 'bg-blue-600 text-white font-medium'
+                : 'text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <span className="truncate text-left">{cat}</span>
+            <span className={`text-xs ml-1 shrink-0 ${actieveCategorie === cat ? 'text-blue-200' : 'text-gray-400'}`}>
+              {telPerCat(cat)}
+            </span>
+          </button>
+        ))}
+      </aside>
+
+      {/* ── hoofdinhoud ── */}
+      <div className="flex-1 p-8 max-w-3xl">
+        {/* ── header ── */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Standaard teksten</h1>
+            <p className="text-gray-500 mt-1 text-sm">
+              {actieveCategorie === 'alle'
+                ? `${teksten.length} tekst${teksten.length !== 1 ? 'en' : ''}`
+                : `${actieveCategorie} — ${telPerCat(actieveCategorie)} tekst${telPerCat(actieveCategorie) !== 1 ? 'en' : ''}`}
+            </p>
+          </div>
+          <button
+            onClick={() => { setToevoegOpen(true); setNieuw({ categorie: actieveCategorie === 'alle' ? '' : actieveCategorie, vraag: '', antwoord: '' }); }}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus size={15} />
-            Eerste tekst toevoegen
+            Tekst toevoegen
           </button>
         </div>
-      )}
 
-      {/* ── items, grouped by category ── */}
-      {gegroepeerd.map(([cat, items]) => (
-        <div key={cat} className="mb-8">
-          {/* Category heading — only show when viewing "alle" */}
-          {actieveCategorie === 'alle' && (
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{cat}</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
+        {/* ── zoekbalk ── */}
+        <div className="relative mb-5 max-w-md">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Zoeken in vraag of tekst..."
+            value={zoekterm}
+            onChange={e => setZoekterm(e.target.value)}
+            className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          />
+          {zoekterm && (
+            <button onClick={() => setZoekterm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-700 transition-colors">
+              <X size={14} />
+            </button>
           )}
-          <div className="space-y-3">
-            {items.map(item => (
-              bewerkId === item.id ? (
-                /* ── Edit card ── */
-                <div key={item.id} className="bg-white border border-blue-300 rounded-xl p-5 shadow-sm">
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Categorie</label>
-                      <input
-                        list="categorie-lijst-edit"
-                        value={bewerkData.categorie || ''}
-                        onChange={e => setBewerkData(d => ({ ...d, categorie: e.target.value }))}
-                        placeholder="Categorie"
-                        className="invoer text-sm"
-                      />
-                      <datalist id="categorie-lijst-edit">
-                        {categorieen.map(c => <option key={c} value={c} />)}
-                      </datalist>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Vraag / onderwerp</label>
-                      <input
-                        type="text"
-                        value={bewerkData.vraag || ''}
-                        onChange={e => setBewerkData(d => ({ ...d, vraag: e.target.value }))}
-                        className="invoer text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Standaard antwoord</label>
-                      <textarea
-                        value={bewerkData.antwoord || ''}
-                        onChange={e => setBewerkData(d => ({ ...d, antwoord: e.target.value }))}
-                        rows={5}
-                        className="invoer text-sm resize-y"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-4">
-                    <button onClick={annuleerBewerk} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
-                      Annuleren
-                    </button>
-                    <button
-                      onClick={slaBewerkt}
-                      disabled={!bewerkData.vraag?.trim() || !bewerkData.antwoord?.trim()}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40"
-                    >
-                      <Check size={14} />
-                      Opslaan
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* ── View card ── */
-                <div key={item.id} className={`bg-white border rounded-xl p-5 transition-colors group ${selectie.has(item.id) ? 'border-blue-400 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <div className="flex items-start gap-2.5 mb-3">
-                    <input
-                      type="checkbox"
-                      checked={selectie.has(item.id)}
-                      onChange={() => toggleSelectie(item.id)}
-                      className="mt-0.5 w-4 h-4 shrink-0 rounded border-gray-300 cursor-pointer accent-blue-600"
-                    />
-                    <div className="flex-1 min-w-0">
-                      {actieveCategorie === 'alle' && item.categorie && (
-                        <span className="inline-block text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mb-1.5">
-                          {item.categorie}
-                        </span>
-                      )}
-                      <p className="text-sm font-semibold text-gray-800 leading-snug">{item.vraag}</p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => toggleFavoriet(item)}
-                        className={`p-1.5 rounded-lg transition-colors ${item.favoriet ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 hover:text-yellow-500 opacity-0 group-hover:opacity-100'}`}
-                        title={item.favoriet ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}
-                      >
-                        <Star size={14} className={item.favoriet ? 'fill-yellow-400' : ''} />
-                      </button>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => verplaats(item, -1)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Omhoog"><ArrowUp size={13} /></button>
-                        <button onClick={() => verplaats(item, 1)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Omlaag"><ArrowDown size={13} /></button>
-                        <button onClick={() => startBewerk(item)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Bewerken"><Pencil size={14} /></button>
-                        <button onClick={() => setVerwijderBevestig(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Verwijderen"><Trash2 size={14} /></button>
+        </div>
+
+        {/* ── add form (inline, at top) ── */}
+        {toevoegOpen && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+            <h2 className="text-sm font-semibold text-blue-800 mb-4">Nieuwe tekst toevoegen</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Categorie</label>
+                <input
+                  list="categorie-lijst"
+                  value={nieuw.categorie}
+                  onChange={e => setNieuw(n => ({ ...n, categorie: e.target.value }))}
+                  placeholder="bijv. Acceptatie, Continuïteit..."
+                  className="invoer text-sm"
+                />
+                <datalist id="categorie-lijst">
+                  {categorieen.map(c => <option key={c} value={c} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Vraag / onderwerp <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={nieuw.vraag}
+                  onChange={e => setNieuw(n => ({ ...n, vraag: e.target.value }))}
+                  placeholder="Bijv. Beoordeel continuïteit"
+                  className="invoer text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Standaard antwoord / dossiernotitie <span className="text-red-500">*</span></label>
+                <textarea
+                  value={nieuw.antwoord}
+                  onChange={e => setNieuw(n => ({ ...n, antwoord: e.target.value }))}
+                  rows={4}
+                  placeholder="Typ de standaard tekst..."
+                  className="invoer text-sm resize-y"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setToevoegOpen(false)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={voegToe}
+                disabled={!nieuw.vraag.trim() || !nieuw.antwoord.trim()}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40"
+              >
+                <Plus size={14} />
+                Toevoegen
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── empty state ── */}
+        {teksten.length === 0 && !toevoegOpen && (
+          <div className="flex flex-col items-center py-20 text-gray-400">
+            <BookOpen size={40} className="mb-3 opacity-40" />
+            <p className="text-sm mb-4">Nog geen standaard teksten</p>
+            <button
+              onClick={() => setToevoegOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              <Plus size={15} />
+              Eerste tekst toevoegen
+            </button>
+          </div>
+        )}
+
+        {/* ── items, grouped by category ── */}
+        {gegroepeerd.map(([cat, items]) => (
+          <div key={cat} className="mb-8">
+            {/* Category heading — only show when viewing "alle" */}
+            {actieveCategorie === 'alle' && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{cat}</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+            )}
+            <div className="space-y-3">
+              {items.map(item => (
+                bewerkId === item.id ? (
+                  /* ── Edit card ── */
+                  <div key={item.id} className="bg-white border border-blue-300 rounded-xl p-5 shadow-sm">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Categorie</label>
+                        <input
+                          list="categorie-lijst-edit"
+                          value={bewerkData.categorie || ''}
+                          onChange={e => setBewerkData(d => ({ ...d, categorie: e.target.value }))}
+                          placeholder="Categorie"
+                          className="invoer text-sm"
+                        />
+                        <datalist id="categorie-lijst-edit">
+                          {categorieen.map(c => <option key={c} value={c} />)}
+                        </datalist>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Vraag / onderwerp</label>
+                        <input
+                          type="text"
+                          value={bewerkData.vraag || ''}
+                          onChange={e => setBewerkData(d => ({ ...d, vraag: e.target.value }))}
+                          className="invoer text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Standaard antwoord</label>
+                        <textarea
+                          value={bewerkData.antwoord || ''}
+                          onChange={e => setBewerkData(d => ({ ...d, antwoord: e.target.value }))}
+                          rows={5}
+                          className="invoer text-sm resize-y"
+                        />
                       </div>
                     </div>
+                    <div className="flex justify-end gap-2 mt-4">
+                      <button onClick={annuleerBewerk} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        Annuleren
+                      </button>
+                      <button
+                        onClick={slaBewerkt}
+                        disabled={!bewerkData.vraag?.trim() || !bewerkData.antwoord?.trim()}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40"
+                      >
+                        <Check size={14} />
+                        Opslaan
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  /* ── View card ── */
+                  <div key={item.id} className={`bg-white border rounded-xl p-5 transition-colors group ${selectie.has(item.id) ? 'border-blue-400 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <div className="flex items-start gap-2.5 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={selectie.has(item.id)}
+                        onChange={() => toggleSelectie(item.id)}
+                        className="mt-0.5 w-4 h-4 shrink-0 rounded border-gray-300 cursor-pointer accent-blue-600"
+                      />
+                      <div className="flex-1 min-w-0">
+                        {actieveCategorie === 'alle' && item.categorie && (
+                          <span className="inline-block text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mb-1.5">
+                            {item.categorie}
+                          </span>
+                        )}
+                        <p className="text-sm font-semibold text-gray-800 leading-snug">{item.vraag}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => toggleFavoriet(item)}
+                          className={`p-1.5 rounded-lg transition-colors ${item.favoriet ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 hover:text-yellow-500 opacity-0 group-hover:opacity-100'}`}
+                          title={item.favoriet ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}
+                        >
+                          <Star size={14} className={item.favoriet ? 'fill-yellow-400' : ''} />
+                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => verplaats(item, -1)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Omhoog"><ArrowUp size={13} /></button>
+                          <button onClick={() => verplaats(item, 1)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Omlaag"><ArrowDown size={13} /></button>
+                          <button onClick={() => startBewerk(item)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Bewerken"><Pencil size={14} /></button>
+                          <button onClick={() => setVerwijderBevestig(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Verwijderen"><Trash2 size={14} /></button>
+                        </div>
+                      </div>
+                    </div>
 
-                  {/* Answer text — read-only, selectable */}
-                  <div className="bg-gray-50 border border-gray-100 rounded-lg px-3.5 py-3 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed mb-3 select-text">
-                    {item.antwoord}
-                  </div>
+                    {/* Answer text — read-only, selectable */}
+                    <div className="bg-gray-50 border border-gray-100 rounded-lg px-3.5 py-3 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed mb-3 select-text">
+                      {item.antwoord}
+                    </div>
 
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => kopieer(item)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
-                        kopieerdId === item.id
-                          ? 'bg-green-100 text-green-700 border border-green-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                      }`}
-                    >
-                      {kopieerdId === item.id
-                        ? <><Check size={12} /> Gekopieerd</>
-                        : <><Copy size={12} /> Kopiëren</>
-                      }
-                    </button>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => kopieer(item)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                          kopieerdId === item.id
+                            ? 'bg-green-100 text-green-700 border border-green-200'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        {kopieerdId === item.id
+                          ? <><Check size={12} /> Gekopieerd</>
+                          : <><Copy size={12} /> Kopiëren</>
+                        }
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )
-            ))}
+                )
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      {verwijderBevestig && (
-        <ConfirmDialog
-          titel="Tekst verwijderen?"
-          omschrijving="De standaard tekst wordt definitief verwijderd."
-          bevestigLabel="Verwijderen"
-          onBevestig={() => verwijder(verwijderBevestig)}
-          onAnnuleer={() => setVerwijderBevestig(null)}
-        />
-      )}
+        {verwijderBevestig && (
+          <ConfirmDialog
+            titel="Tekst verwijderen?"
+            omschrijving="De standaard tekst wordt definitief verwijderd."
+            bevestigLabel="Verwijderen"
+            onBevestig={() => verwijder(verwijderBevestig)}
+            onAnnuleer={() => setVerwijderBevestig(null)}
+          />
+        )}
 
-      {vervangModal && (
-        <VervangModal
-          item={vervangModal.item}
-          onKopieer={(tekst) => kopieerTekst(tekst, vervangModal.item.id)}
-          onSluiten={() => setVervangModal(null)}
-        />
-      )}
+        {vervangModal && (
+          <VervangModal
+            item={vervangModal.item}
+            onKopieer={(tekst) => kopieerTekst(tekst, vervangModal.item.id)}
+            onSluiten={() => setVervangModal(null)}
+          />
+        )}
 
-      {risicoTekst !== null && (
-        <RisicoModal tekst={risicoTekst} onSluiten={() => setRisicoTekst(null)} />
-      )}
+        {risicoTekst !== null && (
+          <RisicoModal tekst={risicoTekst} onSluiten={() => setRisicoTekst(null)} />
+        )}
+      </div>
 
       {/* ── Sticky selectiebalk ── */}
       {selectie.size > 0 && (
@@ -579,17 +605,3 @@ function VervangModal({ item, onKopieer, onSluiten }) {
   );
 }
 
-function Pill({ actief, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-        actief
-          ? 'bg-blue-600 text-white border-blue-600'
-          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
