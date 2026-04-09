@@ -52,6 +52,23 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
     );
   }
 
+  // Digitaal ondertekenen: vaste ja/nee dropdown (ongeacht het geconfigureerde type)
+  if (veld.sleutel === 'digitaal_ondertekenen') {
+    return (
+      <VeldWrap veld={veld}>
+        <select
+          value={waarde || ''}
+          onChange={e => onChange(e.target.value)}
+          className={basisKlasse}
+        >
+          <option value="">-- Kies --</option>
+          <option value="ja">Ja — handtekening automatisch toevoegen</option>
+          <option value="nee">Nee — ruimte vrijlaten voor natte handtekening</option>
+        </select>
+      </VeldWrap>
+    );
+  }
+
   // Ondertekenaar type: select gevuld vanuit instellingen
   if (veld.type === 'ondertekenaar') {
     return (

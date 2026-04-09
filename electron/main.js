@@ -519,6 +519,8 @@ async function genereerDocxImpl({ templateId, values, ondertekekenaarNaam, skipV
   }
   const sigPad = sigNaam && handtekeningPaden[sigNaam] ? handtekeningPaden[sigNaam] : null;
   renderValues.handtekening = sigPad;
+  // Wis de controlevariabele zodat deze niet als tekst in het document verschijnt
+  renderValues.digitaal_ondertekenen = '';
 
   const PizZip = require('pizzip');
   const Docxtemplater = require('docxtemplater');

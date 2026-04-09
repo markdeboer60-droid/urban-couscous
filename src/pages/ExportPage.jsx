@@ -126,13 +126,23 @@ export default function ExportPage({ exportData, navigeer }) {
 
   return (
     <div className="p-8 max-w-xl mx-auto">
-      <button
-        onClick={() => navigeer('browser')}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
-      >
-        <ArrowLeft size={16} />
-        Terug naar overzicht
-      </button>
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigeer('browser')}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Terug naar overzicht
+        </button>
+        <span className="text-gray-300">|</span>
+        <button
+          onClick={() => navigeer('form', { templateId, initieleWaarden: values })}
+          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Velden aanpassen
+        </button>
+      </div>
 
       <div className="mb-8">
         <div className="flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mb-4">
@@ -145,59 +155,75 @@ export default function ExportPage({ exportData, navigeer }) {
         </p>
       </div>
 
-      {/* Ondertekenen sectie — alleen tonen als er ondertekenaars zijn geconfigureerd */}
+      {/* Ondertekenen sectie */}
       {ondertekenaars.length > 0 && (
-        <Sectie
-          titel="Definitief ondertekenen"
-          icoon={<PenLine size={18} className="text-indigo-600" />}
-          className="mb-4"
-        >
-          {getekendDoor ? (
+        (values.digitaal_ondertekenen || '').toLowerCase().trim() === 'ja' ? (
+          <Sectie
+            titel="Ondertekening"
+            icoon={<PenLine size={18} className="text-indigo-600" />}
+            className="mb-4"
+          >
             <div className="flex items-center gap-2.5 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-800">
               <CheckCircle size={16} className="text-indigo-600 shrink-0" />
               <div>
-                <span className="font-medium">Getekend door {getekendDoor}</span>
-                <span className="text-indigo-500 text-xs ml-2">— document opnieuw gegenereerd met handtekening</span>
+                <span className="font-medium">Handtekening automatisch toegevoegd</span>
+                <span className="text-indigo-500 text-xs ml-2">— digitaal ondertekenen staat aan; de handtekening is al in het document verwerkt</span>
               </div>
             </div>
-          ) : (
-            <p className="text-xs text-gray-400 -mt-1 mb-1">
-              Kies de ondertekenaar. Het document wordt opnieuw gegenereerd met de handtekening op de plek van <code className="bg-gray-100 px-1 rounded text-gray-600">{'{%handtekening}'}</code> in het sjabloon.
-            </p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {ondertekenaars.map(naam => {
-              const heeftHandtekening = !!handtekeningPaden[naam];
-              return (
-                <button
-                  key={naam}
-                  onClick={() => tekenDocument(naam)}
-                  disabled={!!tekeningNaam || !heeftHandtekening}
-                  title={!heeftHandtekening ? 'Geen handtekening geconfigureerd in Instellingen' : `Ondertekenen als ${naam}`}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
-                    getekendDoor === naam
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
-                  }`}
-                >
-                  {tekeningNaam === naam ? (
-                    <Loader2 size={14} className="animate-spin shrink-0" />
-                  ) : (
-                    <User size={14} className="shrink-0" />
-                  )}
-                  {naam}
-                  {!heeftHandtekening && <span className="text-xs opacity-60 ml-1">(geen handtekening)</span>}
-                </button>
-              );
-            })}
-          </div>
-          {status.ondertekenen?.fout && (
-            <div className="flex items-center gap-2 mt-2 text-xs text-red-600">
-              <AlertCircle size={13} />
-              {status.ondertekenen.fout}
+          </Sectie>
+        ) : (
+          <Sectie
+            titel="Definitief ondertekenen"
+            icoon={<PenLine size={18} className="text-indigo-600" />}
+            className="mb-4"
+          >
+            {getekendDoor ? (
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-800">
+                <CheckCircle size={16} className="text-indigo-600 shrink-0" />
+                <div>
+                  <span className="font-medium">Getekend door {getekendDoor}</span>
+                  <span className="text-indigo-500 text-xs ml-2">— document opnieuw gegenereerd met handtekening</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 -mt-1 mb-1">
+                Kies de ondertekenaar. Het document wordt opnieuw gegenereerd met de handtekening op de plek van <code className="bg-gray-100 px-1 rounded text-gray-600">{'{%handtekening}'}</code> in het sjabloon.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {ondertekenaars.map(naam => {
+                const heeftHandtekening = !!handtekeningPaden[naam];
+                return (
+                  <button
+                    key={naam}
+                    onClick={() => tekenDocument(naam)}
+                    disabled={!!tekeningNaam || !heeftHandtekening}
+                    title={!heeftHandtekening ? 'Geen handtekening geconfigureerd in Instellingen' : `Ondertekenen als ${naam}`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
+                      getekendDoor === naam
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
+                    }`}
+                  >
+                    {tekeningNaam === naam ? (
+                      <Loader2 size={14} className="animate-spin shrink-0" />
+                    ) : (
+                      <User size={14} className="shrink-0" />
+                    )}
+                    {naam}
+                    {!heeftHandtekening && <span className="text-xs opacity-60 ml-1">(geen handtekening)</span>}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </Sectie>
+            {status.ondertekenen?.fout && (
+              <div className="flex items-center gap-2 mt-2 text-xs text-red-600">
+                <AlertCircle size={13} />
+                {status.ondertekenen.fout}
+              </div>
+            )}
+          </Sectie>
+        )
       )}
 
       {/* Word sectie */}
