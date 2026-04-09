@@ -470,8 +470,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
           <Invoerveld label="Aanhef" variabele="{Aanhef}">
             <select value={velden.aanhef || ''} onChange={e => setVeld('aanhef', e.target.value)} className="invoer">
               <option value="">— kies —</option>
-              <option value="De Heer">De Heer</option>
-              <option value="Mevrouw">Mevrouw</option>
+              <option value="heer">heer</option>
+              <option value="mevrouw">mevrouw</option>
             </select>
           </Invoerveld>
           <div className="col-span-2">

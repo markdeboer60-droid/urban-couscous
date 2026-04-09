@@ -34,6 +34,7 @@ const leegVeld = () => ({
   label: '',
   type: 'text',
   verplicht: true,
+  verborgen: false,
   volgorde: 0,
   opties: [],
   radioOpties: [],
@@ -573,9 +574,14 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
             <code className="ml-2 text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">{'{' + veld.sleutel + '}'}</code>
           )}
         </div>
-        <span className="text-xs text-gray-400 shrink-0">
-          {VELD_TYPES.find(t => t.waarde === veld.type)?.label || veld.type}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {veld.verborgen && (
+            <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded font-medium">verborgen</span>
+          )}
+          <span className="text-xs text-gray-400">
+            {VELD_TYPES.find(t => t.waarde === veld.type)?.label || veld.type}
+          </span>
+        </div>
         <button
           onClick={e => { e.stopPropagation(); onVerwijder(); }}
           className="p-1 text-gray-400 hover:text-red-600 transition-colors"
@@ -753,6 +759,22 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
             />
             <span className="text-xs text-gray-600">
               Toon waarde als klantidentificatie in geschiedenis
+            </span>
+          </label>
+
+          {/* Verborgen */}
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!veld.verborgen}
+              onChange={e => {
+                onChange('verborgen', e.target.checked);
+                if (e.target.checked) onChange('verplicht', false);
+              }}
+              className="w-4 h-4 accent-amber-500"
+            />
+            <span className="text-xs text-gray-600">
+              Verborgen — variabele beschikbaar in sjabloon maar niet zichtbaar in formulier
             </span>
           </label>
 

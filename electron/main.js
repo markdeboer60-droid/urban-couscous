@@ -902,6 +902,13 @@ ipcMain.handle('kvk:selectPdf', async () => {
 });
 
 ipcMain.handle('kvk:scanPdf', async (_, filePath) => {
+  // Polyfill browser DOM-API's die pdfjs-dist nodig heeft in de Node.js-omgeving
+  if (typeof global.DOMMatrix === 'undefined') {
+    const { DOMMatrix, DOMPoint, DOMRect } = require('@napi-rs/canvas');
+    global.DOMMatrix = DOMMatrix;
+    global.DOMPoint  = DOMPoint;
+    global.DOMRect   = DOMRect;
+  }
   // pdf-parse v2 CJS wordt gekopieerd naar electron/ via scripts/bundle-electron.mjs
   const bundlePad = app.isPackaged
     ? path.join(process.resourcesPath, 'app.asar.unpacked', 'electron', 'pdf-parse-bundle.cjs')

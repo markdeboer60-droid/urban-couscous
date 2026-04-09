@@ -187,7 +187,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   }
 
   function zichtbareVelden() {
-    return (template?.velden || []).filter(isZichtbaar);
+    return (template?.velden || []).filter(v => !v.verborgen && isZichtbaar(v));
   }
 
   function ontbrekendeVelden() {
