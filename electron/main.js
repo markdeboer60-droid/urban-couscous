@@ -665,6 +665,7 @@ ipcMain.handle('export:sendEmail', (_, { bijlagePad }) => {
 });
 
 ipcMain.handle('export:saveDocxToDir', (_, { srcPath, opslagMap, naam }) => {
+  if (!srcPath || !fs.existsSync(srcPath)) throw new Error('Bronbestand niet gevonden');
   if (!fs.existsSync(opslagMap)) fs.mkdirSync(opslagMap, { recursive: true });
   const doel = path.join(opslagMap, naam);
   fs.copyFileSync(srcPath, doel);
@@ -712,6 +713,7 @@ ipcMain.handle('export:bulkGenereer', async (_, { templateId, rijen, opslagMap }
 });
 
 ipcMain.handle('export:saveDocxAs', async (_, { srcPath, standaardNaam, defaultDir }) => {
+  if (!srcPath || !fs.existsSync(srcPath)) throw new Error('Bronbestand niet gevonden');
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Opslaan als Word-document',
     defaultPath: defaultDir ? path.join(defaultDir, standaardNaam) : standaardNaam,
@@ -723,6 +725,7 @@ ipcMain.handle('export:saveDocxAs', async (_, { srcPath, standaardNaam, defaultD
 });
 
 ipcMain.handle('export:savePdfAs', async (_, { srcPath, standaardNaam, defaultDir }) => {
+  if (!srcPath || !fs.existsSync(srcPath)) throw new Error('Bronbestand niet gevonden');
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Opslaan als PDF',
     defaultPath: defaultDir ? path.join(defaultDir, standaardNaam) : standaardNaam,
@@ -801,8 +804,12 @@ ipcMain.handle('history:add', (_, entry) => {
   const ext = path.extname(entry.docxPad || '.docx');
   const bestandsnaam = `${entry.templateId}_${Date.now()}${ext}`;
   const persistentPad = path.join(geschiedenisDir, bestandsnaam);
+  let savedDocxPad = null;
   if (entry.docxPad && fs.existsSync(entry.docxPad)) {
-    fs.copyFileSync(entry.docxPad, persistentPad);
+    try {
+      fs.copyFileSync(entry.docxPad, persistentPad);
+      savedDocxPad = persistentPad;
+    } catch {}
   }
 
   // Ondertitel samenstellen uit gemarkeerde velden of bekende sleutels
@@ -833,7 +840,7 @@ ipcMain.handle('history:add', (_, entry) => {
     categorie: entry.categorie,
     datum: new Date().toISOString(),
     values: entry.values,
-    docxPad: persistentPad,
+    docxPad: savedDocxPad,
     ondertitel,
   };
   const history = readHistory();

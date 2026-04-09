@@ -145,13 +145,20 @@ export default function ExportPage({ exportData, navigeer }) {
       </div>
 
       <div className="mb-8">
-        <div className="flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mb-4">
-          <CheckCircle size={28} className="text-green-600" />
+        <div className={`flex items-center justify-center w-14 h-14 rounded-full mb-4 ${docxPad ? 'bg-green-100' : 'bg-amber-100'}`}>
+          {docxPad
+            ? <CheckCircle size={28} className="text-green-600" />
+            : <AlertCircle size={28} className="text-amber-600" />
+          }
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Document klaar</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {docxPad ? 'Document klaar' : 'Bestand niet beschikbaar'}
+        </h1>
         <p className="text-gray-500 mt-1 text-sm">
-          <span className="font-medium text-gray-700">{templateNaam}</span> is gegenereerd.
-          Kies hieronder wat je wilt doen.
+          {docxPad
+            ? <><span className="font-medium text-gray-700">{templateNaam}</span> is gegenereerd. Kies hieronder wat je wilt doen.</>
+            : <>Het bestand voor <span className="font-medium text-gray-700">{templateNaam}</span> is niet meer aanwezig op schijf. Gebruik <strong>Velden aanpassen</strong> om het document opnieuw te genereren.</>
+          }
         </p>
       </div>
 
@@ -227,7 +234,7 @@ export default function ExportPage({ exportData, navigeer }) {
       )}
 
       {/* Word sectie */}
-      <Sectie titel="Word-document" icoon={<FileText size={18} className="text-blue-600" />}>
+      <Sectie titel="Word-document" icoon={<FileText size={18} className="text-blue-600" />} disabled={!docxPad}>
         <ActieKnop
           label="Openen in Word"
           beschrijving="Bewerk het document verder in Microsoft Word"
@@ -277,7 +284,7 @@ export default function ExportPage({ exportData, navigeer }) {
       </Sectie>
 
       {/* PDF sectie */}
-      <Sectie titel="PDF" icoon={<FileDown size={18} className="text-red-500" />} className="mt-4">
+      <Sectie titel="PDF" icoon={<FileDown size={18} className="text-red-500" />} className="mt-4" disabled={!docxPad}>
         {!pdfPad ? (
           <ActieKnop
             label="Converteren naar PDF"
@@ -388,9 +395,9 @@ function OpenLink({ pad }) {
   );
 }
 
-function Sectie({ titel, icoon, children, className = '' }) {
+function Sectie({ titel, icoon, children, className = '', disabled = false }) {
   return (
-    <div className={`bg-white border border-gray-200 rounded-xl p-5 ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-xl p-5 ${className} ${disabled ? 'opacity-40 pointer-events-none select-none' : ''}`}>
       <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-700">
         {icoon}
         {titel}
