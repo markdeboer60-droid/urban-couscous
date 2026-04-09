@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Loader2, AlertCircle, FileUp, Users, Save, BookmarkCheck } from 'lucide-react';
 import VeldInput from '../components/forms/VeldInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -61,6 +61,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   const [conceptOpgeslagen, setConceptOpgeslagen] = useState(false);
   const [conceptVerwijderBevestig, setConceptVerwijderBevestig] = useState(false);
   const [autoOpgeslagenTijd, setAutoOpgeslagenTijd] = useState(null);
+  const [geprobeerd, setGeprobeerd] = useState(false);
   const klantPickerRef = useRef(null);
   const klantMeldingTimer = useRef(null);
   // Ref zodat auto-save altijd de meest recente waarden leest
@@ -84,6 +85,27 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     }, 30000);
     return () => clearInterval(timer);
   }, [template, laden, templateId]);
+
+  // Sneltoetsen: Ctrl+Enter = genereren, Ctrl+S = concept opslaan
+  const handleGenereerRef = useRef(null);
+  const slaConceptOpRef   = useRef(null);
+  useEffect(() => { handleGenereerRef.current = handleGenereer; });
+  useEffect(() => { slaConceptOpRef.current   = slaConceptOp; });
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (laden || !template) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleGenereerRef.current?.();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        slaConceptOpRef.current?.();
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [laden, template]);
 
   // Sluit klantpicker bij klik buiten
   useEffect(() => {
@@ -269,6 +291,12 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
   }
 
   async function handleGenereer() {
+    if (!isIngevuld()) {
+      setGeprobeerd(true);
+      const eerste = ontbrekendeVelden()[0];
+      if (eerste) document.getElementById(`veld-${eerste.sleutel}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     setFout('');
     setBezig(true);
     try {
@@ -463,8 +491,9 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
                   <VeldInput
                     veld={veld}
                     waarde={waarden[veld.sleutel]}
-                    onChange={val => setWaarden(prev => ({ ...prev, [veld.sleutel]: val }))}
+                    onChange={val => { setWaarden(prev => ({ ...prev, [veld.sleutel]: val })); }}
                     ondertekenaars={ondertekenaars}
+                    geprobeerd={geprobeerd}
                   />
                 </div>
               ))}
@@ -480,11 +509,37 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         </div>
       )}
 
-      <div className="mt-8 space-y-3">
+      {/* Voortgangsindicator verplichte velden */}
+      {(() => {
+        const totaal = zichtbareVelden().filter(v => v.verplicht).length;
+        const ingevuld = zichtbareVelden().filter(v => v.verplicht).filter(v => {
+          const val = waarden[v.sleutel];
+          return val !== '' && val !== null && val !== undefined;
+        }).length;
+        if (totaal === 0) return null;
+        const pct = Math.round((ingevuld / totaal) * 100);
+        return (
+          <div className="mt-8 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+              <span>{ingevuld} van {totaal} verplichte velden ingevuld</span>
+              <span>{pct}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
+      <div className="mt-3 space-y-3">
         <button
           onClick={handleGenereer}
-          disabled={!isIngevuld() || bezig}
+          disabled={bezig}
           className="w-full py-3 px-6 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          title="Ctrl+Enter"
         >
           {bezig && <Loader2 size={16} className="animate-spin" />}
           {bezig ? 'Bezig met genereren...' : 'Document genereren'}
@@ -509,6 +564,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         <button
           onClick={slaConceptOp}
           className="w-full py-2 px-6 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+          title="Ctrl+S"
         >
           {conceptOpgeslagen ? (
             <><BookmarkCheck size={14} className="text-green-500" /> Concept opgeslagen!</>

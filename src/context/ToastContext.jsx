@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState } from 'react';
-import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
 
@@ -33,9 +33,10 @@ export function ToastProvider({ children }) {
 }
 
 const ICONEN = {
-  success: <CheckCircle size={15} className="text-green-500 shrink-0" />,
-  error:   <AlertCircle size={15} className="text-red-500 shrink-0" />,
-  info:    <Info        size={15} className="text-blue-500 shrink-0" />,
+  success: <CheckCircle  size={15} className="text-green-500 shrink-0" />,
+  error:   <AlertCircle  size={15} className="text-red-500 shrink-0" />,
+  info:    <Info         size={15} className="text-blue-500 shrink-0" />,
+  warning: <AlertTriangle size={15} className="text-amber-500 shrink-0" />,
 };
 
 function ToastItem({ toast, onSluit }) {

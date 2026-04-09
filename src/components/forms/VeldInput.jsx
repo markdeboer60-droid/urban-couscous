@@ -1,6 +1,9 @@
 
-export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] }) {
-  const basisKlasse = "w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
+export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [], geprobeerd = false }) {
+  const heeftFout = geprobeerd && veld.verplicht && (waarde === '' || waarde === null || waarde === undefined);
+  const basisKlasse = `w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-white ${
+    heeftFout ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-500'
+  }`;
 
   // Radio type: kaartachtige keuzeknopgroep
   // Fallback naar tekstveld als er geen opties zijn geconfigureerd
@@ -8,7 +11,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
     const opties = veld.radioOpties || [];
     if (opties.length === 0) {
       return (
-        <VeldWrap veld={veld}>
+        <VeldWrap veld={veld} heeftFout={heeftFout}>
           <input
             type="text"
             value={waarde || ''}
@@ -20,8 +23,8 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
       );
     }
     return (
-      <VeldWrap veld={veld}>
-        <div className="space-y-2">
+      <VeldWrap veld={veld} heeftFout={heeftFout}>
+        <div className={`space-y-2 ${heeftFout ? 'ring-1 ring-red-300 rounded-lg p-2' : ''}`}>
           {opties.map(opt => (
             <label
               key={opt.key}
@@ -55,7 +58,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   // Behandelaar: dropdown gevuld vanuit ondertekenaars (net als het ondertekenaar-type)
   if (veld.sleutel === 'Behandelaar' && ondertekenaars.length > 0) {
     return (
-      <VeldWrap veld={veld}>
+      <VeldWrap veld={veld} heeftFout={heeftFout}>
         <select
           value={waarde || ''}
           onChange={e => onChange(e.target.value)}
@@ -71,7 +74,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   // Digitaal ondertekenen: vaste ja/nee dropdown (ongeacht het geconfigureerde type)
   if (veld.sleutel === 'digitaal_ondertekenen') {
     return (
-      <VeldWrap veld={veld}>
+      <VeldWrap veld={veld} heeftFout={heeftFout}>
         <select
           value={waarde || ''}
           onChange={e => onChange(e.target.value)}
@@ -88,7 +91,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   // Ondertekenaar type: select gevuld vanuit instellingen
   if (veld.type === 'ondertekenaar') {
     return (
-      <VeldWrap veld={veld}>
+      <VeldWrap veld={veld} heeftFout={heeftFout}>
         <select
           value={waarde || ''}
           onChange={e => onChange(e.target.value)}
@@ -104,7 +107,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   // Currency type: € prefix
   if (veld.type === 'currency') {
     return (
-      <VeldWrap veld={veld}>
+      <VeldWrap veld={veld} heeftFout={heeftFout}>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">€</span>
           <input
@@ -128,7 +131,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   const bekendeTypes = ['text', 'textarea', 'date', 'number', 'select', 'boolean'];
 
   return (
-    <VeldWrap veld={veld}>
+    <VeldWrap veld={veld} heeftFout={heeftFout}>
       {veld.type === 'text' && (
         <input
           type="text"
@@ -217,7 +220,7 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
   );
 }
 
-function VeldWrap({ veld, children }) {
+function VeldWrap({ veld, children, heeftFout }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -227,6 +230,9 @@ function VeldWrap({ veld, children }) {
       {children}
       {veld.toelichting && (
         <p className="mt-1.5 text-xs text-gray-400">{veld.toelichting}</p>
+      )}
+      {heeftFout && (
+        <p className="mt-1 text-xs text-red-500">Dit veld is verplicht</p>
       )}
     </div>
   );

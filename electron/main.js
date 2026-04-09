@@ -532,6 +532,16 @@ async function genereerDocxImpl({ templateId, values, ondertekekenaarNaam, skipV
   // Wis de controlevariabele zodat deze niet als tekst in het document verschijnt
   renderValues.digitaal_ondertekenen = '';
 
+  // Kantoorvariabelen auto-invullen vanuit instellingen (overschrijft NIET als al ingevuld)
+  renderValues.kantoor_naam            = renderValues.kantoor_naam            || settings.kantoorNaam     || '';
+  renderValues.kantoor_adres           = renderValues.kantoor_adres           || settings.kantoorAdres    || '';
+  renderValues.kantoor_postcode_plaats = renderValues.kantoor_postcode_plaats || [settings.kantoorPostcode, settings.kantoorPlaats].filter(Boolean).join('  ') || '';
+  renderValues.kantoor_telefoon        = renderValues.kantoor_telefoon        || settings.kantoorTelefoon || '';
+  renderValues.kantoor_email           = renderValues.kantoor_email           || settings.kantoorEmail    || '';
+  renderValues.kantoor_website         = renderValues.kantoor_website         || settings.kantoorWebsite  || '';
+  renderValues.kantoor_kvk             = renderValues.kantoor_kvk             || settings.kantoorKvk      || '';
+  renderValues.kantoor_btw             = renderValues.kantoor_btw             || settings.kantoorBtw      || '';
+
   const PizZip = require('pizzip');
   const Docxtemplater = require('docxtemplater');
   const ImageModule = require('docxtemplater-image-module-free');

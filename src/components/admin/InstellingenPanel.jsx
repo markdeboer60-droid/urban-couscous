@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, FolderOpen, Image, Loader2, CheckCircle, Plus, Trash2, Pen } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 export default function InstellingenPanel({ onTerug }) {
+  const showToast = useToast();
   const [instellingen, setInstellingen] = useState({
-    templateDir: '', kantoorNaam: '', logoPad: '', ondertekenaars: [], handtekeningPaden: {},
+    templateDir: '', kantoorNaam: '', kantoorAdres: '', kantoorPostcode: '',
+    kantoorPlaats: '', kantoorTelefoon: '', kantoorEmail: '', kantoorWebsite: '',
+    kantoorKvk: '', kantoorBtw: '', logoPad: '', ondertekenaars: [], handtekeningPaden: {},
   });
   const [bezig, setBezig] = useState(false);
   const [opgeslagen, setOpgeslagen] = useState(false);
@@ -12,9 +16,17 @@ export default function InstellingenPanel({ onTerug }) {
   useEffect(() => {
     window.api.settings.get().then(s => {
       setInstellingen({
-        templateDir: s.templateDir || '',
-        kantoorNaam: s.kantoorNaam || '',
-        logoPad: s.logoPad || '',
+        templateDir:    s.templateDir    || '',
+        kantoorNaam:    s.kantoorNaam    || '',
+        kantoorAdres:   s.kantoorAdres   || '',
+        kantoorPostcode: s.kantoorPostcode || '',
+        kantoorPlaats:  s.kantoorPlaats  || '',
+        kantoorTelefoon: s.kantoorTelefoon || '',
+        kantoorEmail:   s.kantoorEmail   || '',
+        kantoorWebsite: s.kantoorWebsite || '',
+        kantoorKvk:     s.kantoorKvk     || '',
+        kantoorBtw:     s.kantoorBtw     || '',
+        logoPad:        s.logoPad        || '',
         ondertekenaars: s.ondertekenaars || [],
         handtekeningPaden: s.handtekeningPaden || {},
       });
@@ -70,6 +82,7 @@ export default function InstellingenPanel({ onTerug }) {
       setOpgeslagen(true);
     } catch (e) {
       console.error('Instellingen opslaan mislukt:', e);
+      showToast('Instellingen opslaan mislukt', 'error');
     } finally {
       setBezig(false);
     }
@@ -88,18 +101,52 @@ export default function InstellingenPanel({ onTerug }) {
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Instellingen</h1>
 
       <div className="space-y-5">
-        {/* Kantoor naam */}
+        {/* Kantoor gegevens */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Kantoor</h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Naam kantoor</label>
-            <input
-              type="text"
-              value={instellingen.kantoorNaam}
-              onChange={e => stelIn('kantoorNaam', e.target.value)}
-              placeholder="Naam van het accountantskantoor"
-              className="invoer"
-            />
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Kantoor</h2>
+          <p className="text-xs text-gray-400 mb-4">
+            Beschikbaar als variabele in sjablonen:{' '}
+            <code className="bg-gray-100 px-1 rounded">{'{kantoor_naam}'}</code>{' '}
+            <code className="bg-gray-100 px-1 rounded">{'{kantoor_adres}'}</code>{' '}
+            <code className="bg-gray-100 px-1 rounded">{'{kantoor_email}'}</code> enz.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Naam kantoor</label>
+              <input type="text" value={instellingen.kantoorNaam} onChange={e => stelIn('kantoorNaam', e.target.value)} placeholder="Naam van het accountantskantoor" className="invoer" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Adres + huisnummer</label>
+              <input type="text" value={instellingen.kantoorAdres} onChange={e => stelIn('kantoorAdres', e.target.value)} placeholder="Hoofdstraat 1" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Postcode</label>
+              <input type="text" value={instellingen.kantoorPostcode} onChange={e => stelIn('kantoorPostcode', e.target.value)} placeholder="1234 AB" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Plaats</label>
+              <input type="text" value={instellingen.kantoorPlaats} onChange={e => stelIn('kantoorPlaats', e.target.value)} placeholder="Amsterdam" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Telefoonnummer</label>
+              <input type="text" value={instellingen.kantoorTelefoon} onChange={e => stelIn('kantoorTelefoon', e.target.value)} placeholder="020-1234567" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">E-mailadres</label>
+              <input type="email" value={instellingen.kantoorEmail} onChange={e => stelIn('kantoorEmail', e.target.value)} placeholder="info@kantoor.nl" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Website</label>
+              <input type="text" value={instellingen.kantoorWebsite} onChange={e => stelIn('kantoorWebsite', e.target.value)} placeholder="www.kantoor.nl" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">KVK-nummer</label>
+              <input type="text" value={instellingen.kantoorKvk} onChange={e => stelIn('kantoorKvk', e.target.value)} placeholder="12345678" className="invoer" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">BTW-nummer</label>
+              <input type="text" value={instellingen.kantoorBtw} onChange={e => stelIn('kantoorBtw', e.target.value)} placeholder="NL123456789B01" className="invoer" />
+            </div>
           </div>
         </div>
 

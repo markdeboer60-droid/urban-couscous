@@ -13,6 +13,7 @@ export default function GeschiedenisPage({ navigeer }) {
   const [exportFout, setExportFout] = useState({});
   const [zoekterm, setZoekterm] = useState('');
   const [sortering, setSortering] = useState('datum-nieuw');
+  const [actieveCategorie, setActieveCategorie] = useState('alle');
 
   useEffect(() => {
     laad();
@@ -47,12 +48,15 @@ export default function GeschiedenisPage({ navigeer }) {
     navigeer('form', { templateId: entry.templateId, initieleWaarden: entry.values });
   }
 
+  const categorieen = [...new Set(geschiedenis.map(e => e.categorie || '').filter(Boolean))].sort();
+
   const gefilterd = geschiedenis
     .filter(e =>
-      !zoekterm ||
-      e.templateNaam.toLowerCase().includes(zoekterm.toLowerCase()) ||
-      (e.ondertitel || '').toLowerCase().includes(zoekterm.toLowerCase()) ||
-      (e.categorie || '').toLowerCase().includes(zoekterm.toLowerCase())
+      (actieveCategorie === 'alle' || (e.categorie || '') === actieveCategorie) &&
+      (!zoekterm ||
+        e.templateNaam.toLowerCase().includes(zoekterm.toLowerCase()) ||
+        (e.ondertitel || '').toLowerCase().includes(zoekterm.toLowerCase()) ||
+        (e.categorie || '').toLowerCase().includes(zoekterm.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortering === 'datum-nieuw') return new Date(b.datum) - new Date(a.datum);
@@ -79,27 +83,56 @@ export default function GeschiedenisPage({ navigeer }) {
       </div>
 
       {geschiedenis.length > 0 && (
-        <div className="flex gap-3 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Zoeken op naam, klant of categorie..."
-              value={zoekterm}
-              onChange={e => setZoekterm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            />
+        <>
+          <div className="flex gap-3 mb-4">
+            <div className="relative flex-1 max-w-md">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Zoeken op naam, klant of categorie..."
+                value={zoekterm}
+                onChange={e => setZoekterm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+            </div>
+            <select
+              value={sortering}
+              onChange={e => setSortering(e.target.value)}
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+            >
+              <option value="datum-nieuw">Nieuwst eerst</option>
+              <option value="datum-oud">Oudst eerst</option>
+              <option value="naam">Naam A–Z</option>
+            </select>
           </div>
-          <select
-            value={sortering}
-            onChange={e => setSortering(e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
-          >
-            <option value="datum-nieuw">Nieuwst eerst</option>
-            <option value="datum-oud">Oudst eerst</option>
-            <option value="naam">Naam A–Z</option>
-          </select>
-        </div>
+          {categorieen.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-6">
+              <button
+                onClick={() => setActieveCategorie('alle')}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  actieveCategorie === 'alle'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Alle
+              </button>
+              {categorieen.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActieveCategorie(cat === actieveCategorie ? 'alle' : cat)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    actieveCategorie === cat
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {geschiedenis.length === 0 ? (

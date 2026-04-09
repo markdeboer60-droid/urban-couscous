@@ -11,16 +11,18 @@ const items = [
 
 export default function Sidebar({ actief, navigeer }) {
   const [versie, setVersie] = useState('');
+  const [kantoorNaam, setKantoorNaam] = useState('');
 
   useEffect(() => {
     window.api.app?.getVersion().then(setVersie).catch(() => {});
+    window.api.settings?.get().then(s => setKantoorNaam(s.kantoorNaam || '')).catch(() => {});
   }, []);
 
   return (
     <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
       <div className="px-5 py-5 border-b border-gray-100">
         <span className="text-base font-semibold text-blue-700 tracking-tight">
-          Sjablonenplatform
+          {kantoorNaam || 'Sjablonenplatform'}
         </span>
       </div>
 

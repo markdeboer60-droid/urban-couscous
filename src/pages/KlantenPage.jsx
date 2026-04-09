@@ -44,6 +44,7 @@ export default function KlantenPage({ navigeer }) {
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
   const [duplicaatWaarschuwing, setDuplicaatWaarschuwing] = useState(null); // { bericht } | null
   const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [sortering, setSortering] = useState('naam-az');
 
   useEffect(() => { laad(); }, []);
 
@@ -97,14 +98,24 @@ export default function KlantenPage({ navigeer }) {
     showToast('Klant verwijderd', 'info');
   }
 
-  const gefilterd = zoekterm
+  const gefilterd = (zoekterm
     ? klanten.filter(k =>
         k.naam.toLowerCase().includes(zoekterm.toLowerCase()) ||
         (k.velden?.klantnummer || '').toLowerCase().includes(zoekterm.toLowerCase()) ||
         (k.velden?.plaats || '').toLowerCase().includes(zoekterm.toLowerCase()) ||
         Object.values(k.velden || {}).some(v => String(v).toLowerCase().includes(zoekterm.toLowerCase()))
       )
-    : klanten;
+    : [...klanten]
+  ).sort((a, b) => {
+    if (sortering === 'naam-az') return a.naam.localeCompare(b.naam, 'nl');
+    if (sortering === 'naam-za') return b.naam.localeCompare(a.naam, 'nl');
+    if (sortering === 'klantnummer') {
+      const ka = a.velden?.klantnummer || '';
+      const kb = b.velden?.klantnummer || '';
+      return ka.localeCompare(kb, 'nl', { numeric: true });
+    }
+    return 0;
+  });
 
   if (bewerkKlant !== null) {
     return (
@@ -144,15 +155,26 @@ export default function KlantenPage({ navigeer }) {
       </div>
 
       {klanten.length > 0 && (
-        <div className="relative mb-6 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Zoeken op naam, klantnummer of plaats..."
-            value={zoekterm}
-            onChange={e => setZoekterm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          />
+        <div className="flex gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Zoeken op naam, klantnummer of plaats..."
+              value={zoekterm}
+              onChange={e => setZoekterm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          <select
+            value={sortering}
+            onChange={e => setSortering(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+          >
+            <option value="naam-az">Naam A–Z</option>
+            <option value="naam-za">Naam Z–A</option>
+            <option value="klantnummer">Klantnummer</option>
+          </select>
         </div>
       )}
 
