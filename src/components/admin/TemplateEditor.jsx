@@ -56,6 +56,7 @@ export default function TemplateEditor({ templateId, onTerug }) {
   const [opgeslagen, setOpgeslagen] = useState(false);
   const [bezig, setBezig] = useState(false);
   const [scanBezig, setScanBezig] = useState(false);
+  const [scanSamenvatting, setScanSamenvatting] = useState(null);
   const [fout, setFout] = useState('');
   const [uitgevouwen, setUitgevouwen] = useState({});
   const [categorieSuggesties, setCategorieSuggesties] = useState([]);
@@ -193,8 +194,18 @@ export default function TemplateEditor({ templateId, onTerug }) {
         });
       });
 
+      const alleVariabelen = [...variabelen, ...condities];
+      const alleVeldenNa = new Set([...bestaandeSleutels, ...nieuw.map(v => v.sleutel)]);
+      const ontbrekend = alleVariabelen.filter(s => !alleVeldenNa.has(s));
+
+      setScanSamenvatting({
+        totaal: alleVariabelen.length,
+        nieuw: nieuw.map(v => v.sleutel),
+        ontbrekend,
+      });
+
       if (nieuw.length === 0) {
-        setFout('Alle variabelen uit het document zijn al gedefinieerd, of er zijn geen variabelen gevonden.');
+        setFout('');
       } else {
         setVelden(v => [...v, ...nieuw]);
         setFout('');
@@ -402,15 +413,49 @@ export default function TemplateEditor({ templateId, onTerug }) {
           )}
         </div>
         {docxPad && (
-          <button
-            type="button"
-            onClick={scanVariabelen}
-            disabled={scanBezig}
-            className="flex items-center gap-2 mt-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 disabled:opacity-50"
-          >
-            {scanBezig ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={14} />}
-            {scanBezig ? 'Scannen...' : 'Variabelen automatisch detecteren'}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={scanVariabelen}
+              disabled={scanBezig}
+              className="flex items-center gap-2 mt-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 disabled:opacity-50"
+            >
+              {scanBezig ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={14} />}
+              {scanBezig ? 'Scannen...' : 'Variabelen automatisch detecteren'}
+            </button>
+            {scanSamenvatting && (
+              <div className="mt-3 text-xs space-y-1.5">
+                <div className="text-gray-500">
+                  {scanSamenvatting.totaal} variabele{scanSamenvatting.totaal !== 1 ? 'n' : ''} gevonden in het document
+                </div>
+                {scanSamenvatting.nieuw.length > 0 ? (
+                  <div className="flex items-start gap-1.5 text-green-700">
+                    <CheckCircle size={12} className="mt-0.5 shrink-0" />
+                    <span>
+                      {scanSamenvatting.nieuw.length} nieuw{scanSamenvatting.nieuw.length !== 1 ? 'e' : ''} veld{scanSamenvatting.nieuw.length !== 1 ? 'en' : ''} toegevoegd:{' '}
+                      <span className="font-mono">{scanSamenvatting.nieuw.map(s => `{${s}}`).join(', ')}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-green-700">
+                    <CheckCircle size={12} className="shrink-0" />
+                    Alle variabelen zijn al gedefinieerd als veld
+                  </div>
+                )}
+                {scanSamenvatting.ontbrekend.length > 0 && (
+                  <div className="flex items-start gap-1.5 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                    <span>
+                      <span className="font-medium">Let op:</span>{' '}
+                      {scanSamenvatting.ontbrekend.length} variabele{scanSamenvatting.ontbrekend.length !== 1 ? 'n' : ''} zonder veld:{' '}
+                      <span className="font-mono">{scanSamenvatting.ontbrekend.map(s => `{${s}}`).join(', ')}</span>
+                      {' '}— deze verschijnen letterlijk in het gegenereerde document.
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </Sectie>
 

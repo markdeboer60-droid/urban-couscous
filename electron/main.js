@@ -368,6 +368,16 @@ ipcMain.handle('klanten:delete', (_, id) => {
   return { ok: true };
 });
 
+ipcMain.handle('klanten:selecteerCsv', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Klanten importeren via CSV',
+    filters: [{ name: 'CSV-bestand', extensions: ['csv'] }],
+    properties: ['openFile'],
+  });
+  if (canceled || filePaths.length === 0) return null;
+  return fs.readFileSync(filePaths[0], 'utf-8');
+});
+
 // ── Concepten handlers ────────────────────────────────────────────────────────
 ipcMain.handle('concepten:getAll', () => readConcepten());
 

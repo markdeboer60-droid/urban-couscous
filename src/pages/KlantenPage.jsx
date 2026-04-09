@@ -42,6 +42,8 @@ export default function KlantenPage({ navigeer }) {
   const [zoekterm, setZoekterm] = useState('');
   const [bewerkKlant, setBewerkKlant] = useState(null);
   const [verwijderBevestig, setVerwijderBevestig] = useState(null);
+  const [duplicaatWaarschuwing, setDuplicaatWaarschuwing] = useState(null); // { bericht } | null
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
 
   useEffect(() => { laad(); }, []);
 
@@ -58,9 +60,30 @@ export default function KlantenPage({ navigeer }) {
     setBewerkKlant({ ...klant, velden: { ...STANDAARD_VELDEN_INIT, ...klant.velden } });
   }
 
-  async function sla() {
+  async function sla(forceer = false) {
     if (!bewerkKlant.naam.trim()) return;
     const isNieuw = !bewerkKlant.id;
+
+    if (!forceer) {
+      const kvk = (bewerkKlant.velden?.kvk_nummer || '').trim();
+      const naamLc = bewerkKlant.naam.trim().toLowerCase();
+      const duplicaat = klanten.find(k => {
+        if (k.id === bewerkKlant.id) return false; // zichzelf overslaan bij bewerken
+        const kvkMatch = kvk && (k.velden?.kvk_nummer || '').trim() === kvk;
+        const naamMatch = k.naam.trim().toLowerCase() === naamLc;
+        return kvkMatch || naamMatch;
+      });
+      if (duplicaat) {
+        setDuplicaatWaarschuwing({
+          bericht: kvk && (duplicaat.velden?.kvk_nummer || '').trim() === kvk
+            ? `Er bestaat al een klant met KVK-nummer ${kvk}: "${duplicaat.naam}".`
+            : `Er bestaat al een klant met de naam "${duplicaat.naam}".`,
+        });
+        return;
+      }
+    }
+
+    setDuplicaatWaarschuwing(null);
     await window.api.klanten.save(bewerkKlant);
     setBewerkKlant(null);
     laad();
@@ -102,13 +125,22 @@ export default function KlantenPage({ navigeer }) {
           <h1 className="text-2xl font-bold text-gray-900">Adresboek</h1>
           <p className="text-gray-500 mt-1 text-sm">{klanten.length} klant{klanten.length !== 1 ? 'en' : ''}</p>
         </div>
-        <button
-          onClick={nieuw}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={15} />
-          Klant toevoegen
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCsvImportOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FileUp size={15} />
+            Importeer CSV
+          </button>
+          <button
+            onClick={nieuw}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={15} />
+            Klant toevoegen
+          </button>
+        </div>
       </div>
 
       {klanten.length > 0 && (
@@ -159,6 +191,30 @@ export default function KlantenPage({ navigeer }) {
           bevestigLabel="Verwijderen"
           onBevestig={() => verwijder(verwijderBevestig)}
           onAnnuleer={() => setVerwijderBevestig(null)}
+        />
+      )}
+
+      {duplicaatWaarschuwing && (
+        <ConfirmDialog
+          titel="Mogelijke dubbele klant"
+          omschrijving={`${duplicaatWaarschuwing.bericht} Wilt u toch doorgaan met opslaan?`}
+          bevestigLabel="Toch opslaan"
+          onBevestig={() => sla(true)}
+          onAnnuleer={() => setDuplicaatWaarschuwing(null)}
+        />
+      )}
+
+      {csvImportOpen && (
+        <CsvImportModal
+          onSluiten={() => setCsvImportOpen(false)}
+          onImport={async (nieuweKlanten) => {
+            for (const k of nieuweKlanten) {
+              await window.api.klanten.save(k);
+            }
+            setCsvImportOpen(false);
+            laad();
+            showToast(`${nieuweKlanten.length} klant${nieuweKlanten.length !== 1 ? 'en' : ''} geïmporteerd`);
+          }}
         />
       )}
     </div>
@@ -224,6 +280,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
   const [overeenkomstenLaden, setOvereenkomstenLaden] = useState(!!klant.id);
   const [overeenkomstenFout, setOvereenkomstenFout] = useState(false);
   const [verwijderDoc, setVerwijderDoc] = useState(null);
+  const [wordFout, setWordFout] = useState({});
   const [bedrijfLaden, setBedrijfLaden] = useState(false);
   const [bedrijfKeuzes, setBedrijfKeuzes] = useState(null); // null | []
   const [kvkLaden, setKvkLaden] = useState(false);
@@ -675,28 +732,53 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
                     )}
                     <div className="text-xs text-gray-400 mt-0.5">{formatDatumTijd(entry.datum)}</div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => navigeer('form', { templateId: entry.templateId, initieleWaarden: entry.values })}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Herbewerken"
-                    >
-                      <RotateCcw size={14} />
-                    </button>
-                    <button
-                      onClick={async () => { try { await window.api.export.openInWord(entry.docxPad); } catch {} }}
-                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                      title="Openen in Word"
-                    >
-                      <FolderOpen size={14} />
-                    </button>
-                    <button
-                      onClick={() => setVerwijderDoc(entry.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Verwijderen"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="flex flex-col items-end gap-1">
+                    {wordFout[entry.id] && (
+                      <span className="text-xs text-red-500 max-w-48 text-right">{wordFout[entry.id]}</span>
+                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => navigeer('form', { templateId: entry.templateId, initieleWaarden: entry.values })}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Opnieuw bewerken"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setWordFout(f => ({ ...f, [entry.id]: null }));
+                          try {
+                            await window.api.export.openInWord(entry.docxPad);
+                          } catch {
+                            setWordFout(f => ({ ...f, [entry.id]: 'Bestand niet gevonden — genereer het document opnieuw.' }));
+                          }
+                        }}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Openen in Word"
+                      >
+                        <FolderOpen size={14} />
+                      </button>
+                      <button
+                        onClick={() => navigeer('export', {
+                          templateId: entry.templateId,
+                          templateNaam: entry.templateNaam,
+                          docxPad: entry.docxPad,
+                          values: entry.values || {},
+                          bestandsnaamPatroon: null,
+                        })}
+                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        title="Exportopties (PDF, e-mail, afdrukken)"
+                      >
+                        <FileText size={14} />
+                      </button>
+                      <button
+                        onClick={() => setVerwijderDoc(entry.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Verwijderen"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -816,6 +898,224 @@ function BedrijfKiezenModal({ resultaten, onKies, onSluiten }) {
           >
             Sluiten
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CSV import modal ──────────────────────────────────────────────────────────
+function parseCsv(tekst) {
+  const regels = tekst.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(r => r.trim());
+  if (regels.length < 2) return { kolommen: [], rijen: [] };
+  const parseerRegel = (regel) => {
+    const cellen = [];
+    let cel = '', inQuotes = false;
+    for (let i = 0; i < regel.length; i++) {
+      const c = regel[i];
+      if (c === '"') {
+        if (inQuotes && regel[i + 1] === '"') { cel += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if ((c === ',' || c === ';') && !inQuotes) {
+        cellen.push(cel.trim()); cel = '';
+      } else {
+        cel += c;
+      }
+    }
+    cellen.push(cel.trim());
+    return cellen;
+  };
+  const kolommen = parseerRegel(regels[0]);
+  const rijen = regels.slice(1).map(r => {
+    const cellen = parseerRegel(r);
+    return Object.fromEntries(kolommen.map((k, i) => [k, cellen[i] || '']));
+  });
+  return { kolommen, rijen };
+}
+
+const CSV_VELD_OPTIES = [
+  { sleutel: 'naam',                        label: 'Naam onderneming' },
+  { sleutel: 'klantnummer',                 label: 'Klantnummer' },
+  { sleutel: 'kvk_nummer',                  label: 'KVK nummer' },
+  { sleutel: 'btw_nummer',                  label: 'BTW nummer' },
+  { sleutel: 'iban',                        label: 'IBAN' },
+  { sleutel: 'rechtsvorm',                  label: 'Rechtsvorm' },
+  { sleutel: 'adres',                       label: 'Adres onderneming' },
+  { sleutel: 'postcode',                    label: 'Postcode onderneming' },
+  { sleutel: 'plaats',                      label: 'Plaats onderneming' },
+  { sleutel: 'contactpersoon_1',            label: 'Contactpersoon' },
+  { sleutel: 'email_contactpersoon',        label: 'E-mail contactpersoon' },
+  { sleutel: 'telefoonnummer_contactpersoon', label: 'Telefoonnummer' },
+  { sleutel: 'oprichtingsdatum',            label: 'Oprichtingsdatum' },
+  { sleutel: 'naam_behandelaar',            label: 'Behandelaar' },
+  { sleutel: 'startjaar_opdracht',          label: 'Startjaar opdracht' },
+];
+
+function CsvImportModal({ onSluiten, onImport }) {
+  const [stap, setStap] = useState('laden'); // laden | koppelen | bevestigen
+  const [kolommen, setKolommen] = useState([]);
+  const [rijen, setRijen] = useState([]);
+  const [koppeling, setKoppeling] = useState({}); // sleutel → CSV-kolom
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState('');
+
+  async function laadCsv() {
+    setBezig(true);
+    setFout('');
+    try {
+      const inhoud = await window.api.klanten.selecteerCsv();
+      if (!inhoud) { setBezig(false); return; }
+      const { kolommen: k, rijen: r } = parseCsv(inhoud);
+      if (k.length === 0) { setFout('Geen kolommen gevonden in het CSV-bestand.'); setBezig(false); return; }
+      setKolommen(k);
+      setRijen(r);
+      // Automatisch koppelen op basis van kolomnaam
+      const autoKoppeling = {};
+      CSV_VELD_OPTIES.forEach(({ sleutel, label }) => {
+        const match = k.find(kol =>
+          kol.toLowerCase().replace(/[\s_-]/g, '') === sleutel.toLowerCase().replace(/[\s_-]/g, '') ||
+          kol.toLowerCase().replace(/[\s_-]/g, '') === label.toLowerCase().replace(/[\s_-]/g, '')
+        );
+        if (match) autoKoppeling[sleutel] = match;
+      });
+      setKoppeling(autoKoppeling);
+      setStap('koppelen');
+    } catch (e) {
+      setFout('Kon het bestand niet lezen: ' + (e.message || 'onbekende fout'));
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  function bouwKlanten() {
+    return rijen.map(rij => {
+      const velden = {};
+      CSV_VELD_OPTIES.forEach(({ sleutel }) => {
+        if (sleutel === 'naam') return;
+        const csvKolom = koppeling[sleutel];
+        if (csvKolom && rij[csvKolom]) velden[sleutel] = rij[csvKolom];
+      });
+      const naamKolom = koppeling['naam'];
+      return { naam: (naamKolom && rij[naamKolom]) || '(onbekend)', velden };
+    }).filter(k => k.naam && k.naam !== '(onbekend)');
+  }
+
+  const preview = bouwKlanten().slice(0, 3);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onSluiten} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Klanten importeren via CSV</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {stap === 'laden' && 'Selecteer een CSV-bestand met klantgegevens'}
+              {stap === 'koppelen' && `${rijen.length} rijen gevonden — koppel de kolommen aan de juiste velden`}
+              {stap === 'bevestigen' && `${bouwKlanten().length} klanten klaar om te importeren`}
+            </p>
+          </div>
+          <button onClick={onSluiten} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {fout && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <X size={14} className="shrink-0" />
+              {fout}
+            </div>
+          )}
+
+          {stap === 'laden' && (
+            <div className="flex flex-col items-center py-12 gap-4">
+              <div className="p-4 bg-blue-50 rounded-full">
+                <FileUp size={28} className="text-blue-600" />
+              </div>
+              <p className="text-sm text-gray-500 text-center max-w-sm">
+                Selecteer een CSV-bestand. De eerste rij moet kolomkoppen bevatten.
+                Komma (<code className="bg-gray-100 px-1 rounded">,</code>) en puntkomma (<code className="bg-gray-100 px-1 rounded">;</code>) worden als scheidingsteken herkend.
+              </p>
+              <button
+                onClick={laadCsv}
+                disabled={bezig}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {bezig ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+                Bestand kiezen
+              </button>
+            </div>
+          )}
+
+          {stap === 'koppelen' && (
+            <>
+              <p className="text-xs text-gray-500">
+                Kies voor elk veld welke CSV-kolom erbij hoort. Velden zonder koppeling worden overgeslagen.
+                <span className="ml-1 font-medium text-gray-700">De naam is verplicht.</span>
+              </p>
+              <div className="space-y-2">
+                {CSV_VELD_OPTIES.map(({ sleutel, label }) => (
+                  <div key={sleutel} className="flex items-center gap-3">
+                    <div className="w-48 shrink-0">
+                      <span className={`text-xs font-medium ${sleutel === 'naam' ? 'text-red-600' : 'text-gray-600'}`}>
+                        {label}{sleutel === 'naam' && <span className="text-red-500 ml-0.5">*</span>}
+                      </span>
+                    </div>
+                    <select
+                      value={koppeling[sleutel] || ''}
+                      onChange={e => setKoppeling(k => ({ ...k, [sleutel]: e.target.value || undefined }))}
+                      className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">— niet koppelen —</option>
+                      {kolommen.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              {preview.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Voorbeeld (eerste {preview.length} rijen):</p>
+                  <div className="space-y-1.5">
+                    {preview.map((k, i) => (
+                      <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-xs text-gray-700">
+                        <Users size={12} className="text-gray-400 shrink-0" />
+                        <span className="font-medium">{k.naam}</span>
+                        {k.velden.klantnummer && <span className="text-gray-400">nr. {k.velden.klantnummer}</span>}
+                        {k.velden.plaats && <span className="text-gray-400">{k.velden.plaats}</span>}
+                      </div>
+                    ))}
+                    {rijen.length > 3 && (
+                      <p className="text-xs text-gray-400 text-center">... en {rijen.length - 3} meer</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between shrink-0">
+          <button onClick={onSluiten} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+            Annuleren
+          </button>
+          {stap === 'koppelen' && (
+            <button
+              onClick={() => {
+                const klanten = bouwKlanten();
+                if (klanten.length === 0) { setFout('Geen klanten om te importeren. Zorg dat de naam-kolom is gekoppeld.'); return; }
+                onImport(klanten);
+              }}
+              disabled={!koppeling['naam']}
+              className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40"
+            >
+              <Check size={14} />
+              {bouwKlanten().length} klant{bouwKlanten().length !== 1 ? 'en' : ''} importeren
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('api', {
     getAll: () => ipcRenderer.invoke('klanten:getAll'),
     save: (klant) => ipcRenderer.invoke('klanten:save', klant),
     delete: (id) => ipcRenderer.invoke('klanten:delete', id),
+    selecteerCsv: () => ipcRenderer.invoke('klanten:selecteerCsv'),
   },
   // Concepten
   concepten: {
