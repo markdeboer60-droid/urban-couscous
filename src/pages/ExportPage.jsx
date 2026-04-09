@@ -52,7 +52,7 @@ export default function ExportPage({ exportData, navigeer }) {
       setAlleTemplates(templates);
       setOndertekenaars(s.ondertekenaars || []);
       setHandtekeningPaden(s.handtekeningPaden || {});
-    });
+    }).catch(() => {});
   }, []);
 
   async function tekenDocument(naam) {
@@ -376,9 +376,10 @@ export default function ExportPage({ exportData, navigeer }) {
 
 function OpenLink({ pad }) {
   const bestandsnaam = pad.split(/[\\/]/).pop();
+  const isPdf = bestandsnaam.toLowerCase().endsWith('.pdf');
   return (
     <button
-      onClick={() => window.api.export.openInWord(pad)}
+      onClick={() => isPdf ? window.api.export.openPdf(pad) : window.api.export.openInWord(pad)}
       className="flex items-center gap-1.5 mt-1.5 ml-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
     >
       <ExternalLink size={11} />

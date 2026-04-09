@@ -52,6 +52,22 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [] 
     );
   }
 
+  // Behandelaar: dropdown gevuld vanuit ondertekenaars (net als het ondertekenaar-type)
+  if (veld.sleutel === 'Behandelaar' && ondertekenaars.length > 0) {
+    return (
+      <VeldWrap veld={veld}>
+        <select
+          value={waarde || ''}
+          onChange={e => onChange(e.target.value)}
+          className={basisKlasse}
+        >
+          <option value="">-- Kies behandelaar --</option>
+          {ondertekenaars.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      </VeldWrap>
+    );
+  }
+
   // Digitaal ondertekenen: vaste ja/nee dropdown (ongeacht het geconfigureerde type)
   if (veld.sleutel === 'digitaal_ondertekenen') {
     return (

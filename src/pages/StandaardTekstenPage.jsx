@@ -299,7 +299,7 @@ export default function StandaardTekstenPage() {
           </div>
         )}
 
-        {/* ── empty state ── */}
+        {/* ── empty state: geen teksten aangemaakt ── */}
         {teksten.length === 0 && !toevoegOpen && (
           <div className="flex flex-col items-center py-20 text-gray-400">
             <BookOpen size={40} className="mb-3 opacity-40" />
@@ -311,6 +311,19 @@ export default function StandaardTekstenPage() {
               <Plus size={15} />
               Eerste tekst toevoegen
             </button>
+          </div>
+        )}
+
+        {/* ── empty state: geen resultaten voor huidige filter/zoekterm ── */}
+        {teksten.length > 0 && gefilterd.length === 0 && (
+          <div className="flex flex-col items-center py-16 text-gray-400">
+            <Search size={32} className="mb-3 opacity-30" />
+            <p className="text-sm">Geen teksten gevonden</p>
+            {zoekterm && (
+              <button onClick={() => setZoekterm('')} className="mt-2 text-xs text-blue-600 hover:underline">
+                Zoekterm wissen
+              </button>
+            )}
           </div>
         )}
 

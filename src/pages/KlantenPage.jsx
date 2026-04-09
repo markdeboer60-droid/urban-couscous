@@ -222,6 +222,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
   const [nieuwWaarde, setNieuwWaarde] = useState('');
   const [overeenkomsten, setOvereenkomsten] = useState([]);
   const [overeenkomstenLaden, setOvereenkomstenLaden] = useState(!!klant.id);
+  const [overeenkomstenFout, setOvereenkomstenFout] = useState(false);
   const [verwijderDoc, setVerwijderDoc] = useState(null);
   const [bedrijfLaden, setBedrijfLaden] = useState(false);
   const [bedrijfKeuzes, setBedrijfKeuzes] = useState(null); // null | []
@@ -316,7 +317,7 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
         );
         return matchNaam || matchNr;
       }));
-    }).catch(() => {}).finally(() => setOvereenkomstenLaden(false));
+    }).catch(() => setOvereenkomstenFout(true)).finally(() => setOvereenkomstenLaden(false));
   }, [klant.id]);
 
   async function verwijderOvereenkomst(id) {
@@ -656,6 +657,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
               <Loader2 size={13} className="animate-spin" />
               <span className="text-xs">Laden...</span>
             </div>
+          ) : overeenkomstenFout ? (
+            <p className="text-xs text-red-500 py-1">Kon de documenten niet laden. Controleer of de app correct is geïnstalleerd.</p>
           ) : overeenkomsten.length === 0 ? (
             <p className="text-xs text-gray-400 py-1">
               Geen documenten gevonden voor <span className="font-medium">{klant.naam}</span>.

@@ -59,13 +59,18 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
   useEffect(() => { laad(); }, []);
 
   async function laad() {
-    const [data, conceptData] = await Promise.all([
-      window.api.templates.getAll(),
-      window.api.concepten.getAll().catch(() => []),
-    ]);
-    setTemplates(data);
-    setConcepten(conceptData);
-    setLaden(false);
+    try {
+      const [data, conceptData] = await Promise.all([
+        window.api.templates.getAll(),
+        window.api.concepten.getAll().catch(() => []),
+      ]);
+      setTemplates(data);
+      setConcepten(conceptData);
+    } catch {
+      setTemplates([]);
+    } finally {
+      setLaden(false);
+    }
   }
 
   async function toggleFavoriet(e, id) {
@@ -85,7 +90,7 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
   function openTemplate(id) {
     slaRecentOp(id);
     setRecenteIds(leesRecent());
-    navigeer('form', id);
+    navigeer('form', { templateId: id });
   }
 
   const categorieen = ['Alle', ...new Set(templates.map(t => t.categorie).filter(Boolean))].sort((a, b) =>
@@ -245,7 +250,7 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
               {conceptenMetNaam.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => navigeer('form', c.templateId)}
+                  onClick={() => navigeer('form', { templateId: c.templateId })}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-900 hover:bg-amber-100 transition-colors"
                 >
                   <FileText size={13} className="text-amber-500 shrink-0" />

@@ -78,7 +78,9 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       try {
         await window.api.concepten.save({ templateId, templateNaam: template.naam, waarden: huidig });
         setAutoOpgeslagenTijd(new Date());
-      } catch {}
+      } catch {
+        showToast('Automatisch opslaan mislukt', 'error');
+      }
     }, 30000);
     return () => clearInterval(timer);
   }, [template, laden, templateId]);
