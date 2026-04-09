@@ -32,9 +32,9 @@ const TRANSPARENT_PNG = Buffer.from(
 );
 
 const defaultOndertekenaars = [
-  'Drs M.R. de Boer AA',
-  'Drs M.R. Wijnia',
-  'Drs G.O. Visser RA',
+  'Drs. M.R. de Boer AA',
+  'Drs. M.R. Wijnia',
+  'Drs. G.O. Visser RA',
 ];
 
 // ── Seed-data standaard teksten ───────────────────────────────────────────────
@@ -209,6 +209,26 @@ function ensureDirs() {
       logoPad: '',
       ondertekenaars: defaultOndertekenaars,
     }, null, 2));
+  } else {
+    // Migratie: normaliseer Drs-spelling en voeg Drs. G.O. Visser RA toe indien ontbreekt
+    try {
+      const s = JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
+      let gewijzigd = false;
+      const ondertekenaars = (s.ondertekenaars || []).map(o => {
+        const genormaliseerd = o.replace(/^Drs\s+/i, 'Drs. ');
+        if (genormaliseerd !== o) gewijzigd = true;
+        return genormaliseerd;
+      });
+      if (!ondertekenaars.some(o => o.includes('Visser'))) {
+        ondertekenaars.push('Drs. G.O. Visser RA');
+        gewijzigd = true;
+      }
+      if (gewijzigd) {
+        const bijgewerkt = { ...s, ondertekenaars };
+        fs.writeFileSync(settingsFile, JSON.stringify(bijgewerkt, null, 2));
+        _settingsCache = bijgewerkt;
+      }
+    } catch {}
   }
 }
 
@@ -485,11 +505,19 @@ async function genereerDocxImpl({ templateId, values, ondertekekenaarNaam, skipV
   }
 
   // Handtekening-afbeelding bepalen voor {%handtekening}
+  // Volgorde: 1) tekenDocument-knop (ondertekekenaarNaam)
+  //           2) digitaal_ondertekenen='ja' + Behandelaar/ondertekenaar in values
+  //           3) transparante fallback (1×1 px)
   const settings = readSettings();
   const handtekeningPaden = settings.handtekeningPaden || {};
-  const sigPad = ondertekekenaarNaam && handtekeningPaden[ondertekekenaarNaam]
-    ? handtekeningPaden[ondertekekenaarNaam]
-    : null;
+  let sigNaam = ondertekekenaarNaam || null;
+  if (!sigNaam) {
+    const digi = (values.digitaal_ondertekenen || '').toLowerCase().trim();
+    if (digi === 'ja') {
+      sigNaam = values.ondertekenaar || values.Behandelaar || values.behandelaar || null;
+    }
+  }
+  const sigPad = sigNaam && handtekeningPaden[sigNaam] ? handtekeningPaden[sigNaam] : null;
   renderValues.handtekening = sigPad;
 
   const PizZip = require('pizzip');

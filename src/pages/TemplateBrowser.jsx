@@ -160,11 +160,41 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Sjablonen</h1>
-        <p className="text-gray-500 mt-1">Kies een sjabloon om te starten</p>
+    <div className="flex min-h-full">
+
+      {/* ── Categorie-zijbalk ── */}
+      <div className="w-52 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col">
+        <div className="px-4 py-5 border-b border-gray-100">
+          <h1 className="text-base font-bold text-gray-900">Sjablonen</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Kies een sjabloon</p>
+        </div>
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {categorieen.map(cat => {
+            const aantal = cat === 'Alle'
+              ? templates.length
+              : templates.filter(t => t.categorie === cat).length;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActieveCategorie(cat)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between gap-2 ${
+                  actieveCategorie === cat
+                    ? 'bg-blue-600 text-white font-medium'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <span className="truncate">{cat}</span>
+                <span className={`text-xs shrink-0 tabular-nums ${actieveCategorie === cat ? 'text-blue-200' : 'text-gray-400'}`}>
+                  {aantal}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
+
+      {/* ── Hoofdinhoud ── */}
+      <div className="flex-1 min-w-0 p-8 overflow-auto">
 
       {/* Zoekbalk + weergave toggle */}
       <div className="flex items-center gap-3 mb-6">
@@ -195,23 +225,6 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
             <List size={16} />
           </button>
         </div>
-      </div>
-
-      {/* Categorietabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        {categorieen.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActieveCategorie(cat)}
-            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              actieveCategorie === cat
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
       </div>
 
       {/* Openstaande concepten */}
@@ -328,7 +341,8 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
       {bulkTemplate && (
         <BulkModal template={bulkTemplate} onSluit={() => setBulkTemplate(null)} />
       )}
-    </div>
+      </div> {/* einde hoofdinhoud */}
+    </div> {/* einde flex container */}
   );
 }
 

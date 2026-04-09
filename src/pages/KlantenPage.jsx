@@ -226,7 +226,12 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
   const [bedrijfLaden, setBedrijfLaden] = useState(false);
   const [bedrijfKeuzes, setBedrijfKeuzes] = useState(null); // null | []
   const [kvkLaden, setKvkLaden] = useState(false);
+  const [ondertekenaars, setOndertekenaars] = useState([]);
   const initialKlant = useRef(klant);
+
+  useEffect(() => {
+    window.api.settings.get().then(s => setOndertekenaars(s.ondertekenaars || [])).catch(() => {});
+  }, []);
 
   async function scanKvkUittreksel() {
     setKvkLaden(true);
@@ -251,8 +256,8 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
       if (gevonden.bedrijfsnaam && !klant.naam) { nieuwKlant.naam = gevonden.bedrijfsnaam; n++; }
       onChange(nieuwKlant);
       showToast(n > 0 ? `${n} veld${n !== 1 ? 'en' : ''} ingevuld vanuit KVK uittreksel` : 'Geen gegevens herkend in dit uittreksel', n > 0 ? undefined : 'info');
-    } catch {
-      showToast('Scannen mislukt', 'error');
+    } catch (e) {
+      showToast(`Scannen mislukt: ${e?.message || String(e)}`, 'error');
     } finally {
       setKvkLaden(false);
     }
@@ -559,8 +564,11 @@ function KlantFormulier({ klant, onChange, onSla, onAnnuleer, navigeer }) {
           <Invoerveld label="Startjaar opdracht" variabele="{Startjaar opdracht}">
             <input type="text" value={velden.startjaar_opdracht || ''} onChange={e => setVeld('startjaar_opdracht', e.target.value)} placeholder="bijv. 2024" className="invoer" />
           </Invoerveld>
-          <Invoerveld label="Behandelaar / accountant" variabele="{Behandelaar}">
-            <input type="text" value={velden.naam_behandelaar || ''} onChange={e => setVeld('naam_behandelaar', e.target.value)} placeholder="Naam behandelaar" className="invoer" />
+          <Invoerveld label="Behandelaar / ondertekenaar" variabele="{Behandelaar}">
+            <select value={velden.naam_behandelaar || ''} onChange={e => setVeld('naam_behandelaar', e.target.value)} className="invoer">
+              <option value="">— kies behandelaar —</option>
+              {ondertekenaars.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
           </Invoerveld>
         </div>
         <div className="grid grid-cols-2 gap-3">
