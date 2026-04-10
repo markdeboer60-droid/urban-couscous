@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 export default function InstellingenPanel({ onTerug }) {
   const showToast = useToast();
   const [instellingen, setInstellingen] = useState({
-    templateDir: '', kantoorNaam: '', kantoorAdres: '', kantoorPostcode: '',
+    templateDir: '', gedeeldeDataDir: '', kantoorNaam: '', kantoorAdres: '', kantoorPostcode: '',
     kantoorPlaats: '', kantoorTelefoon: '', kantoorEmail: '', kantoorWebsite: '',
     kantoorKvk: '', kantoorBtw: '', logoPad: '', ondertekenaars: [], handtekeningPaden: {},
   });
@@ -16,7 +16,8 @@ export default function InstellingenPanel({ onTerug }) {
   useEffect(() => {
     window.api.settings.get().then(s => {
       setInstellingen({
-        templateDir:    s.templateDir    || '',
+        templateDir:      s.templateDir      || '',
+        gedeeldeDataDir:  s.gedeeldeDataDir  || '',
         kantoorNaam:    s.kantoorNaam    || '',
         kantoorAdres:   s.kantoorAdres   || '',
         kantoorPostcode: s.kantoorPostcode || '',
@@ -41,6 +42,11 @@ export default function InstellingenPanel({ onTerug }) {
   async function kiesMap() {
     const pad = await window.api.settings.selectDir();
     if (pad) stelIn('templateDir', pad);
+  }
+
+  async function kiesGedeeldeMap() {
+    const pad = await window.api.settings.selectGedeeldeDir();
+    if (pad) stelIn('gedeeldeDataDir', pad);
   }
 
   async function kiesLogo() {
@@ -231,6 +237,38 @@ export default function InstellingenPanel({ onTerug }) {
               Toevoegen
             </button>
           </div>
+        </div>
+
+        {/* Gedeelde map (multi-gebruiker) */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Gedeelde map — klanten &amp; standaard teksten</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            Wijs een gedeelde netwerkmap of OneDrive-map aan. Alle medewerkers die naar dezelfde map verwijzen
+            delen automatisch het adresboek en de standaard teksten. Laat leeg om lokaal te werken.
+          </p>
+          <div className="flex gap-3 items-center">
+            <input
+              type="text"
+              value={instellingen.gedeeldeDataDir}
+              readOnly
+              placeholder="Geen gedeelde map ingesteld — werkt lokaal"
+              className="invoer flex-1 bg-gray-50 cursor-default text-gray-500 text-sm"
+            />
+            <button onClick={kiesGedeeldeMap} className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 shrink-0">
+              <FolderOpen size={15} />
+              Kiezen
+            </button>
+            {instellingen.gedeeldeDataDir && (
+              <button onClick={() => stelIn('gedeeldeDataDir', '')} className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-500 hover:bg-gray-50 shrink-0">
+                Wissen
+              </button>
+            )}
+          </div>
+          {instellingen.gedeeldeDataDir && (
+            <p className="mt-2 text-xs text-blue-600">
+              Klanten en standaard teksten worden gelezen en opgeslagen in deze map. Zorg dat alle medewerkers schrijfrechten hebben op deze map.
+            </p>
+          )}
         </div>
 
         {/* Sjablonenmap */}

@@ -165,18 +165,18 @@ const SEED_STANDAARD_TEKSTEN = [
   { categorie: 'Continuïteit', vraag: 'Documenteren continuïteitsbeoordeling', antwoord: 'Leg de uitgevoerde continuïteitsbeoordeling, de verkregen informatie, de bespreking met het management en de conclusie volledig vast in het dossier zodat het dossier inzichtelijk is voor een externe kwaliteitsbeoordelaar.' },
 ];
 
-function initStandaardTeksten() {
+function initStandaardTeksten(pad = standaardTekstenFile) {
   const nu = new Date().toISOString();
-  if (!fs.existsSync(standaardTekstenFile)) {
+  if (!fs.existsSync(pad)) {
     // Eerste keer: alles seeden
     const items = SEED_STANDAARD_TEKSTEN.map(item => ({
       ...item, id: randomUUID(), aangemaakt: nu, bijgewerkt: nu,
     }));
-    fs.writeFileSync(standaardTekstenFile, JSON.stringify(items, null, 2));
+    fs.writeFileSync(pad, JSON.stringify(items, null, 2));
   } else {
     // Bestaand bestand: alleen ontbrekende items toevoegen (migratie-veilig)
     let bestaand;
-    try { bestaand = JSON.parse(fs.readFileSync(standaardTekstenFile, 'utf-8')); }
+    try { bestaand = JSON.parse(fs.readFileSync(pad, 'utf-8')); }
     catch { bestaand = []; }
     // Migratie: hernoem categorie 'Algemeen' → 'Visionplanner' voor de originele 8 items
     let gewijzigd = false;
@@ -188,9 +188,39 @@ function initStandaardTeksten() {
       .filter(s => !bestaand.some(b => b.categorie === s.categorie && b.vraag === s.vraag))
       .map(item => ({ ...item, id: randomUUID(), aangemaakt: nu, bijgewerkt: nu }));
     if (nieuw.length > 0 || gewijzigd) {
-      fs.writeFileSync(standaardTekstenFile, JSON.stringify([...bestaand, ...nieuw], null, 2));
+      fs.writeFileSync(pad, JSON.stringify([...bestaand, ...nieuw], null, 2));
     }
   }
+}
+
+// ── Gedeelde data map (multi-gebruiker) ───────────────────────────────────────
+// _settingsCache wordt gevuld door readSettings() vóór ieder gebruik van klanten
+// of standaard teksten. We lezen het direct uit de cache om circulaire calls
+// via ensureDirs → readSettings → ensureDirs te voorkomen.
+function getGedeeldeDataDir() {
+  return _settingsCache?.gedeeldeDataDir || null;
+}
+
+function getKlantenFile() {
+  const dir = getGedeeldeDataDir();
+  if (dir) {
+    try { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); } catch {}
+    const f = path.join(dir, 'klanten.json');
+    if (!fs.existsSync(f)) fs.writeFileSync(f, '[]');
+    return f;
+  }
+  return klantenFile;
+}
+
+function getStandaardTekstenFile() {
+  const dir = getGedeeldeDataDir();
+  if (dir) {
+    try { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); } catch {}
+    const f = path.join(dir, 'standaard_teksten.json');
+    if (!fs.existsSync(f)) initStandaardTeksten(f);
+    return f;
+  }
+  return standaardTekstenFile;
 }
 
 function ensureDirs() {
@@ -258,12 +288,12 @@ function readVelden(templateId) {
 function writeVelden(templateId, velden) {
   fs.writeFileSync(path.join(veldDir, `${templateId}.json`), JSON.stringify(velden, null, 2));
 }
-function readKlanten() { ensureDirs(); return JSON.parse(fs.readFileSync(klantenFile, 'utf-8')); }
-function writeKlanten(data) { fs.writeFileSync(klantenFile, JSON.stringify(data, null, 2)); }
+function readKlanten() { ensureDirs(); return JSON.parse(fs.readFileSync(getKlantenFile(), 'utf-8')); }
+function writeKlanten(data) { fs.writeFileSync(getKlantenFile(), JSON.stringify(data, null, 2)); }
 function readConcepten() { ensureDirs(); return JSON.parse(fs.readFileSync(conceptenFile, 'utf-8')); }
 function writeConcepten(data) { fs.writeFileSync(conceptenFile, JSON.stringify(data, null, 2)); }
-function readStandaardTeksten() { ensureDirs(); return JSON.parse(fs.readFileSync(standaardTekstenFile, 'utf-8')); }
-function writeStandaardTeksten(data) { fs.writeFileSync(standaardTekstenFile, JSON.stringify(data, null, 2)); }
+function readStandaardTeksten() { ensureDirs(); return JSON.parse(fs.readFileSync(getStandaardTekstenFile(), 'utf-8')); }
+function writeStandaardTeksten(data) { fs.writeFileSync(getStandaardTekstenFile(), JSON.stringify(data, null, 2)); }
 
 function getTemplateDocxPath(templateId, versie) {
   const settings = readSettings();
@@ -747,6 +777,14 @@ ipcMain.handle('settings:set', (_, updates) => {
 ipcMain.handle('settings:selectDir', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Selecteer map voor sjablonen',
+    properties: ['openDirectory'],
+  });
+  return canceled ? null : filePaths[0];
+});
+
+ipcMain.handle('settings:selectGedeeldeDir', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Selecteer gedeelde map (netwerk of OneDrive)',
     properties: ['openDirectory'],
   });
   return canceled ? null : filePaths[0];

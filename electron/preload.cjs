@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('api', {
     get: () => ipcRenderer.invoke('settings:get'),
     set: (updates) => ipcRenderer.invoke('settings:set', updates),
     selectDir: () => ipcRenderer.invoke('settings:selectDir'),
+    selectGedeeldeDir: () => ipcRenderer.invoke('settings:selectGedeeldeDir'),
     selectLogo: () => ipcRenderer.invoke('settings:selectLogo'),
     selectHandtekening: (naam) => ipcRenderer.invoke('settings:selectHandtekening', naam),
     getOneDrivePad: () => ipcRenderer.invoke('settings:getOneDrivePad'),
