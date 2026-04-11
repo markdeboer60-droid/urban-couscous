@@ -302,14 +302,16 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     try {
       const values = bouwValues();
       const docxPad = await window.api.export.generateDocx({ templateId, values });
-      await window.api.history.add({
-        templateId,
-        templateNaam: template.naam,
-        categorie: template.categorie,
-        docxPad,
-        values: waarden,
-      });
-      // Concept verwijderen — fout hier mag genereren niet blokkeren
+      // Geschiedenis en concept-opruiming mogen genereren niet blokkeren
+      try {
+        await window.api.history.add({
+          templateId,
+          templateNaam: template.naam,
+          categorie: template.categorie,
+          docxPad,
+          values: waarden,
+        });
+      } catch {}
       try { await window.api.concepten.delete(templateId); } catch {}
       navigeer('export', { templateId, docxPad, templateNaam: template.naam, values: waarden, bestandsnaamPatroon: template.bestandsnaamPatroon });
     } catch (e) {

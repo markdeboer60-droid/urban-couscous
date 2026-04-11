@@ -88,14 +88,23 @@ export default function ExportPage({ exportData, navigeer }) {
   }
 
   async function handleOpslaanDocx(defaultDir = null) {
-    const pad = await window.api.export.saveDocxAs({
-      srcPath: docxPad,
-      standaardNaam: `${standaardNaam}.docx`,
-      defaultDir,
-    });
-    if (!pad) return;
-    setOpgeslagenDocxPad(pad);
-    await voerUit(defaultDir ? 'opslaanDocxOneDrive' : 'opslaanDocx', async () => {});
+    const actie = defaultDir ? 'opslaanDocxOneDrive' : 'opslaanDocx';
+    setStatus(s => ({ ...s, [actie]: { bezig: true, fout: null, klaar: false } }));
+    try {
+      const pad = await window.api.export.saveDocxAs({
+        srcPath: docxPad,
+        standaardNaam: `${standaardNaam}.docx`,
+        defaultDir,
+      });
+      if (!pad) {
+        setStatus(s => ({ ...s, [actie]: { bezig: false, fout: null, klaar: false } }));
+        return;
+      }
+      setOpgeslagenDocxPad(pad);
+      setStatus(s => ({ ...s, [actie]: { bezig: false, fout: null, klaar: true } }));
+    } catch (e) {
+      setStatus(s => ({ ...s, [actie]: { bezig: false, fout: e.message || 'Opslaan mislukt', klaar: false } }));
+    }
   }
 
   async function handleExportPdf() {
@@ -106,17 +115,21 @@ export default function ExportPage({ exportData, navigeer }) {
   }
 
   async function voegBijlageToe() {
-    const geselecteerd = await window.api.export.selectBijlagen();
-    if (!geselecteerd || geselecteerd.length === 0) return;
-    setBijlagen(prev => {
-      // Dedupleer op pad
-      const bestaandePaden = new Set(prev.map(b => b.pad));
-      const nieuw = geselecteerd.filter(b => !bestaandePaden.has(b.pad));
-      return [...prev, ...nieuw];
-    });
-    // Als er al een PDF was gegenereerd, moet die opnieuw worden aangemaakt
-    setPdfPad(null);
-    setStatus(s => ({ ...s, pdf: {} }));
+    try {
+      const geselecteerd = await window.api.export.selectBijlagen();
+      if (!geselecteerd || geselecteerd.length === 0) return;
+      setBijlagen(prev => {
+        // Dedupleer op pad
+        const bestaandePaden = new Set(prev.map(b => b.pad));
+        const nieuw = geselecteerd.filter(b => !bestaandePaden.has(b.pad));
+        return [...prev, ...nieuw];
+      });
+      // Als er al een PDF was gegenereerd, moet die opnieuw worden aangemaakt
+      setPdfPad(null);
+      setStatus(s => ({ ...s, pdf: {} }));
+    } catch {
+      // Dialoog geannuleerd of IPC-fout — niets doen
+    }
   }
 
   function verwijderBijlage(pad) {
@@ -128,14 +141,23 @@ export default function ExportPage({ exportData, navigeer }) {
 
   async function handleOpslaanPdf(defaultDir = null) {
     if (!pdfPad) return;
-    const pad = await window.api.export.savePdfAs({
-      srcPath: pdfPad,
-      standaardNaam: `${standaardNaam}.pdf`,
-      defaultDir,
-    });
-    if (!pad) return;
-    setOpgeslagenPdfPad(pad);
-    await voerUit(defaultDir ? 'opslaanPdfOneDrive' : 'opslaanPdf', async () => {});
+    const actie = defaultDir ? 'opslaanPdfOneDrive' : 'opslaanPdf';
+    setStatus(s => ({ ...s, [actie]: { bezig: true, fout: null, klaar: false } }));
+    try {
+      const pad = await window.api.export.savePdfAs({
+        srcPath: pdfPad,
+        standaardNaam: `${standaardNaam}.pdf`,
+        defaultDir,
+      });
+      if (!pad) {
+        setStatus(s => ({ ...s, [actie]: { bezig: false, fout: null, klaar: false } }));
+        return;
+      }
+      setOpgeslagenPdfPad(pad);
+      setStatus(s => ({ ...s, [actie]: { bezig: false, fout: null, klaar: true } }));
+    } catch (e) {
+      setStatus(s => ({ ...s, [actie]: { bezig: false, fout: e.message || 'Opslaan mislukt', klaar: false } }));
+    }
   }
 
   async function handleEmail(bijlagePad, statusSleutel) {

@@ -230,12 +230,16 @@ export default function KlantenPage({ navigeer }) {
         <CsvImportModal
           onSluiten={() => setCsvImportOpen(false)}
           onImport={async (nieuweKlanten) => {
-            for (const k of nieuweKlanten) {
-              await window.api.klanten.save(k);
+            try {
+              for (const k of nieuweKlanten) {
+                await window.api.klanten.save(k);
+              }
+              setCsvImportOpen(false);
+              laad();
+              showToast(`${nieuweKlanten.length} klant${nieuweKlanten.length !== 1 ? 'en' : ''} geïmporteerd`);
+            } catch (e) {
+              showToast('Importfout: ' + (e?.message || 'Onbekende fout'), 'error');
             }
-            setCsvImportOpen(false);
-            laad();
-            showToast(`${nieuweKlanten.length} klant${nieuweKlanten.length !== 1 ? 'en' : ''} geïmporteerd`);
           }}
         />
       )}
