@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ArrowLeft, FileText, FileDown, Mail, Loader2, CheckCircle,
   AlertCircle, ExternalLink, Cloud, ArrowRight, Printer, PenLine, User,
+  Paperclip, X, Plus,
 } from 'lucide-react';
 
 function berekenBestandsnaam(patroon, templateNaam, values) {
@@ -40,6 +41,7 @@ export default function ExportPage({ exportData, navigeer }) {
   const [handtekeningPaden, setHandtekeningPaden] = useState({});
   const [getekendDoor, setGetekendDoor] = useState(null);
   const [tekeningNaam, setTekeningNaam] = useState(null);
+  const [bijlagen, setBijlagen] = useState([]);
   const standaardNaam = berekenBestandsnaam(bestandsnaamPatroon, templateNaam, values);
 
   useEffect(() => {
@@ -98,9 +100,30 @@ export default function ExportPage({ exportData, navigeer }) {
 
   async function handleExportPdf() {
     await voerUit('pdf', async () => {
-      const pad = await window.api.export.exportPdf(docxPad);
+      const pad = await window.api.export.exportPdf({ docxPath: docxPad, bijlagen });
       setPdfPad(pad);
     });
+  }
+
+  async function voegBijlageToe() {
+    const geselecteerd = await window.api.export.selectBijlagen();
+    if (!geselecteerd || geselecteerd.length === 0) return;
+    setBijlagen(prev => {
+      // Dedupleer op pad
+      const bestaandePaden = new Set(prev.map(b => b.pad));
+      const nieuw = geselecteerd.filter(b => !bestaandePaden.has(b.pad));
+      return [...prev, ...nieuw];
+    });
+    // Als er al een PDF was gegenereerd, moet die opnieuw worden aangemaakt
+    setPdfPad(null);
+    setStatus(s => ({ ...s, pdf: {} }));
+  }
+
+  function verwijderBijlage(pad) {
+    setBijlagen(prev => prev.filter(b => b.pad !== pad));
+    // Invalideer bestaande PDF
+    setPdfPad(null);
+    setStatus(s => ({ ...s, pdf: {} }));
   }
 
   async function handleOpslaanPdf(defaultDir = null) {
@@ -285,9 +308,47 @@ export default function ExportPage({ exportData, navigeer }) {
 
       {/* PDF sectie */}
       <Sectie titel="PDF" icoon={<FileDown size={18} className="text-red-500" />} className="mt-4" disabled={!docxPad}>
+        {/* Bijlagen */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+              <Paperclip size={12} />
+              Bijlagen toevoegen aan PDF
+            </span>
+            <button
+              onClick={voegBijlageToe}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <Plus size={12} />
+              Bestand toevoegen
+            </button>
+          </div>
+          {bijlagen.length > 0 ? (
+            <div className="space-y-1 mb-3">
+              {bijlagen.map((b, i) => (
+                <div key={b.pad} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700">
+                  <FileText size={12} className="text-gray-400 shrink-0" />
+                  <span className="flex-1 truncate" title={b.pad}>{b.naam}</span>
+                  <button
+                    onClick={() => verwijderBijlage(b.pad)}
+                    className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                    title="Bijlage verwijderen"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 mb-3">
+              Geen bijlagen — de PDF bevat alleen het gegenereerde document. Voeg Word- of PDF-bestanden toe om ze achteraan de PDF te plakken.
+            </p>
+          )}
+        </div>
+
         {!pdfPad ? (
           <ActieKnop
-            label="Converteren naar PDF"
+            label={bijlagen.length > 0 ? `Converteren naar PDF (+ ${bijlagen.length} bijlage${bijlagen.length !== 1 ? 'n' : ''})` : 'Converteren naar PDF'}
             beschrijving="Gebruikt Microsoft Word om de PDF te genereren"
             onClick={handleExportPdf}
             staat={status.pdf}

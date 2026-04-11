@@ -648,7 +648,50 @@ ipcMain.handle('export:openInWord', (_, filePath) => {
   return { ok: true };
 });
 
-ipcMain.handle('export:exportPdf', async (_, docxPath) => {
+// Helper: converteer één bestand (docx of pdf) naar een PDF-pad.
+// Geeft ook terug of het een tijdelijk bestand is (dan verwijderen na samenvoegen).
+async function converteerNaarPdf(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.pdf') return { pad: filePath, tijdelijk: false };
+
+  if (process.platform === 'win32') {
+    const uitvoerPdf = path.join(os.tmpdir(), `bijlage_${Date.now()}.pdf`);
+    const ef = filePath.replace(/'/g, "''");
+    const ep = uitvoerPdf.replace(/'/g, "''");
+    const ps = `$w=New-Object -ComObject Word.Application;$w.Visible=$false;$d=$w.Documents.Open('${ef}');$d.SaveAs([ref]'${ep}',[ref]17);$d.Close();$w.Quit()`;
+    await new Promise((resolve, reject) =>
+      execFile('powershell', ['-NoProfile', '-Command', ps], err => err ? reject(err) : resolve())
+    );
+    return { pad: uitvoerPdf, tijdelijk: true };
+  } else {
+    // Kopieer naar tmpdir met unieke naam zodat LibreOffice een voorspelbare uitvoernaam heeft
+    const tmpDocx = path.join(os.tmpdir(), `bijlage_${Date.now()}${ext}`);
+    fs.copyFileSync(filePath, tmpDocx);
+    await new Promise((resolve, reject) =>
+      exec(`soffice --headless --convert-to pdf --outdir "${os.tmpdir()}" "${tmpDocx}"`, err => err ? reject(err) : resolve())
+    );
+    try { fs.unlinkSync(tmpDocx); } catch {}
+    const uitvoerPdf = tmpDocx.replace(/\.[^.]+$/, '.pdf');
+    return { pad: uitvoerPdf, tijdelijk: true };
+  }
+}
+
+ipcMain.handle('export:selectBijlagen', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Bijlagen selecteren',
+    filters: [{ name: 'Documenten', extensions: ['pdf', 'docx', 'doc'] }],
+    properties: ['openFile', 'multiSelections'],
+  });
+  if (result.canceled) return [];
+  return result.filePaths.map(p => ({ naam: path.basename(p), pad: p }));
+});
+
+ipcMain.handle('export:exportPdf', async (_, payload) => {
+  // Backwards compatibel: payload kan een string zijn (enkel docxPath, geen bijlagen)
+  const docxPath = typeof payload === 'string' ? payload : payload.docxPath;
+  const bijlagen = typeof payload === 'string' ? [] : (payload.bijlagen || []);
+
+  // Stap 1: hoofddocument DOCX → PDF
   const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
   if (process.platform === 'win32') {
     const ed = docxPath.replace(/'/g, "''");
@@ -662,7 +705,38 @@ ipcMain.handle('export:exportPdf', async (_, docxPath) => {
       exec(`soffice --headless --convert-to pdf --outdir "${path.dirname(docxPath)}" "${docxPath}"`, err => err ? reject(err) : resolve())
     );
   }
-  return pdfPath;
+
+  if (bijlagen.length === 0) return pdfPath;
+
+  // Stap 2: bijlagen omzetten naar PDF en samenvoegen
+  const { PDFDocument } = require('pdf-lib');
+  const tijdelijkeBestanden = [];
+
+  try {
+    const allesPdfs = [pdfPath];
+    for (const bijlage of bijlagen) {
+      const { pad, tijdelijk } = await converteerNaarPdf(bijlage.pad);
+      allesPdfs.push(pad);
+      if (tijdelijk) tijdelijkeBestanden.push(pad);
+    }
+
+    // Samengevoegd PDF-document maken
+    const samengevoegd = await PDFDocument.create();
+    for (const pdfBestand of allesPdfs) {
+      const bytes = fs.readFileSync(pdfBestand);
+      const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const paginas = await samengevoegd.copyPages(doc, doc.getPageIndices());
+      paginas.forEach(p => samengevoegd.addPage(p));
+    }
+
+    const uitvoerPad = pdfPath.replace(/\.pdf$/, '_met_bijlagen.pdf');
+    fs.writeFileSync(uitvoerPad, await samengevoegd.save());
+    return uitvoerPad;
+  } finally {
+    for (const tmp of tijdelijkeBestanden) {
+      try { fs.unlinkSync(tmp); } catch {}
+    }
+  }
 });
 
 ipcMain.handle('export:openPdf', (_, pdfPath) => {
