@@ -1181,6 +1181,22 @@ ipcMain.handle('bedrijf:zoek', async (_, { naam, plaats }) => {
   }
 });
 
+// ── Admin: opruimen ───────────────────────────────────────────────────────────
+ipcMain.handle('admin:opruimen', () => {
+  // Wis geschiedenis JSON
+  writeHistory([]);
+  // Verwijder gegenereerde bestanden uit de geschiedenis-map
+  try {
+    const files = fs.readdirSync(geschiedenisDir);
+    for (const file of files) {
+      try { fs.unlinkSync(path.join(geschiedenisDir, file)); } catch {}
+    }
+  } catch {}
+  // Wis concepten JSON
+  writeConcepten([]);
+  return { ok: true };
+});
+
 // ── Venster ───────────────────────────────────────────────────────────────────
 function createWindow() {
   const win = new BrowserWindow({
@@ -1193,7 +1209,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    title: 'Sjablonenplatform',
+    title: 'Sjabloongenerator - Otto Visser & Partners',
     autoHideMenuBar: true,
   });
 
