@@ -668,7 +668,7 @@ async function converteerNaarPdf(filePath) {
     const tmpDocx = path.join(os.tmpdir(), `bijlage_${Date.now()}${ext}`);
     fs.copyFileSync(filePath, tmpDocx);
     await new Promise((resolve, reject) =>
-      exec(`soffice --headless --convert-to pdf --outdir "${os.tmpdir()}" "${tmpDocx}"`, err => err ? reject(err) : resolve())
+      execFile('soffice', ['--headless', '--convert-to', 'pdf', '--outdir', os.tmpdir(), tmpDocx], err => err ? reject(err) : resolve())
     );
     try { fs.unlinkSync(tmpDocx); } catch {}
     const uitvoerPdf = tmpDocx.replace(/\.[^.]+$/, '.pdf');
@@ -702,7 +702,7 @@ ipcMain.handle('export:exportPdf', async (_, payload) => {
     );
   } else {
     await new Promise((resolve, reject) =>
-      exec(`soffice --headless --convert-to pdf --outdir "${path.dirname(docxPath)}" "${docxPath}"`, err => err ? reject(err) : resolve())
+      execFile('soffice', ['--headless', '--convert-to', 'pdf', '--outdir', path.dirname(docxPath), docxPath], err => err ? reject(err) : resolve())
     );
   }
 
