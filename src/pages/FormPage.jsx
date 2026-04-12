@@ -4,6 +4,23 @@ import VeldInput from '../components/forms/VeldInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
+// Zet bestandsnaamPatroon om naar een leesbare geschiedenistitel
+function berekenGeschiedenisNaam(patroon, templateNaam, waarden) {
+  if (!patroon) return templateNaam;
+  const datum = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+  let naam = patroon
+    .replace(/\{datum\}/gi, datum)
+    .replace(/\{templatenaam\}/gi, templateNaam)
+    .replace(/\{(\w+)\}/g, (_, key) => {
+      const val = waarden[key];
+      return (val != null && val !== '') ? String(val) : '';
+    })
+    .replace(/_+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return naam || templateNaam;
+}
+
 // Koppeling van standaard sjabloontags naar klantgegevens in het adresboek
 const STANDAARD_VARIABELEN = {
   // ── Contactpersoon ──
@@ -304,9 +321,10 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       const docxPad = await window.api.export.generateDocx({ templateId, values });
       // Geschiedenis en concept-opruiming mogen genereren niet blokkeren
       try {
+        const geschiedenisNaam = berekenGeschiedenisNaam(template.bestandsnaamPatroon, template.naam, waarden);
         await window.api.history.add({
           templateId,
-          templateNaam: template.naam,
+          templateNaam: geschiedenisNaam,
           categorie: template.categorie,
           docxPad,
           values: waarden,
