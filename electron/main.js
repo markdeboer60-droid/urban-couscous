@@ -709,7 +709,9 @@ ipcMain.handle('export:exportPdf', async (_, payload) => {
   if (bijlagen.length === 0) return pdfPath;
 
   // Stap 2: bijlagen omzetten naar PDF en samenvoegen
-  const { PDFDocument } = require('pdf-lib');
+  // Gebruik de lokale UMD-bundel (electron/pdf-lib-bundle.cjs) — altijd beschikbaar
+  // via asarUnpack electron/**, ongeacht module-resolutie vanuit de asar.
+  const { PDFDocument } = require('./pdf-lib-bundle.cjs');
   const tijdelijkeBestanden = [];
 
   try {
