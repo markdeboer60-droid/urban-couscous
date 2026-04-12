@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Copy, Check, Pencil, Trash2, BookOpen, ArrowUp, ArrowDown, Star, Search, X, FileText } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
@@ -22,6 +22,10 @@ export default function StandaardTekstenPage() {
   const [vervangModal, setVervangModal] = useState(null); // { item } | null
   const [selectie, setSelectie]         = useState(new Set());
   const [risicoTekst, setRisicoTekst]   = useState(null); // string | null
+  const [zijbalkBreedte, setZijbalkBreedte] = useState(() => {
+    try { return parseInt(localStorage.getItem('standaardteksten-zijbalk-breedte') || '208', 10); } catch { return 208; }
+  });
+  const asideRef = useRef(null);
 
   useEffect(() => { laad(); }, []);
 
@@ -152,6 +156,27 @@ export default function StandaardTekstenPage() {
     setRisicoTekst(delen.join('\n\n'));
   }
 
+  function startResize(e) {
+    e.preventDefault();
+    if (asideRef.current) asideRef.current.style.transition = 'none';
+    let x = e.clientX;
+    let breedte = zijbalkBreedte;
+    function onMove(ev) {
+      breedte = Math.max(120, Math.min(360, breedte + (ev.clientX - x)));
+      x = ev.clientX;
+      if (asideRef.current) asideRef.current.style.width = `${breedte}px`;
+    }
+    function onUp() {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (asideRef.current) asideRef.current.style.transition = '';
+      setZijbalkBreedte(breedte);
+      try { localStorage.setItem('standaardteksten-zijbalk-breedte', String(breedte)); } catch {}
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
+
   function startBewerk(item) {
     setBewerkId(item.id);
     setBewerkData({ id: item.id, categorie: item.categorie || '', vraag: item.vraag, antwoord: item.antwoord });
@@ -171,7 +196,7 @@ export default function StandaardTekstenPage() {
   return (
     <div className="flex min-h-full">
       {/* ── zijmenu ── */}
-      <aside className="w-52 shrink-0 bg-gray-50 border-r border-gray-200 p-3 space-y-0.5">
+      <aside ref={asideRef} className="shrink-0 bg-gray-50 border-r border-gray-200 p-3 space-y-0.5 overflow-y-auto" style={{ width: zijbalkBreedte }}>
         <button
           onClick={() => setActieve('alle')}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -202,6 +227,13 @@ export default function StandaardTekstenPage() {
           </button>
         ))}
       </aside>
+
+      {/* ── resize handle ── */}
+      <div
+        onMouseDown={startResize}
+        className="w-1.5 shrink-0 -ml-px cursor-col-resize hover:bg-blue-400/30 transition-colors z-10"
+        title="Sleep om breder/smaller te maken"
+      />
 
       {/* ── hoofdinhoud ── */}
       <div className="flex-1 p-8 max-w-3xl">

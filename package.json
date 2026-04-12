@@ -23,7 +23,10 @@
     "asarUnpack": [
       "electron/**",
       "node_modules/pizzip/**",
-      "node_modules/docxtemplater/**"
+      "node_modules/docxtemplater/**",
+      "node_modules/pdf-lib/**",
+      "node_modules/@pdf-lib/**",
+      "node_modules/pako/**"
     ],
     "win": {
       "target": "nsis"

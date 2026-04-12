@@ -55,6 +55,9 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
   const [recenteIds, setRecenteIds] = useState(leesRecent);
   const [concepten, setConcepten] = useState([]);
   const [conceptenOpen, setConceptenOpen] = useState(true);
+  const [zijbalkBreedte, setZijbalkBreedte] = useState(() => {
+    try { return parseInt(localStorage.getItem('sjablonen-zijbalk-breedte') || '208', 10); } catch { return 208; }
+  });
 
   useEffect(() => { laad(); }, []);
 
@@ -127,6 +130,14 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
     });
   }
 
+  function stelZijbalkBreedteIn(delta) {
+    setZijbalkBreedte(b => {
+      const nieuw = Math.max(120, Math.min(360, b + delta));
+      try { localStorage.setItem('sjablonen-zijbalk-breedte', String(nieuw)); } catch {}
+      return nieuw;
+    });
+  }
+
   // ── Onboarding (lege staat) ──────────────────────────────────────────────────
   if (!laden && templates.length === 0) {
     return (
@@ -168,7 +179,7 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
     <div className="flex min-h-full">
 
       {/* ── Categorie-zijbalk ── */}
-      <div className="w-52 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col">
+      <div className="relative shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col" style={{ width: zijbalkBreedte }}>
         <div className="px-4 py-5 border-b border-gray-100">
           <h1 className="text-base font-bold text-gray-900">Sjablonen</h1>
           <p className="text-xs text-gray-500 mt-0.5">Kies een sjabloon</p>
@@ -196,6 +207,7 @@ export default function TemplateBrowser({ navigeer, zoekRef }) {
             );
           })}
         </nav>
+        <DragHandle onDrag={stelZijbalkBreedteIn} />
       </div>
 
       {/* ── Hoofdinhoud ── */}

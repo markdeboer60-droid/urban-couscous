@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { History, Trash2, FileText, RotateCcw, FolderOpen, Loader2, Search, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { formatDatumTijd } from '../utils/formatDatum';
@@ -17,6 +17,10 @@ export default function GeschiedenisPage({ navigeer }) {
   const [ingeklapt, setIngeklapt] = useState(() => {
     try { return localStorage.getItem('geschiedenis-sidebar-ingeklapt') === 'true'; } catch { return false; }
   });
+  const [zijbalkBreedte, setZijbalkBreedte] = useState(() => {
+    try { return parseInt(localStorage.getItem('geschiedenis-zijbalk-breedte') || '192', 10); } catch { return 192; }
+  });
+  const asideRef = useRef(null);
 
   useEffect(() => {
     laad();
@@ -59,6 +63,28 @@ export default function GeschiedenisPage({ navigeer }) {
     });
   }
 
+  function startResize(e) {
+    e.preventDefault();
+    // Schakel transitie tijdelijk uit zodat slepen vloeiend is
+    if (asideRef.current) asideRef.current.style.transition = 'none';
+    let x = e.clientX;
+    let breedte = zijbalkBreedte;
+    function onMove(ev) {
+      breedte = Math.max(120, Math.min(360, breedte + (ev.clientX - x)));
+      x = ev.clientX;
+      if (asideRef.current) asideRef.current.style.width = `${breedte}px`;
+    }
+    function onUp() {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (asideRef.current) asideRef.current.style.transition = '';
+      setZijbalkBreedte(breedte);
+      try { localStorage.setItem('geschiedenis-zijbalk-breedte', String(breedte)); } catch {}
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
+
   const categorieen = [...new Set(geschiedenis.map(e => e.categorie || '').filter(Boolean))].sort();
 
   const gefilterd = geschiedenis
@@ -88,7 +114,12 @@ export default function GeschiedenisPage({ navigeer }) {
     <div className="flex min-h-full">
       {/* Zijmenu — alleen tonen als er categorieën zijn */}
       {categorieen.length > 0 && (
-        <aside className={`${ingeklapt ? 'w-14' : 'w-48'} shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-200 overflow-hidden`}>
+        <>
+        <aside
+          ref={asideRef}
+          className="shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col transition-[width] duration-200 overflow-hidden"
+          style={{ width: ingeklapt ? '56px' : zijbalkBreedte }}
+        >
           <div className={`flex items-center border-b border-gray-200 ${ingeklapt ? 'justify-center px-0 py-3' : 'justify-between px-3 py-3'}`}>
             {!ingeklapt && <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Categorie</span>}
             <button
@@ -132,6 +163,14 @@ export default function GeschiedenisPage({ navigeer }) {
             ))}
           </nav>
         </aside>
+        {!ingeklapt && (
+          <div
+            onMouseDown={startResize}
+            className="w-1.5 shrink-0 -ml-px cursor-col-resize hover:bg-blue-400/30 transition-colors z-10"
+            title="Sleep om breder/smaller te maken"
+          />
+        )}
+        </>
       )}
 
       {/* Hoofdinhoud */}
