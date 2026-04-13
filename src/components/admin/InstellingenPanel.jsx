@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, FolderOpen, Image, Loader2, CheckCircle, Plus, Trash2, Pen } from 'lucide-react';
+import ConfirmDialog from '../ui/ConfirmDialog';
 import { useToast } from '../../context/ToastContext';
 
 export default function InstellingenPanel({ onTerug }) {
@@ -12,9 +13,12 @@ export default function InstellingenPanel({ onTerug }) {
   const [bezig, setBezig] = useState(false);
   const [opgeslagen, setOpgeslagen] = useState(false);
   const [nieuweOndertekenaar, setNieuweOndertekenaar] = useState('');
+  const [mapWijzigingBevestig, setMapWijzigingBevestig] = useState(false);
+  const origineleTemplateDir = useRef('');
 
   useEffect(() => {
     window.api.settings.get().then(s => {
+      origineleTemplateDir.current = s.templateDir || '';
       setInstellingen({
         templateDir:      s.templateDir      || '',
         gedeeldeDataDir:  s.gedeeldeDataDir  || '',
@@ -82,9 +86,35 @@ export default function InstellingenPanel({ onTerug }) {
   }
 
   async function opslaan() {
+    // Als de sjablonenmap is gewijzigd, controleer of er sjablonen zijn die verwijderd zullen worden
+    if (instellingen.templateDir !== origineleTemplateDir.current) {
+      const bestaande = await window.api.templates.getAll();
+      if (bestaande.length > 0) {
+        setMapWijzigingBevestig(true);
+        return;
+      }
+    }
+    await slaInstellingenOp();
+  }
+
+  async function bevestigMapWijziging() {
+    setMapWijzigingBevestig(false);
+    setBezig(true);
+    try {
+      await window.api.templates.deleteAll();
+      await slaInstellingenOp();
+      showToast('Sjablonenmap gewijzigd — alle sjablonen verwijderd', 'info');
+    } catch (e) {
+      showToast('Fout bij wijzigen map: ' + (e?.message || 'onbekend'), 'error');
+      setBezig(false);
+    }
+  }
+
+  async function slaInstellingenOp() {
     setBezig(true);
     try {
       await window.api.settings.set(instellingen);
+      origineleTemplateDir.current = instellingen.templateDir;
       setOpgeslagen(true);
     } catch (e) {
       console.error('Instellingen opslaan mislukt:', e);
@@ -332,6 +362,16 @@ export default function InstellingenPanel({ onTerug }) {
           {opgeslagen ? 'Opgeslagen!' : bezig ? 'Opslaan...' : 'Opslaan'}
         </button>
       </div>
+
+      {mapWijzigingBevestig && (
+        <ConfirmDialog
+          titel="Sjablonenmap wijzigen?"
+          omschrijving="Je wijzigt de sjablonenmap. Alle bestaande sjablonen en hun veldconfiguraties worden verwijderd — je begint opnieuw leeg. De Word-bestanden in de oude map blijven onaangeroerd. Wil je doorgaan?"
+          bevestigLabel="Ja, wijzigen en sjablonen verwijderen"
+          onBevestig={bevestigMapWijziging}
+          onAnnuleer={() => setMapWijzigingBevestig(false)}
+        />
+      )}
     </div>
   );
 }

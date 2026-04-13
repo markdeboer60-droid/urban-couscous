@@ -340,6 +340,16 @@ ipcMain.handle('templates:delete', (_, id) => {
   return { ok: true };
 });
 
+ipcMain.handle('templates:deleteAll', () => {
+  const all = readMeta();
+  for (const t of all) {
+    const veldFile = path.join(veldDir, `${t.id}.json`);
+    try { if (fs.existsSync(veldFile)) fs.unlinkSync(veldFile); } catch {}
+  }
+  writeMeta([]);
+  return { ok: true };
+});
+
 ipcMain.handle('templates:selectDocx', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Selecteer Word-sjabloon',

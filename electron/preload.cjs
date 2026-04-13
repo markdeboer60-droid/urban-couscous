@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('api', {
     scanDocxVars: (filePath) => ipcRenderer.invoke('templates:scanDocxVars', filePath),
     duplicate: (id) => ipcRenderer.invoke('templates:duplicate', id),
     toggleFavoriet: (id) => ipcRenderer.invoke('templates:toggleFavoriet', id),
+    deleteAll: () => ipcRenderer.invoke('templates:deleteAll'),
   },
   // Klanten
   klanten: {
