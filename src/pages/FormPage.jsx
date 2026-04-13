@@ -4,6 +4,40 @@ import VeldInput from '../components/forms/VeldInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
+// Evalueer een rekenformule met {sleutel} referenties naar veldwaarden
+function berekenFormule(formule, waarden) {
+  if (!formule) return null;
+  try {
+    let expr = formule.replace(/\{([\w\s]+)\}/g, (_, key) => {
+      const val = parseFloat(waarden[key.trim()]);
+      return isNaN(val) ? '0' : String(val);
+    });
+    // Percentage: 15% → (15/100)
+    expr = expr.replace(/(\d+(?:[.,]\d+)?)\s*%/g, (_, n) => `(${n.replace(',', '.')}/100)`);
+    // Veiligheidscheck: alleen cijfers, operators en haakjes
+    if (!/^[\d\s.+\-*/()]+$/.test(expr)) return null;
+    // eslint-disable-next-line no-new-func
+    const result = Function('"use strict"; return (' + expr + ')')();
+    return typeof result === 'number' && isFinite(result) ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+function formatteerBerekend(getal, opmaak) {
+  if (getal === null || getal === undefined || isNaN(getal)) return null;
+  switch (opmaak) {
+    case 'valuta':
+      return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(getal);
+    case 'procent':
+      return new Intl.NumberFormat('nl-NL', { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: 4 }).format(getal);
+    case 'getal':
+      return new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 6 }).format(getal);
+    default:
+      return String(getal);
+  }
+}
+
 // Zet bestandsnaamPatroon om naar een leesbare geschiedenistitel
 function berekenGeschiedenisNaam(patroon, templateNaam, waarden) {
   if (!patroon) return templateNaam;
@@ -209,7 +243,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
 
   function ontbrekendeVelden() {
     return zichtbareVelden()
-      .filter(v => v.verplicht)
+      .filter(v => v.verplicht && v.type !== 'berekend')
       .filter(v => {
         const val = waarden[v.sleutel];
         return val === '' || val === null || val === undefined;
@@ -222,11 +256,11 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
 
   function bouwValues() {
     const result = {};
+    // Eerste ronde: alle niet-berekende velden
     (template?.velden || []).forEach(v => {
+      if (v.type === 'berekend') return;
       const val = waarden[v.sleutel];
       if (v.type === 'radio') {
-        // Zet de geselecteerde optie om naar booleaanse vlaggen per optie:
-        // rente = 'euribor' → rente_euribor=true, rente_vast=false, rente_onderling=false
         (v.radioOpties || []).forEach(opt => {
           result[`${v.sleutel}_${opt.key}`] = val === opt.key;
         });
@@ -237,6 +271,12 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
       } else {
         result[v.sleutel] = val ?? '';
       }
+    });
+    // Tweede ronde: berekende velden (kunnen andere velden refereren via waarden)
+    (template?.velden || []).forEach(v => {
+      if (v.type !== 'berekend') return;
+      const uitkomst = berekenFormule(v.formule || '', waarden);
+      result[v.sleutel] = formatteerBerekend(uitkomst, v.opmaak || 'getal') ?? '';
     });
     return result;
   }
@@ -510,7 +550,9 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
                 <div key={veld.sleutel} id={`veld-${veld.sleutel}`}>
                   <VeldInput
                     veld={veld}
-                    waarde={waarden[veld.sleutel]}
+                    waarde={veld.type === 'berekend'
+                      ? berekenFormule(veld.formule, waarden)
+                      : waarden[veld.sleutel]}
                     onChange={val => { setWaarden(prev => ({ ...prev, [veld.sleutel]: val })); }}
                     ondertekenaars={ondertekenaars}
                     geprobeerd={geprobeerd}

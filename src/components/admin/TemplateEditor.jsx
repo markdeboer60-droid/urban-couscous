@@ -15,6 +15,7 @@ const VELD_TYPES = [
   { waarde: 'radio',         label: 'Keuzeknop (radio — meerdere opties)' },
   { waarde: 'boolean',       label: 'Ja / Nee (schakelaar)' },
   { waarde: 'ondertekenaar', label: 'Ondertekenaar kantoor' },
+  { waarde: 'berekend',      label: 'Berekende waarde (formule)' },
 ];
 
 // Slim type afleiden uit de variabelenaam
@@ -43,6 +44,8 @@ const leegVeld = () => ({
   placeholder: '',
   toonInGeschiedenisTitel: false,
   groep: '',
+  formule: '',
+  opmaak: 'valuta',
 });
 
 export default function TemplateEditor({ templateId, onTerug }) {
@@ -623,12 +626,14 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
                 ))}
               </select>
             </Invoerveld>
-            <Invoerveld label="Verplicht">
-              <select value={veld.verplicht ? 'ja' : 'nee'} onChange={e => onChange('verplicht', e.target.value === 'ja')} className="invoer">
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-              </select>
-            </Invoerveld>
+            {veld.type !== 'berekend' && (
+              <Invoerveld label="Verplicht">
+                <select value={veld.verplicht ? 'ja' : 'nee'} onChange={e => onChange('verplicht', e.target.value === 'ja')} className="invoer">
+                  <option value="ja">Ja</option>
+                  <option value="nee">Nee</option>
+                </select>
+              </Invoerveld>
+            )}
           </div>
 
           {/* Opties voor select */}
@@ -711,6 +716,34 @@ function VeldRij({ veld, idx, uitgevouwen, alleVelden, onToggle, onChange, onVer
                 Per geselecteerde optie worden booleaanse sjabloonvariabelen aangemaakt:
                 <code className="bg-gray-100 px-1 rounded ml-1">{`{${veld.sleutel || 'veld'}_sleutel}`}</code>
               </p>
+            </div>
+          )}
+
+          {/* Formule voor berekende velden */}
+          {veld.type === 'berekend' && (
+            <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <Invoerveld label="Formule">
+                <input
+                  type="text"
+                  value={veld.formule || ''}
+                  onChange={e => onChange('formule', e.target.value)}
+                  placeholder="{Dividenduitkering} * 15%"
+                  className="invoer font-mono"
+                />
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Gebruik <code className="bg-white border border-gray-200 px-1 rounded">{'{sleutel}'}</code> om andere velden te refereren.
+                  Operators: <code className="bg-white border border-gray-200 px-1 rounded">+ - * /</code> en percentages zoals <code className="bg-white border border-gray-200 px-1 rounded">15%</code>.
+                  Voorbeeld: <code className="bg-white border border-gray-200 px-1 rounded">{'{Dividenduitkering} * 15%'}</code>
+                </p>
+              </Invoerveld>
+              <Invoerveld label="Opmaak resultaat">
+                <select value={veld.opmaak || 'valuta'} onChange={e => onChange('opmaak', e.target.value)} className="invoer">
+                  <option value="valuta">Bedrag (€ 1.234,56)</option>
+                  <option value="getal">Getal (1.234,56)</option>
+                  <option value="procent">Procent (15,00%)</option>
+                  <option value="tekst">Tekst (geen opmaak)</option>
+                </select>
+              </Invoerveld>
             </div>
           )}
 

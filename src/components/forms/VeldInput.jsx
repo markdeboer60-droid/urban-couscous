@@ -1,3 +1,16 @@
+function formatteerBerekend(getal, opmaak) {
+  if (getal === null || getal === undefined || isNaN(getal)) return null;
+  switch (opmaak) {
+    case 'valuta':
+      return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(getal);
+    case 'procent':
+      return new Intl.NumberFormat('nl-NL', { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: 4 }).format(getal);
+    case 'getal':
+      return new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 6 }).format(getal);
+    default:
+      return String(getal);
+  }
+}
 
 export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [], geprobeerd = false }) {
   const heeftFout = geprobeerd && veld.verplicht && (waarde === '' || waarde === null || waarde === undefined);
@@ -123,6 +136,23 @@ export default function VeldInput({ veld, waarde, onChange, ondertekenaars = [],
             placeholder="0,00"
             className={basisKlasse + ' pl-8'}
           />
+        </div>
+      </VeldWrap>
+    );
+  }
+
+  // Berekend type: read-only live preview
+  if (veld.type === 'berekend') {
+    const geformateerd = formatteerBerekend(waarde, veld.opmaak || 'getal');
+    return (
+      <VeldWrap veld={veld} heeftFout={false}>
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+          {geformateerd !== null ? (
+            <span className="text-sm font-semibold text-blue-900">{geformateerd}</span>
+          ) : (
+            <span className="text-sm text-gray-400 italic">Vul de benodigde velden in</span>
+          )}
+          <span className="text-xs text-blue-300 font-mono truncate max-w-[50%]" title={veld.formule}>{veld.formule}</span>
         </div>
       </VeldWrap>
     );
