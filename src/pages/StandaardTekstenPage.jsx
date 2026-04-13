@@ -103,18 +103,28 @@ export default function StandaardTekstenPage() {
   async function verplaats(item, richting) {
     const idx = teksten.findIndex(t => t.id === item.id);
     if (idx < 0) return;
-    const herschikt = [...teksten];
     const doelIdx = idx + richting;
-    if (doelIdx < 0 || doelIdx >= herschikt.length) return;
+    if (doelIdx < 0 || doelIdx >= teksten.length) return;
+    const herschikt = [...teksten];
     [herschikt[idx], herschikt[doelIdx]] = [herschikt[doelIdx], herschikt[idx]];
     setTeksten(herschikt);
-    await window.api.standaardTeksten.reorderAll(herschikt);
+    try {
+      await window.api.standaardTeksten.reorderAll(herschikt);
+    } catch {
+      setTeksten(teksten); // herstel originele volgorde
+      showToast('Volgorde opslaan mislukt', 'error');
+    }
   }
 
   async function toggleFavoriet(item) {
     const bijgewerkt = { ...item, favoriet: !item.favoriet };
     setTeksten(t => t.map(x => x.id === item.id ? bijgewerkt : x));
-    await window.api.standaardTeksten.save(bijgewerkt);
+    try {
+      await window.api.standaardTeksten.save(bijgewerkt);
+    } catch {
+      setTeksten(t => t.map(x => x.id === item.id ? item : x)); // herstel
+      showToast('Favoriet opslaan mislukt', 'error');
+    }
   }
 
   function kopieer(item) {

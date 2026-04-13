@@ -4,17 +4,24 @@ import VeldInput from '../components/forms/VeldInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
+// Zet een getal om naar string zonder wetenschappelijke notatie (1e+21 → '1000...')
+function getalNaarStr(val) {
+  if (!isFinite(val)) return '0';
+  // toFixed(10) vermijdt 1e+21; daarna trailing nullen weghalen
+  return val.toFixed(10).replace(/\.?0+$/, '') || '0';
+}
+
 // Evalueer een rekenformule met {sleutel} referenties naar veldwaarden
 function berekenFormule(formule, waarden) {
   if (!formule) return null;
   try {
     let expr = formule.replace(/\{([\w\s]+)\}/g, (_, key) => {
       const val = parseFloat(waarden[key.trim()]);
-      return isNaN(val) ? '0' : String(val);
+      return isNaN(val) ? '0' : getalNaarStr(val);
     });
     // Percentage: 15% → (15/100)
     expr = expr.replace(/(\d+(?:[.,]\d+)?)\s*%/g, (_, n) => `(${n.replace(',', '.')}/100)`);
-    // Veiligheidscheck: alleen cijfers, operators en haakjes
+    // Veiligheidscheck: alleen cijfers, operators en haakjes — geen code-injectie mogelijk
     if (!/^[\d\s.+\-*/()]+$/.test(expr)) return null;
     // eslint-disable-next-line no-new-func
     const result = Function('"use strict"; return (' + expr + ')')();
@@ -231,6 +238,17 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
     return result;
   }, [waarden, template]);
 
+  // Live berekening van alle 'berekend'-velden in declaratievolgorde,
+  // zodat velden naar eerder berekende velden kunnen verwijzen
+  const berekendeWaardenLive = useMemo(() => {
+    const computed = {};
+    (template?.velden || []).forEach(v => {
+      if (v.type !== 'berekend') return;
+      computed[v.sleutel] = berekenFormule(v.formule || '', { ...waarden, ...computed }) ?? null;
+    });
+    return computed;
+  }, [waarden, template]);
+
   function isZichtbaar(veld) {
     if (!veld.zichtbaarAls) return true;
     const { sleutel, waarde } = veld.zichtbaarAls;
@@ -272,10 +290,13 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
         result[v.sleutel] = val ?? '';
       }
     });
-    // Tweede ronde: berekende velden (kunnen andere velden refereren via waarden)
+    // Tweede ronde: berekende velden — in declaratievolgorde zodat ze ook
+    // elkaars waarden kunnen refereren (bijv. Netto = Bruto - Belasting)
+    const berekendeRuwe = {}; // sleutel → raw number voor kruisreferenties
     (template?.velden || []).forEach(v => {
       if (v.type !== 'berekend') return;
-      const uitkomst = berekenFormule(v.formule || '', waarden);
+      const uitkomst = berekenFormule(v.formule || '', { ...waarden, ...berekendeRuwe });
+      berekendeRuwe[v.sleutel] = uitkomst ?? 0;
       result[v.sleutel] = formatteerBerekend(uitkomst, v.opmaak || 'getal') ?? '';
     });
     return result;
@@ -551,7 +572,7 @@ export default function FormPage({ templateId, initieleWaarden, navigeer }) {
                   <VeldInput
                     veld={veld}
                     waarde={veld.type === 'berekend'
-                      ? berekenFormule(veld.formule, waarden)
+                      ? berekendeWaardenLive[veld.sleutel]
                       : waarden[veld.sleutel]}
                     onChange={val => { setWaarden(prev => ({ ...prev, [veld.sleutel]: val })); }}
                     ondertekenaars={ondertekenaars}
