@@ -1,5 +1,5 @@
 {
-  "name": "urban-couscous",
+  "name": "sjablonenplatform",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,8 +13,10 @@
     "preview": "vite preview"
   },
   "build": {
-    "appId": "nl.sjablonenplatform",
-    "productName": "Sjablonenplatform",
+    "appId": "nl.ottovisser.sjablonenplatform",
+    "productName": "Sjabloongenerator",
+    "copyright": "© 2025 Otto Visser & Partners",
+    "icon": "build/icon",
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -29,13 +31,26 @@
       "node_modules/pako/**"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "artifactName": "Sjabloongenerator-Setup-${version}.exe",
+      "requestedExecutionLevel": "user"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sjabloongenerator",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
     }
   },
   "dependencies": {
