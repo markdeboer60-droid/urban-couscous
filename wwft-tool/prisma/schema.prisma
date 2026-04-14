@@ -1,0 +1,225 @@
+// Wwft Compliance Tool — Prisma Schema
+// SQLite (migratable to PostgreSQL via datasource swap)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  MEDEWERKER
+  PARTNER
+}
+
+enum RisicoOordeel {
+  LAAG
+  MIDDEN
+  HOOG
+}
+
+enum ClientStatus {
+  GESTART
+  IN_BEHANDELING
+  AFGEROND
+}
+
+enum WizardStap {
+  BEDRIJFSVERKENNING
+  WWFT
+  IDENTIFICATIE
+  BEOORDELING
+}
+
+enum WizardAntwoord {
+  JA
+  NEE
+  NVT
+}
+
+enum DocumentType {
+  ID
+  UBO
+  KVK
+  UBO_REGISTER
+  OVERIG
+}
+
+enum ReviewStatus {
+  GEPLAND
+  UITGEVOERD
+  ACHTERSTALLIG
+}
+
+enum MeldingBeslissing {
+  NIET_MELDEN
+  FIU_MELDING
+}
+
+enum IndicatorType {
+  SUBJECTIEF
+  OBJECTIEF
+}
+
+enum ZoekBron {
+  OPENSANCTIONS
+  WEBSEARCH
+  GLEIF
+  ICIJ
+}
+
+enum SearchBeslissing {
+  RISICO
+  FALSE_POSITIVE
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Organization {
+  id         String   @id @default(cuid())
+  naam       String
+  kvkNummer  String?
+  aangemaakt DateTime @default(now())
+
+  users   User[]
+  clients Client[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String   @unique
+  wachtwoordHash String
+  naam           String
+  rol            UserRole @default(MEDEWERKER)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  clientsAangemaakt  Client[]            @relation("ClientAangemaakt")
+  clientsGoedgekeurd Client[]            @relation("ClientGoedgekeurd")
+  searchQueries      SearchQuery[]
+  searchActions      SearchResultAction[]
+  documenten         Document[]
+  reviews            Review[]
+  meldingen          Melding[]
+}
+
+model Client {
+  id              String         @id @default(cuid())
+  organizationId  String
+  naam            String
+  kvkNummer       String?
+  risicoOordeel   RisicoOordeel?
+  risicoMotivatie String?
+  status          ClientStatus   @default(GESTART)
+  aangemaakt      DateTime       @default(now())
+  aangemaaktDoor  String
+  goedgekeurdDoor String?
+  goedgekeurdOp   DateTime?
+  eindOpmerkingen String?
+
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  aanmaker          User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
+  goedgekeurdeUser  User?        @relation("ClientGoedgekeurd", fields: [goedgekeurdDoor], references: [id])
+
+  wizardAnswers WizardAnswer[]
+  documents     Document[]
+  reviews       Review[]
+  meldingen     Melding[]
+  searchQueries SearchQuery[]
+}
+
+model WizardAnswer {
+  id          String         @id @default(cuid())
+  clientId    String
+  stap        WizardStap
+  vraagKey    String
+  antwoord    WizardAntwoord
+  toelichting String?
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, vraagKey])
+}
+
+model Document {
+  id                 String       @id @default(cuid())
+  clientId           String
+  type               DocumentType
+  bestandsnaam       String
+  bestandspad        String
+  naamBetrokkene     String?
+  functie            String?
+  geboortedatum      String?
+  verificatiemethode String?
+  uploadOp           DateTime     @default(now())
+  uploadDoor         String
+
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uploader User   @relation(fields: [uploadDoor], references: [id])
+}
+
+model Review {
+  id               String        @id @default(cuid())
+  clientId         String
+  uitgevoerdOp     DateTime?
+  uitgevoerdDoor   String?
+  volgendeReviewOp DateTime
+  status           ReviewStatus  @default(GEPLAND)
+  bevindingen      String?
+  risicoOordeelNa  RisicoOordeel?
+
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uitvoerder User?  @relation(fields: [uitgevoerdDoor], references: [id])
+}
+
+model Melding {
+  id              String            @id @default(cuid())
+  clientId        String
+  datumTransactie DateTime
+  bedrag          Float
+  omschrijving    String
+  indicatorType   IndicatorType
+  motivatie       String
+  beslissing      MeldingBeslissing
+  onderbouwing    String
+  afgerondDoor    String?
+  afgerondOp      DateTime?
+  fiuReferentie   String?
+
+  client         Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  afgerondByUser User?  @relation(fields: [afgerondDoor], references: [id])
+}
+
+model SearchQuery {
+  id             String   @id @default(cuid())
+  clientId       String
+  zoeknaam       String
+  bron           ZoekBron
+  uitgevoerdOp   DateTime @default(now())
+  uitgevoerdDoor String
+
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uitvoerder User   @relation(fields: [uitgevoerdDoor], references: [id])
+
+  resultActions SearchResultAction[]
+}
+
+model SearchResultAction {
+  id              String           @id @default(cuid())
+  searchQueryId   String
+  hitTitel        String
+  hitUrl          String?
+  hitSamenvatting String
+  beslissing      SearchBeslissing
+  notitie         String?
+  timestamp       DateTime         @default(now())
+  gebruikerId     String
+
+  searchQuery SearchQuery @relation(fields: [searchQueryId], references: [id], onDelete: Cascade)
+  gebruiker   User        @relation(fields: [gebruikerId], references: [id])
+}
