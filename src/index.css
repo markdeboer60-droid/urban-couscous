@@ -1,2 +1,8 @@
+@import "tailwindcss";
+
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; }
+body { margin: 0; font-family: system-ui, sans-serif; }
+
+.invoer {
+  @apply w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white;
+}

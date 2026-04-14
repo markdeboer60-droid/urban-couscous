@@ -1,41 +1,74 @@
 {
-  "name": "urban-couscous",
-  "private": true,
+  "name": "sjablonenplatform",
   "version": "1.0.0",
+  "description": "Documentgenerator voor Otto Visser & Partners",
+  "author": "Otto Visser & Partners",
+  "private": true,
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "electron:dev": "NODE_ENV=development electron .",
+    "electron:dev": "node scripts/bundle-electron.mjs && NODE_ENV=development electron .",
     "build": "vite build",
-    "electron:build": "vite build && electron-builder",
+    "electron:build": "node scripts/bundle-electron.mjs && vite build && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "build": {
-    "appId": "nl.financieeldashboard",
-    "productName": "Financieel Dashboard",
+    "appId": "nl.ottovisser.sjablonenplatform",
+    "productName": "Sjabloongenerator",
+    "copyright": "© 2025 Otto Visser & Partners",
+    "icon": "build/icon",
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "electron/**",
+      "node_modules/pizzip/**",
+      "node_modules/docxtemplater/**",
+      "node_modules/pdf-lib/**",
+      "node_modules/@pdf-lib/**",
+      "node_modules/pako/**"
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/favicon.svg"
+      "icon": "build/icon.ico",
+      "artifactName": "Sjabloongenerator-Setup-${version}.exe",
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sjabloongenerator",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
     }
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.2",
     "cors": "^2.8.6",
+    "docxtemplater": "^3.68.3",
+    "docxtemplater-image-module-free": "^1.1.1",
     "express": "^5.2.1",
+    "lucide-react": "^1.7.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
+    "pizzip": "^3.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "recharts": "^3.8.0"
+    "recharts": "^3.8.0",
+    "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
