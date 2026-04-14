@@ -1,7 +1,9 @@
 {
   "name": "sjablonenplatform",
-  "private": true,
   "version": "1.0.0",
+  "description": "Documentgenerator voor Otto Visser & Partners",
+  "author": "Otto Visser & Partners",
+  "private": true,
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -34,7 +36,7 @@
       "target": "nsis",
       "icon": "build/icon.ico",
       "artifactName": "Sjabloongenerator-Setup-${version}.exe",
-      "requestedExecutionLevel": "user"
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
