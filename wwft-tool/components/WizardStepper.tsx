@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuestionRow } from "@/components/QuestionRow";
 import { DocumentUpload } from "@/components/DocumentUpload";
+import { IdentificatieOnderzoek } from "@/components/IdentificatieOnderzoek";
 import { RisicoOordeel } from "@/components/RisicoOordeel";
 import { useToast } from "@/hooks/use-toast";
 import { getVragenPerCategorie } from "@/lib/wizardQuestions";
@@ -111,7 +112,14 @@ export function WizardStepper({ clientId, clientNaam, isReadOnly }: WizardSteppe
 
   function renderStep() {
     if (currentStap.stap === "IDENTIFICATIE") {
-      return <DocumentUpload clientId={clientId} readOnly={isReadOnly} />;
+      return (
+        <div className="space-y-8">
+          <DocumentUpload clientId={clientId} readOnly={isReadOnly} />
+          <div className="border-t pt-6">
+            <IdentificatieOnderzoek clientId={clientId} clientNaam={clientNaam} readOnly={isReadOnly} />
+          </div>
+        </div>
+      );
     }
 
     if (currentStap.stap === "BEOORDELING") {
