@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusStepper } from "@/components/StatusStepper";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { ResultCard } from "@/components/ResultCard";
+import { BeeindigingDialog } from "@/components/BeeindigingDialog";
+import { LandRisicoAlert } from "@/components/LandRisicoAlert";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit } from "@/types";
 import { cn } from "@/lib/utils";
@@ -40,7 +42,7 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
   const [icijHits, setIcijHits] = useState<(IcijHit & { queryId: string })[]>([]);
   const [webIsMock, setWebIsMock] = useState(false);
 
-  const isReadOnly = client.status === "AFGEROND";
+  const isReadOnly = client.status === "AFGEROND" || client.status === "BEEINDIGD";
 
   async function search(source: string) {
     if (!zoekNaam.trim()) return;
@@ -105,15 +107,24 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
             <Link href="/" className="text-gray-500 hover:text-gray-700">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="text-lg font-bold text-gray-900">{client.naam}</h1>
             {client.kvkNummer && <span className="text-sm text-gray-500">KvK {client.kvkNummer}</span>}
+            {(client as Client & { land?: string }).land && (
+              <span className="text-sm text-gray-500">{(client as Client & { land?: string }).land}</span>
+            )}
             {client.risicoOordeel && <Badge variant={risicoVariant}>{client.risicoOordeel}</Badge>}
-            {isReadOnly && <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Afgerond</Badge>}
+            {client.status === "AFGEROND" && <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Afgerond</Badge>}
+            {client.status === "BEEINDIGD" && <Badge variant="destructive" className="flex items-center gap-1">Beëindigd</Badge>}
           </div>
+          {(client as Client & { land?: string }).land && (
+            <div className="mb-2">
+              <LandRisicoAlert land={(client as Client & { land?: string }).land ?? ""} />
+            </div>
+          )}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <StatusStepper
               clientId={client.id}
@@ -141,6 +152,19 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
                 <Button size="sm" onClick={handleApprove} className="flex items-center gap-1">
                   <Shield className="h-3.5 w-3.5" /> Goedkeuren
                 </Button>
+              )}
+              {currentUser.rol === "PARTNER" && client.status !== "BEEINDIGD" && (
+                <BeeindigingDialog
+                  clientId={client.id}
+                  clientNaam={client.naam}
+                  onBeeindigd={(verwijderDatum) =>
+                    setClient((c) => ({
+                      ...c,
+                      status: "BEEINDIGD" as ClientStatus,
+                      verwijderDatum,
+                    } as typeof c))
+                  }
+                />
               )}
             </div>
           </div>
@@ -335,6 +359,13 @@ function MeldingenSection({
                     FIU-melding finaliseren
                   </Button>
                 )
+              )}
+              {m.beslissing === "FIU_MELDING" && m.afgerondOp && (
+                <a href={`/api/meldingen/goaml?meldingId=${m.id}`} download>
+                  <Button size="sm" variant="outline" className="mt-1 flex items-center gap-1 text-xs">
+                    <FileCode className="h-3 w-3" /> goAML XML
+                  </Button>
+                </a>
               )}
             </div>
           ))}

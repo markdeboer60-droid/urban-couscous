@@ -13,9 +13,10 @@ import { QuestionRow } from "@/components/QuestionRow";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { IdentificatieOnderzoek } from "@/components/IdentificatieOnderzoek";
 import { RisicoOordeel } from "@/components/RisicoOordeel";
+import { EddPanel } from "@/components/EddPanel";
 import { useToast } from "@/hooks/use-toast";
 import { getVragenPerCategorie } from "@/lib/wizardQuestions";
-import type { WizardStap, WizardAntwoord, WizardAnswer } from "@/types";
+import type { WizardStap, WizardAntwoord, WizardAnswer, UserRole } from "@/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,12 @@ interface WizardStepperProps {
   clientId: string;
   clientNaam: string;
   isReadOnly?: boolean;
+  userRol?: UserRole;
+  eddData?: {
+    isEdd: boolean;
+    eddBronVermogen?: string;
+    eddGoedgekeurdOp?: string;
+  };
 }
 
 const STAP_LABELS: { stap: WizardStap | "IDENTIFICATIE"; label: string }[] = [
@@ -33,7 +40,13 @@ const STAP_LABELS: { stap: WizardStap | "IDENTIFICATIE"; label: string }[] = [
   { stap: "BEOORDELING", label: "4. Beoordeling" },
 ];
 
-export function WizardStepper({ clientId, clientNaam, isReadOnly }: WizardStepperProps) {
+export function WizardStepper({
+  clientId,
+  clientNaam,
+  isReadOnly,
+  userRol = "MEDEWERKER",
+  eddData,
+}: WizardStepperProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [activeStep, setActiveStep] = useState(0);
@@ -43,7 +56,6 @@ export function WizardStepper({ clientId, clientNaam, isReadOnly }: WizardSteppe
   const [risicoMotivatie, setRisicoMotivatie] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Load existing answers
   useEffect(() => {
     fetch(`/api/wizard?clientId=${clientId}`)
       .then((r) => r.json())
@@ -158,6 +170,17 @@ export function WizardStepper({ clientId, clientNaam, isReadOnly }: WizardSteppe
                 disabled={isReadOnly}
               />
             </div>
+            {/* EDD — shown when risk is HOOG or EDD already set */}
+            {(risicoOordeel === "HOOG" || eddData?.isEdd) && (
+              <EddPanel
+                clientId={clientId}
+                isEdd={eddData?.isEdd ?? false}
+                eddBronVermogen={eddData?.eddBronVermogen}
+                eddGoedgekeurdOp={eddData?.eddGoedgekeurdOp}
+                userRol={userRol}
+                readOnly={isReadOnly}
+              />
+            )}
           </div>
         </div>
       );

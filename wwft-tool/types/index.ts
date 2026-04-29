@@ -8,7 +8,7 @@
 
 export type UserRole = "MEDEWERKER" | "PARTNER";
 export type RisicoOordeel = "LAAG" | "MIDDEN" | "HOOG";
-export type ClientStatus = "GESTART" | "IN_BEHANDELING" | "AFGEROND";
+export type ClientStatus = "GESTART" | "IN_BEHANDELING" | "AFGEROND" | "BEEINDIGD";
 export type WizardStap =
   | "BEDRIJFSVERKENNING"
   | "WWFT"
@@ -44,6 +44,7 @@ export interface Client {
   organizationId: string;
   naam: string;
   kvkNummer?: string | null;
+  land?: string | null;
   risicoOordeel?: RisicoOordeel | null;
   risicoMotivatie?: string | null;
   status: ClientStatus;
@@ -52,6 +53,16 @@ export interface Client {
   goedgekeurdDoor?: string | null;
   goedgekeurdOp?: string | null;
   eindOpmerkingen?: string | null;
+  // EDD
+  isEdd?: boolean;
+  eddBronVermogen?: string | null;
+  eddGoedgekeurdDoor?: string | null;
+  eddGoedgekeurdOp?: string | null;
+  // Beëindiging
+  beeindigd?: string | null;
+  beeindigdReden?: string | null;
+  beeindigdDoor?: string | null;
+  verwijderDatum?: string | null;
   /** Populated in list queries */
   aanmaker?: Pick<User, "naam">;
   reviews?: Review[];
@@ -138,6 +149,7 @@ export interface SearchResultAction {
 export interface CreateClientPayload {
   naam: string;
   kvkNummer?: string;
+  land?: string;
 }
 
 export interface UpdateClientPayload {

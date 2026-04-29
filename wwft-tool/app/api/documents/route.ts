@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
   const functie = formData.get("functie") as string | null;
   const geboortedatum = formData.get("geboortedatum") as string | null;
   const verificatiemethode = formData.get("verificatiemethode") as string | null;
+  const isPep = formData.get("isPep") === "true";
+  const pepBronVermelding = (formData.get("pepBronVermelding") as string | null) || null;
   const file = formData.get("file") as File | null;
 
   if (!clientId || !type || !file) {
@@ -90,6 +92,8 @@ export async function POST(req: NextRequest) {
       functie,
       geboortedatum,
       verificatiemethode,
+      isPep,
+      pepBronVermelding,
       uploadDoor: user.id,
     },
   });

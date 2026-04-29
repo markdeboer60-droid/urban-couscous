@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { SessionUser } from "@/types";
+import type { SessionUser, UserRole } from "@/types";
 import { WizardStepper } from "@/components/WizardStepper";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -28,7 +28,7 @@ export default async function WizardPage({ params }: Props) {
 
   if (!client) notFound();
 
-  const isReadOnly = client.status === "AFGEROND";
+  const isReadOnly = client.status === "AFGEROND" || client.status === "BEEINDIGD";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,6 +51,12 @@ export default async function WizardPage({ params }: Props) {
           clientId={clientId}
           clientNaam={client.naam}
           isReadOnly={isReadOnly}
+          userRol={user.rol as UserRole}
+          eddData={{
+            isEdd: client.isEdd,
+            eddBronVermogen: client.eddBronVermogen ?? undefined,
+            eddGoedgekeurdOp: client.eddGoedgekeurdOp?.toISOString() ?? undefined,
+          }}
         />
       </main>
     </div>

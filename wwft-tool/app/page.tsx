@@ -33,6 +33,9 @@ export default async function DashboardPage() {
     ...c,
     aangemaakt: c.aangemaakt.toISOString(),
     goedgekeurdOp: c.goedgekeurdOp?.toISOString() ?? null,
+    eddGoedgekeurdOp: c.eddGoedgekeurdOp?.toISOString() ?? null,
+    beeindigd: c.beeindigd?.toISOString() ?? null,
+    verwijderDatum: c.verwijderDatum?.toISOString() ?? null,
     reviews: c.reviews.map((r) => ({
       ...r,
       volgendeReviewOp: r.volgendeReviewOp.toISOString(),

@@ -26,6 +26,7 @@ enum ClientStatus {
   GESTART
   IN_BEHANDELING
   AFGEROND
+  BEEINDIGD
 }
 
 enum WizardStap {
@@ -96,35 +97,52 @@ model User {
   wachtwoordHash String
   naam           String
   rol            UserRole @default(MEDEWERKER)
+  totpSecret     String?
+  totpEnabled    Boolean  @default(false)
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
-  clientsAangemaakt  Client[]            @relation("ClientAangemaakt")
-  clientsGoedgekeurd Client[]            @relation("ClientGoedgekeurd")
-  searchQueries      SearchQuery[]
-  searchActions      SearchResultAction[]
-  documenten         Document[]
-  reviews            Review[]
-  meldingen          Melding[]
+  clientsAangemaakt    Client[]             @relation("ClientAangemaakt")
+  clientsGoedgekeurd   Client[]             @relation("ClientGoedgekeurd")
+  clientsEddGoedgekeurd Client[]            @relation("ClientEddGoedgekeurd")
+  clientsBeeindigd     Client[]             @relation("ClientBeeindigd")
+  searchQueries        SearchQuery[]
+  searchActions        SearchResultAction[]
+  documenten           Document[]
+  reviews              Review[]
+  meldingen            Melding[]
 }
 
 model Client {
-  id              String         @id @default(cuid())
-  organizationId  String
-  naam            String
-  kvkNummer       String?
-  risicoOordeel   RisicoOordeel?
-  risicoMotivatie String?
-  status          ClientStatus   @default(GESTART)
-  aangemaakt      DateTime       @default(now())
-  aangemaaktDoor  String
-  goedgekeurdDoor String?
-  goedgekeurdOp   DateTime?
-  eindOpmerkingen String?
+  id               String         @id @default(cuid())
+  organizationId   String
+  naam             String
+  kvkNummer        String?
+  land             String?
+  risicoOordeel    RisicoOordeel?
+  risicoMotivatie  String?
+  status           ClientStatus   @default(GESTART)
+  aangemaakt       DateTime       @default(now())
+  aangemaaktDoor   String
+  goedgekeurdDoor  String?
+  goedgekeurdOp    DateTime?
+  eindOpmerkingen  String?
+  // EDD
+  isEdd            Boolean        @default(false)
+  eddBronVermogen  String?
+  eddGoedgekeurdDoor String?
+  eddGoedgekeurdOp   DateTime?
+  // Beëindiging
+  beeindigd        DateTime?
+  beeindigdReden   String?
+  beeindigdDoor    String?
+  verwijderDatum   DateTime?
 
-  organization      Organization @relation(fields: [organizationId], references: [id])
-  aanmaker          User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
-  goedgekeurdeUser  User?        @relation("ClientGoedgekeurd", fields: [goedgekeurdDoor], references: [id])
+  organization         Organization @relation(fields: [organizationId], references: [id])
+  aanmaker             User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
+  goedgekeurdeUser     User?        @relation("ClientGoedgekeurd", fields: [goedgekeurdDoor], references: [id])
+  eddGoedgekeurdeUser  User?        @relation("ClientEddGoedgekeurd", fields: [eddGoedgekeurdDoor], references: [id])
+  beeindigdeUser       User?        @relation("ClientBeeindigd", fields: [beeindigdDoor], references: [id])
 
   wizardAnswers WizardAnswer[]
   documents     Document[]
@@ -156,6 +174,8 @@ model Document {
   functie            String?
   geboortedatum      String?
   verificatiemethode String?
+  isPep              Boolean      @default(false)
+  pepBronVermelding  String?
   uploadOp           DateTime     @default(now())
   uploadDoor         String
 
@@ -164,14 +184,15 @@ model Document {
 }
 
 model Review {
-  id               String        @id @default(cuid())
+  id               String         @id @default(cuid())
   clientId         String
   uitgevoerdOp     DateTime?
   uitgevoerdDoor   String?
   volgendeReviewOp DateTime
-  status           ReviewStatus  @default(GEPLAND)
+  status           ReviewStatus   @default(GEPLAND)
   bevindingen      String?
   risicoOordeelNa  RisicoOordeel?
+  emailVerstuurd   Boolean        @default(false)
 
   client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   uitvoerder User?  @relation(fields: [uitgevoerdDoor], references: [id])

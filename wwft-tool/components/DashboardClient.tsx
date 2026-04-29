@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * DashboardClient — client-side dashboard with search/filter.
+ * DashboardClient — client-side dashboard with KPI tiles, search/filter.
  */
 
 import { useState } from "react";
-import { Search, LogOut, Users, Shield } from "lucide-react";
+import { Search, LogOut, Users, Shield, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClientCard } from "@/components/ClientCard";
 import { NewClientDialog } from "@/components/NewClientDialog";
+import { KpiCards } from "@/components/KpiCards";
 import type { Client, Review, ClientStatus, UserRole } from "@/types";
 
 interface DashboardClientProps {
@@ -52,6 +53,9 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
                 <Users className="h-4 w-4" /> Beheer
               </Link>
             )}
+            <Link href="/profiel" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+              <UserCircle className="h-4 w-4" /> Profiel
+            </Link>
             <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/login" })} className="flex items-center gap-1">
               <LogOut className="h-4 w-4" /> Uitloggen
             </Button>
@@ -65,6 +69,9 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
           <h1 className="text-2xl font-bold text-gray-900">Cliënten</h1>
           <NewClientDialog />
         </div>
+
+        {/* KPI tiles */}
+        <KpiCards />
 
         {/* Filters */}
         <div className="flex gap-3 flex-wrap">
@@ -86,6 +93,7 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
               <SelectItem value="GESTART">Gestart</SelectItem>
               <SelectItem value="IN_BEHANDELING">In behandeling</SelectItem>
               <SelectItem value="AFGEROND">Afgerond</SelectItem>
+              <SelectItem value="BEEINDIGD">Beëindigd</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -34,6 +34,9 @@ export default async function DossierPage({ params }: Props) {
     ...client,
     aangemaakt: client.aangemaakt.toISOString(),
     goedgekeurdOp: client.goedgekeurdOp?.toISOString() ?? null,
+    eddGoedgekeurdOp: client.eddGoedgekeurdOp?.toISOString() ?? null,
+    beeindigd: client.beeindigd?.toISOString() ?? null,
+    verwijderDatum: client.verwijderDatum?.toISOString() ?? null,
   };
 
   return (

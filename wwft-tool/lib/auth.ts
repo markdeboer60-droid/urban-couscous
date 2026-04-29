@@ -1,12 +1,14 @@
 /**
  * auth.ts — NextAuth configuration helpers
  * Exports authOptions for use in both the route handler and getServerSession calls.
+ * Supports optional TOTP 2FA via totpCode credential field.
  */
 
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyTotpToken } from "@/lib/totp";
 import type { SessionUser } from "@/types";
 
 export const authOptions: NextAuthOptions = {
@@ -21,6 +23,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "E-mailadres", type: "email" },
         password: { label: "Wachtwoord", type: "password" },
+        totpCode: { label: "2FA-code", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -32,11 +35,14 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) return null;
 
-        const valid = await bcrypt.compare(
-          credentials.password,
-          user.wachtwoordHash
-        );
+        const valid = await bcrypt.compare(credentials.password, user.wachtwoordHash);
         if (!valid) return null;
+
+        // If 2FA is enabled, require a valid TOTP code
+        if (user.totpEnabled && user.totpSecret) {
+          const code = credentials.totpCode ?? "";
+          if (!code || !verifyTotpToken(user.totpSecret, code)) return null;
+        }
 
         return {
           id: user.id,
@@ -51,7 +57,6 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // Cast — authorize returns our extended user shape
         const u = user as unknown as SessionUser;
         token.id = u.id;
         token.naam = u.naam;
@@ -75,10 +80,6 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-/**
- * Compute next review date based on risk level.
- * HOOG = +1 year, MIDDEN = +2 years, LAAG = +3 years
- */
 export function berekenVolgendeReview(
   risicoOordeel: "LAAG" | "MIDDEN" | "HOOG"
 ): Date {
