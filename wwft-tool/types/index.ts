@@ -87,6 +87,8 @@ export interface Document {
   functie?: string | null;
   geboortedatum?: string | null;
   verificatiemethode?: string | null;
+  isPep?: boolean;
+  pepBronVermelding?: string | null;
   uploadOp: string;
   uploadDoor: string;
   uploader?: Pick<User, "naam">;

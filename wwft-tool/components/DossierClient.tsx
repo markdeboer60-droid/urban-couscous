@@ -5,7 +5,7 @@
  * review panel, meldingen overview, and approval flow.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { ResultCard } from "@/components/ResultCard";
 import { BeeindigingDialog } from "@/components/BeeindigingDialog";
 import { LandRisicoAlert } from "@/components/LandRisicoAlert";
 import { useToast } from "@/hooks/use-toast";
-import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit } from "@/types";
+import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit, Melding } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface DossierClientProps {
@@ -274,8 +274,6 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
 
 // ─── Inline meldingen section ─────────────────────────────────────────────────
 
-import type { Melding } from "@/types";
-
 function MeldingenSection({
   clientId,
   isReadOnly,
@@ -297,8 +295,7 @@ function MeldingenSection({
     setLoaded(true);
   }, [clientId]);
 
-  // Lazy load
-  useState(() => { load(); });
+  useEffect(() => { load(); }, [load]);
 
   async function handleFinalize(meldingId: string) {
     try {
