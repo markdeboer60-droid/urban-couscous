@@ -61,6 +61,11 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "clientId, type en file verplicht" }, { status: 400 });
   }
 
+  const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+  if (file.size > MAX_BYTES) {
+    return Response.json({ error: "Bestand is te groot (max 10 MB)" }, { status: 413 });
+  }
+
   // Verify ownership
   const client = await prisma.client.findFirst({
     where: { id: clientId, organizationId: user.organizationId },

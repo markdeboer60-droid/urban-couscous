@@ -33,6 +33,9 @@ interface WizardStepperProps {
     eddBronVermogen?: string;
     eddGoedgekeurdOp?: string;
   };
+  initialRisicoOordeel?: string;
+  initialRisicoMotivatie?: string;
+  initialEindOpmerkingen?: string;
 }
 
 const STAP_LABELS: { stap: WizardStap | "IDENTIFICATIE"; label: string }[] = [
@@ -48,14 +51,17 @@ export function WizardStepper({
   isReadOnly,
   userRol = "MEDEWERKER",
   eddData,
+  initialRisicoOordeel = "",
+  initialRisicoMotivatie = "",
+  initialEindOpmerkingen = "",
 }: WizardStepperProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [activeStep, setActiveStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { antwoord: WizardAntwoord; toelichting: string }>>({});
-  const [eindOpmerkingen, setEindOpmerkingen] = useState("");
-  const [risicoOordeel, setRisicoOordeel] = useState<string>("");
-  const [risicoMotivatie, setRisicoMotivatie] = useState("");
+  const [eindOpmerkingen, setEindOpmerkingen] = useState(initialEindOpmerkingen);
+  const [risicoOordeel, setRisicoOordeel] = useState<string>(initialRisicoOordeel);
+  const [risicoMotivatie, setRisicoMotivatie] = useState(initialRisicoMotivatie);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {

@@ -56,7 +56,8 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
   useEffect(() => {
     fetch(`/api/documents?clientId=${clientId}`)
       .then((r) => r.json())
-      .then(setDocuments);
+      .then((data) => { if (Array.isArray(data)) setDocuments(data); })
+      .catch(() => {/* ignore */});
   }, [clientId]);
 
   async function handleUpload(e: React.FormEvent) {

@@ -41,8 +41,13 @@ export function MeldingForm({ clientId }: MeldingFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const bedragVal = parseFloat(form.bedrag);
     if (!form.beslissing || !form.datumTransactie || !form.bedrag || !form.omschrijving || !form.indicatorType || !form.motivatie || !form.onderbouwing) {
       toast({ title: "Alle velden verplicht", variant: "destructive" });
+      return;
+    }
+    if (isNaN(bedragVal) || bedragVal <= 0) {
+      toast({ title: "Voer een geldig positief bedrag in", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -53,7 +58,7 @@ export function MeldingForm({ clientId }: MeldingFormProps) {
         body: JSON.stringify({
           clientId,
           datumTransactie: form.datumTransactie,
-          bedrag: parseFloat(form.bedrag),
+          bedrag: bedragVal,
           omschrijving: form.omschrijving,
           indicatorType: form.indicatorType,
           motivatie: form.motivatie,

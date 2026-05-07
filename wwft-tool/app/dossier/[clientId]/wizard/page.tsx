@@ -57,6 +57,9 @@ export default async function WizardPage({ params }: Props) {
             eddBronVermogen: client.eddBronVermogen ?? undefined,
             eddGoedgekeurdOp: client.eddGoedgekeurdOp?.toISOString() ?? undefined,
           }}
+          initialRisicoOordeel={client.risicoOordeel ?? ""}
+          initialRisicoMotivatie={client.risicoMotivatie ?? ""}
+          initialEindOpmerkingen={client.eindOpmerkingen ?? ""}
         />
       </main>
     </div>

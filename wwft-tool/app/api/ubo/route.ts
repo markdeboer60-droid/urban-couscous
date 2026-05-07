@@ -1,8 +1,7 @@
 /**
  * /api/ubo — UBO ownership structure: nodes (companies/persons) and edges (relationships).
  * GET    ?clientId=xxx   — load full structure
- * POST                   — create or update the full structure (upsert)
- * DELETE ?nodeId=xxx     — delete a single node (cascades edges)
+ * POST                   — replace full structure (upsert nodes/edges, delete removed ones)
  */
 
 import { NextRequest } from "next/server";
