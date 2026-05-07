@@ -234,6 +234,43 @@ export interface IcijHit {
   rol?: string;
 }
 
+export interface MonitoringAlert {
+  id: string;
+  clientId: string;
+  type: string;
+  bron: string;
+  omschrijving: string;
+  aangemaakt: string;
+  opgelost: boolean;
+  opgelostOp?: string | null;
+  opgelostDoor?: string | null;
+  client?: { naam: string; id: string };
+}
+
+export interface UboNode {
+  id: string;
+  clientId: string;
+  type: "BEDRIJF" | "PERSOON";
+  naam: string;
+  kvkNummer?: string | null;
+  geboortedatum?: string | null;
+  land?: string | null;
+  isPep: boolean;
+  notities?: string | null;
+  posX: number;
+  posY: number;
+  aangemaakt: string;
+}
+
+export interface UboEdge {
+  id: string;
+  clientId: string;
+  vanId: string;
+  naarId: string;
+  type?: string | null;
+  belang?: number | null;
+}
+
 // ─── Session extension ────────────────────────────────────────────────────────
 
 /** Extended NextAuth session user */

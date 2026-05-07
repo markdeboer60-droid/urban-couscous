@@ -137,6 +137,8 @@ model Client {
   beeindigdReden   String?
   beeindigdDoor    String?
   verwijderDatum   DateTime?
+  // Monitoring
+  lastScreenedOp   DateTime?
 
   organization         Organization @relation(fields: [organizationId], references: [id])
   aanmaker             User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
@@ -144,11 +146,14 @@ model Client {
   eddGoedgekeurdeUser  User?        @relation("ClientEddGoedgekeurd", fields: [eddGoedgekeurdDoor], references: [id])
   beeindigdeUser       User?        @relation("ClientBeeindigd", fields: [beeindigdDoor], references: [id])
 
-  wizardAnswers WizardAnswer[]
-  documents     Document[]
-  reviews       Review[]
-  meldingen     Melding[]
-  searchQueries SearchQuery[]
+  wizardAnswers     WizardAnswer[]
+  documents         Document[]
+  reviews           Review[]
+  meldingen         Melding[]
+  searchQueries     SearchQuery[]
+  monitoringAlerts  MonitoringAlert[]
+  uboNodes          UboNode[]
+  uboEdges          UboEdge[]
 }
 
 model WizardAnswer {
@@ -243,4 +248,50 @@ model SearchResultAction {
 
   searchQuery SearchQuery @relation(fields: [searchQueryId], references: [id], onDelete: Cascade)
   gebruiker   User        @relation(fields: [gebruikerId], references: [id])
+}
+
+model MonitoringAlert {
+  id           String    @id @default(cuid())
+  clientId     String
+  type         String    // SANCTIONS_HIT | KVK_INACTIEF | KVK_FAILLIET
+  bron         String    // OPENSANCTIONS | KVK_OPENDATA
+  omschrijving String
+  aangemaakt   DateTime  @default(now())
+  opgelost     Boolean   @default(false)
+  opgelostOp   DateTime?
+  opgelostDoor String?
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model UboNode {
+  id            String   @id @default(cuid())
+  clientId      String
+  type          String   // BEDRIJF | PERSOON
+  naam          String
+  kvkNummer     String?
+  geboortedatum String?
+  land          String?
+  isPep         Boolean  @default(false)
+  notities      String?
+  posX          Float    @default(0)
+  posY          Float    @default(0)
+  aangemaakt    DateTime @default(now())
+
+  client         Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uitgandeEdges  UboEdge[] @relation("EdgeVan")
+  inkomstigeEdges UboEdge[] @relation("EdgeNaar")
+}
+
+model UboEdge {
+  id       String  @id @default(cuid())
+  clientId String
+  vanId    String
+  naarId   String
+  type     String? // eigenaar | bestuurder | gevolmachtigde
+  belang   Float?
+
+  client Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  van    UboNode @relation("EdgeVan", fields: [vanId], references: [id], onDelete: Cascade)
+  naar   UboNode @relation("EdgeNaar", fields: [naarId], references: [id], onDelete: Cascade)
 }

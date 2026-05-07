@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ClientCard } from "@/components/ClientCard";
 import { NewClientDialog } from "@/components/NewClientDialog";
 import { KpiCards } from "@/components/KpiCards";
+import { MonitoringPanel } from "@/components/MonitoringPanel";
 import type { Client, Review, ClientStatus, UserRole } from "@/types";
 
 interface DashboardClientProps {
@@ -72,6 +73,11 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
 
         {/* KPI tiles */}
         <KpiCards />
+
+        {/* Monitoring alerts */}
+        <div className="bg-white border rounded-lg p-4">
+          <MonitoringPanel showRunButton />
+        </div>
 
         {/* Filters */}
         <div className="flex gap-3 flex-wrap">
