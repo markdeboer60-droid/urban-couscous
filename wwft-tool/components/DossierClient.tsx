@@ -235,7 +235,7 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
         )}
 
         {/* OSINT search bar */}
-        {activeTab === "osint" && (<>
+        {activeTab === "osint" && (
         <div className="bg-white border rounded-lg p-4 space-y-3">
           <div className="flex gap-2">
             <Input
@@ -313,16 +313,16 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
             </TabsContent>
           </Tabs>
         </div>
+        )}
 
-        {/* Review panel */}
+        {/* Review panel — always visible */}
         <div className="bg-white border rounded-lg p-4">
           <h2 className="text-base font-semibold mb-3">Periodieke review</h2>
           <ReviewPanel clientId={client.id} />
         </div>
 
-        {/* Meldingen */}
+        {/* Meldingen — always visible */}
         <MeldingenSection clientId={client.id} isReadOnly={isReadOnly} currentUserRol={currentUser.rol} />
-        </>)}
       </main>
     </div>
   );

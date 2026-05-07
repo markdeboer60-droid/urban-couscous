@@ -70,8 +70,16 @@ function BedrijfNode({ id, data, selected }: NodeProps) {
   const [lokaalKvk, setLokaalKvk] = useState(d.kvkNummer ?? "");
   const [lokaalLand, setLokaalLand] = useState(d.land ?? "");
 
+  function openEdit() {
+    setLokaalNaam(d.naam);
+    setLokaalKvk(d.kvkNummer ?? "");
+    setLokaalLand(d.land ?? "");
+    setEditing(true);
+  }
+
   function save() {
-    d.onChange(id, { naam: lokaalNaam, kvkNummer: lokaalKvk || undefined, land: lokaalLand || undefined });
+    if (!lokaalNaam.trim()) return;
+    d.onChange(id, { naam: lokaalNaam.trim(), kvkNummer: lokaalKvk || undefined, land: lokaalLand || undefined });
     setEditing(false);
   }
 
@@ -89,7 +97,7 @@ function BedrijfNode({ id, data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} className="!bg-blue-400 !w-3 !h-3" />
 
       {!editing ? (
-        <div className="px-3 py-2 space-y-1" onDoubleClick={() => setEditing(true)}>
+        <div className="px-3 py-2 space-y-1" onDoubleClick={openEdit}>
           <div className="flex items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
             <span className="text-sm font-semibold text-gray-900 leading-tight">{d.naam || "Bedrijf"}</span>
@@ -100,7 +108,7 @@ function BedrijfNode({ id, data, selected }: NodeProps) {
           <div className="flex items-center gap-1 pt-0.5">
             <button
               className="nodrag text-[10px] text-blue-500 hover:text-blue-700"
-              onClick={() => setEditing(true)}
+              onClick={openEdit}
             >
               Bewerken
             </button>
@@ -152,8 +160,16 @@ function PersoonNode({ id, data, selected }: NodeProps) {
   const [lokaalGeb, setLokaalGeb] = useState(d.geboortedatum ?? "");
   const [lokaalPep, setLokaalPep] = useState(d.isPep ?? false);
 
+  function openEdit() {
+    setLokaalNaam(d.naam);
+    setLokaalGeb(d.geboortedatum ?? "");
+    setLokaalPep(d.isPep ?? false);
+    setEditing(true);
+  }
+
   function save() {
-    d.onChange(id, { naam: lokaalNaam, geboortedatum: lokaalGeb || undefined, isPep: lokaalPep });
+    if (!lokaalNaam.trim()) return;
+    d.onChange(id, { naam: lokaalNaam.trim(), geboortedatum: lokaalGeb || undefined, isPep: lokaalPep });
     setEditing(false);
   }
 
@@ -172,7 +188,7 @@ function PersoonNode({ id, data, selected }: NodeProps) {
       <Handle type="source" position={Position.Right} className="!bg-green-400 !w-3 !h-3" />
 
       {!editing ? (
-        <div className="text-center px-3 space-y-1" onDoubleClick={() => setEditing(true)}>
+        <div className="text-center px-3 space-y-1" onDoubleClick={openEdit}>
           <div className="flex flex-col items-center gap-0.5">
             <User className="h-5 w-5 text-green-600" />
             <span className="text-xs font-semibold text-gray-900 leading-tight">{d.naam || "Persoon"}</span>
@@ -184,7 +200,7 @@ function PersoonNode({ id, data, selected }: NodeProps) {
           </div>
           {d.geboortedatum && <p className="text-[10px] text-gray-400">{d.geboortedatum}</p>}
           <div className="flex items-center gap-1 justify-center pt-0.5">
-            <button className="nodrag text-[10px] text-blue-500 hover:text-blue-700" onClick={() => setEditing(true)}>
+            <button className="nodrag text-[10px] text-blue-500 hover:text-blue-700" onClick={openEdit}>
               Bewerken
             </button>
             <span className="text-gray-300">·</span>
@@ -449,7 +465,7 @@ export function UboStructuurEditor({ clientId, readOnly }: UboStructuurEditorPro
           }),
         });
       } catch {
-        // non-blocking
+        toast({ title: "Opslaan mislukt — controleer uw verbinding", variant: "destructive" });
       }
     },
     [clientId]

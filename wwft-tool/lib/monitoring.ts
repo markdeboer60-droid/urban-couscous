@@ -133,12 +133,14 @@ async function screenFaillissementsdossier(naam: string): Promise<string[]> {
     const data = await res.json();
     const records: FaillissementRecord[] = data.content ?? data.results ?? data ?? [];
 
+    // Build a match word: first word with >3 chars, or just the first word
+    const words = naam.trim().toLowerCase().split(/\s+/);
+    const matchWord = words.find((w) => w.length > 3) ?? words[0];
+
     return records
       .filter((r) => {
         if (!r.naam) return false;
-        // Simple name match (case-insensitive, first word of query)
-        const queryWord = naam.trim().split(" ")[0].toLowerCase();
-        return r.naam.toLowerCase().includes(queryWord);
+        return r.naam.toLowerCase().includes(matchWord);
       })
       .map((r) => {
         const soort = r.soort ?? "Insolventie";
@@ -170,13 +172,17 @@ async function screenRechtspraak(naam: string): Promise<string[]> {
     const titleMatches = [...xml.matchAll(/<title[^>]*>([^<]+)<\/title>/g)];
     const dateMatches = [...xml.matchAll(/<updated>([^<]+)<\/updated>/g)];
 
+    // Build match word from name: first word with >3 chars, or first word
+    const naamWords = naam.trim().toLowerCase().split(/\s+/);
+    const naamMatchWord = naamWords.find((w) => w.length > 3) ?? naamWords[0];
+
     return titleMatches
       .slice(1) // skip feed title
       .filter((m) => {
         const title = m[1].trim().toLowerCase();
-        const queryLower = naam.trim().toLowerCase();
-        // Verify the name appears in context (crude but avoids false positives)
-        return title.length > 10 && !title.startsWith("rechtspraak");
+        return title.length > 10
+          && !title.startsWith("rechtspraak")
+          && title.includes(naamMatchWord);
       })
       .slice(0, 3)
       .map((m, i) => {
@@ -205,9 +211,14 @@ export async function screenClient(
 ): Promise<number> {
   let newAlerts = 0;
   const existing = await getExistingAlertKeys(client.id);
-  const prevSnapshot: KvkSnapshot | null = client.kvkSnapshot
-    ? JSON.parse(client.kvkSnapshot)
-    : null;
+  let prevSnapshot: KvkSnapshot | null = null;
+  if (client.kvkSnapshot) {
+    try {
+      prevSnapshot = JSON.parse(client.kvkSnapshot);
+    } catch {
+      // ignore malformed snapshot
+    }
+  }
 
   async function persist(omschrijving: string, type: string, bron: string) {
     if (existing.has(omschrijving)) return;
@@ -264,12 +275,17 @@ export async function screenClient(
 
 // ─── Screen all active clients in an organisation ────────────────────────────
 
+// Max clients to screen in a single cron invocation to stay within Vercel function timeout
+const MAX_CLIENTS_PER_RUN = 20;
+
 export async function screenOrganization(
   organizationId: string
 ): Promise<{ screened: number; newAlerts: number }> {
   const clients = await prisma.client.findMany({
     where: { organizationId, status: { not: "BEEINDIGD" } },
     select: { id: true, naam: true, kvkNummer: true, kvkSnapshot: true, organizationId: true },
+    orderBy: { lastScreenedOp: { sort: "asc", nulls: "first" } },
+    take: MAX_CLIENTS_PER_RUN,
   });
 
   let totalNew = 0;

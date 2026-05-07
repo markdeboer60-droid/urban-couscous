@@ -88,7 +88,7 @@ export function WizardStepper({
     saveAnswer(stap, key, antwoord, toelichting);
   }
 
-  async function handleFinalize() {
+  const handleFinalize = useCallback(async () => {
     if (!risicoOordeel) {
       toast({ title: "Selecteer risicoprofiel", variant: "destructive" });
       return;
@@ -118,7 +118,7 @@ export function WizardStepper({
     } finally {
       setSaving(false);
     }
-  }
+  }, [clientId, risicoOordeel, risicoMotivatie, eindOpmerkingen, toast, router]);
 
   const currentStap = STAP_LABELS[activeStep];
 
@@ -137,8 +137,7 @@ export function WizardStepper({
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStep, isReadOnly]);
+  }, [activeStep, isReadOnly, handleFinalize]);
 
   function renderStep() {
     if (currentStap.stap === "IDENTIFICATIE") {
