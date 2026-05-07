@@ -97,6 +97,15 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "Alleen partners mogen een cliëntrelatie beëindigen" }, { status: 403 });
   }
 
+  const VALID_STATUSSEN = ["GESTART", "IN_BEHANDELING", "AFGEROND", "BEEINDIGD"];
+  const VALID_RISICO = ["LAAG", "MIDDEN", "HOOG"];
+  if (body.status && !VALID_STATUSSEN.includes(body.status)) {
+    return Response.json({ error: "Ongeldige status" }, { status: 400 });
+  }
+  if (body.risicoOordeel && !VALID_RISICO.includes(body.risicoOordeel)) {
+    return Response.json({ error: "Ongeldig risico-oordeel" }, { status: 400 });
+  }
+
   const updateData: Record<string, unknown> = {};
   if (body.status) updateData.status = body.status;
   if (body.risicoOordeel) updateData.risicoOordeel = body.risicoOordeel;
@@ -173,10 +182,12 @@ export async function PATCH(req: NextRequest) {
     const aanmaker = await prisma.user.findUnique({ where: { id: existing.aangemaaktDoor } });
 
     // Notify creator: dossier approved
+    const safeNaam = existing.naam.replace(/[\r\n]/g, " ").slice(0, 200);
+
     if (aanmaker?.email && aanmaker.id !== user.id) {
       await sendMail({
         to: aanmaker.email,
-        subject: `Dossier goedgekeurd — ${existing.naam}`,
+        subject: `Dossier goedgekeurd — ${safeNaam}`,
         html: dossierGoedgekeurdHtml({
           clientNaam: existing.naam,
           medewerkerNaam: aanmaker.naam,
@@ -191,7 +202,7 @@ export async function PATCH(req: NextRequest) {
     if (aanmaker?.email) {
       await sendMail({
         to: aanmaker.email,
-        subject: `Review gepland — ${existing.naam}`,
+        subject: `Review gepland — ${safeNaam}`,
         html: reviewReminderHtml({
           clientNaam: existing.naam,
           volgendeReviewOp: review.volgendeReviewOp,
@@ -208,10 +219,11 @@ export async function PATCH(req: NextRequest) {
       where: { organizationId: user.organizationId, rol: "PARTNER" },
     });
     const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const safeNaamHoog = existing.naam.replace(/[\r\n]/g, " ").slice(0, 200);
     for (const partner of partners) {
       await sendMail({
         to: partner.email,
-        subject: `Hoog risico cliënt ter goedkeuring — ${existing.naam}`,
+        subject: `Hoog risico cliënt ter goedkeuring — ${safeNaamHoog}`,
         html: highRiskAlertHtml({
           clientNaam: existing.naam,
           medewerkerNaam: user.naam,

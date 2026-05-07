@@ -27,6 +27,11 @@ interface MailOptions {
   html: string;
 }
 
+/** Strip CRLF from user-controlled strings to prevent SMTP header injection. */
+function sanitizeHeader(s: string): string {
+  return s.replace(/[\r\n]/g, " ").slice(0, 255);
+}
+
 export async function sendMail(opts: MailOptions): Promise<void> {
   const from = process.env.SMTP_FROM ?? "Wwft Compliance <noreply@wwft.local>";
   const transporter = getTransporter();

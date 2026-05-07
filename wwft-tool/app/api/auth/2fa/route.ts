@@ -17,7 +17,7 @@ function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
 }
 
-/** GET /api/auth/2fa — generate new secret for setup */
+/** GET /api/auth/2fa — generate new secret for setup (not persisted until confirmed) */
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return unauthorized();
@@ -26,12 +26,7 @@ export async function GET() {
   const secret = generateTotpSecret();
   const uri = getTotpUri(secret, user.email);
 
-  // Store temp secret — user must confirm before enabling
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { totpSecret: secret },
-  });
-
+  // Secret is NOT stored until the user confirms with a valid TOTP code (POST below).
   return Response.json({ secret, uri });
 }
 
@@ -41,20 +36,23 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return unauthorized();
   const user = session.user as unknown as SessionUser;
 
-  const { token }: { token: string } = await req.json();
+  const { token, secret }: { token: string; secret?: string } = await req.json();
 
+  // Accept either a freshly confirmed secret (new setup) or the existing DB secret (re-confirmation)
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-  if (!dbUser?.totpSecret) {
-    return Response.json({ error: "Geen TOTP-secret gevonden. Start setup opnieuw." }, { status: 400 });
+  const effectiveSecret = secret ?? dbUser?.totpSecret ?? null;
+
+  if (!effectiveSecret) {
+    return Response.json({ error: "Geen TOTP-secret opgegeven." }, { status: 400 });
   }
 
-  if (!verifyTotpToken(dbUser.totpSecret, token)) {
+  if (!verifyTotpToken(effectiveSecret, token, user.id)) {
     return Response.json({ error: "Ongeldige code. Probeer opnieuw." }, { status: 400 });
   }
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { totpEnabled: true },
+    data: { totpSecret: effectiveSecret, totpEnabled: true },
   });
 
   return Response.json({ ok: true });

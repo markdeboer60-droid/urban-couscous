@@ -58,7 +58,7 @@ export function TwoFactorSetup({ totpEnabled: initialEnabled }: TwoFactorSetupPr
       const res = await fetch("/api/auth/2fa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, secret }),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       setEnabled(true);

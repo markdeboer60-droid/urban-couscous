@@ -69,8 +69,12 @@ export async function POST(req: NextRequest) {
   const user = session.user as unknown as SessionUser;
   const body: CompleteReviewPayload = await req.json();
 
+  const VALID_RISICO = ["LAAG", "MIDDEN", "HOOG"];
   if (!body.reviewId || !body.risicoOordeelNa) {
     return Response.json({ error: "reviewId en risicoOordeelNa verplicht" }, { status: 400 });
+  }
+  if (!VALID_RISICO.includes(body.risicoOordeelNa)) {
+    return Response.json({ error: "Ongeldig risico-oordeel" }, { status: 400 });
   }
 
   // Verify the review belongs to a client in the user's org

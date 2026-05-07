@@ -11,11 +11,24 @@ import { prisma } from "@/lib/prisma";
 import { verifyTotpToken } from "@/lib/totp";
 import type { SessionUser } from "@/types";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
+  },
+  cookies: {
+    sessionToken: {
+      name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: isProduction,
+      },
+    },
   },
   providers: [
     CredentialsProvider({
@@ -41,7 +54,7 @@ export const authOptions: NextAuthOptions = {
         // If 2FA is enabled, require a valid TOTP code
         if (user.totpEnabled && user.totpSecret) {
           const code = credentials.totpCode ?? "";
-          if (!code || !verifyTotpToken(user.totpSecret, code)) return null;
+          if (!code || !verifyTotpToken(user.totpSecret, code, user.id)) return null;
         }
 
         return {

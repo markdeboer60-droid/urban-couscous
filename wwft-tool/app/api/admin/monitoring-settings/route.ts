@@ -57,6 +57,17 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Ongeldige frequentie" }, { status: 400 });
   }
 
+  if (!/^\d{2}:\d{2}$/.test(body.monitoringTijdstip)) {
+    return Response.json({ error: "Ongeldig tijdstip, formaat HH:MM verwacht" }, { status: 400 });
+  }
+  const [h, m] = body.monitoringTijdstip.split(":").map(Number);
+  if (h > 23 || m > 59) {
+    return Response.json({ error: "Ongeldig tijdstip" }, { status: 400 });
+  }
+  if (!Number.isInteger(body.monitoringDagVanWeek) || body.monitoringDagVanWeek < 1 || body.monitoringDagVanWeek > 7) {
+    return Response.json({ error: "dagVanWeek moet 1–7 zijn" }, { status: 400 });
+  }
+
   const volgendeMonitoringRun = berekenVolgendeRun(
     body.monitoringFrequentie,
     body.monitoringTijdstip,

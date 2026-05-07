@@ -69,35 +69,26 @@ export async function POST(req: NextRequest) {
   if (!await verifyClient(body.clientId, user.organizationId))
     return Response.json({ error: "Niet gevonden" }, { status: 404 });
 
-  // Upsert all nodes
+  // Upsert all nodes — use updateMany (scoped to clientId) to prevent cross-org IDOR
   for (const node of body.nodes) {
-    await prisma.uboNode.upsert({
-      where: { id: node.id },
-      create: {
-        id: node.id,
-        clientId: body.clientId,
-        type: node.type,
-        naam: node.naam,
-        kvkNummer: node.kvkNummer ?? null,
-        geboortedatum: node.geboortedatum ?? null,
-        land: node.land ?? null,
-        isPep: node.isPep ?? false,
-        notities: node.notities ?? null,
-        posX: node.posX ?? 0,
-        posY: node.posY ?? 0,
-      },
-      update: {
-        type: node.type,
-        naam: node.naam,
-        kvkNummer: node.kvkNummer ?? null,
-        geboortedatum: node.geboortedatum ?? null,
-        land: node.land ?? null,
-        isPep: node.isPep ?? false,
-        notities: node.notities ?? null,
-        posX: node.posX ?? 0,
-        posY: node.posY ?? 0,
-      },
+    const nodeData = {
+      type: node.type,
+      naam: node.naam,
+      kvkNummer: node.kvkNummer ?? null,
+      geboortedatum: node.geboortedatum ?? null,
+      land: node.land ?? null,
+      isPep: node.isPep ?? false,
+      notities: node.notities ?? null,
+      posX: node.posX ?? 0,
+      posY: node.posY ?? 0,
+    };
+    const updated = await prisma.uboNode.updateMany({
+      where: { id: node.id, clientId: body.clientId },
+      data: nodeData,
     });
+    if (updated.count === 0) {
+      await prisma.uboNode.create({ data: { id: node.id, clientId: body.clientId, ...nodeData } });
+    }
   }
 
   // Delete removed nodes (cascades edges automatically)
@@ -106,23 +97,18 @@ export async function POST(req: NextRequest) {
     where: { clientId: body.clientId, id: { notIn: incomingNodeIds } },
   });
 
-  // Upsert all edges
+  // Upsert all edges — scoped to clientId to prevent cross-org IDOR
   for (const edge of body.edges) {
-    await prisma.uboEdge.upsert({
-      where: { id: edge.id },
-      create: {
-        id: edge.id,
-        clientId: body.clientId,
-        vanId: edge.vanId,
-        naarId: edge.naarId,
-        type: edge.type ?? null,
-        belang: edge.belang ?? null,
-      },
-      update: {
-        type: edge.type ?? null,
-        belang: edge.belang ?? null,
-      },
+    const edgeData = { type: edge.type ?? null, belang: edge.belang ?? null };
+    const updated = await prisma.uboEdge.updateMany({
+      where: { id: edge.id, clientId: body.clientId },
+      data: edgeData,
     });
+    if (updated.count === 0) {
+      await prisma.uboEdge.create({
+        data: { id: edge.id, clientId: body.clientId, vanId: edge.vanId, naarId: edge.naarId, ...edgeData },
+      });
+    }
   }
 
   // Delete removed edges

@@ -2,7 +2,8 @@
  * /api/cron/monitoring — automatisch geplande screening (Vercel Cron).
  * Vercel roept dit elk uur aan; de handler beslist welke organisaties aan de beurt zijn.
  *
- * Beveiliging: controleer CRON_SECRET header of Vercel's eigen x-vercel-cron header.
+ * Beveiliging: CRON_SECRET is altijd vereist. x-vercel-cron header is niet voldoende
+ * omdat deze header door elke HTTP-client kan worden nagebootst.
  * Stel CRON_SECRET=<willekeurige string> in als omgevingsvariabele.
  */
 
@@ -11,16 +12,11 @@ import { prisma } from "@/lib/prisma";
 import { screenOrganization, berekenVolgendeRun } from "@/lib/monitoring";
 
 export async function GET(req: NextRequest) {
-  // Vercel zet automatisch x-vercel-cron: 1 bij cron-aanroepen
-  const isCron = req.headers.get("x-vercel-cron") === "1";
   const cronSecret = process.env.CRON_SECRET;
-  const providedSecret = req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
+  const provided = req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
 
-  if (!isCron) {
-    // Handmatige aanroep vereist het geheim
-    if (!cronSecret || providedSecret !== cronSecret) {
-      return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
-    }
+  if (!cronSecret || provided !== cronSecret) {
+    return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
   }
 
   const now = new Date();
