@@ -141,6 +141,7 @@ model User {
   documenten           Document[]
   reviews              Review[]
   meldingen            Melding[]
+  opmerkingen          Opmerking[]
 }
 
 model Client {
@@ -186,6 +187,7 @@ model Client {
   uboNodes          UboNode[]
   uboEdges          UboEdge[]
   notificaties      Notificatie[]
+  opmerkingen       Opmerking[]
 }
 
 model WizardAnswer {
@@ -326,4 +328,15 @@ model UboEdge {
   client Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   van    UboNode @relation("EdgeVan", fields: [vanId], references: [id], onDelete: Cascade)
   naar   UboNode @relation("EdgeNaar", fields: [naarId], references: [id], onDelete: Cascade)
+}
+
+model Opmerking {
+  id         String   @id @default(cuid())
+  clientId   String
+  userId     String
+  tekst      String
+  aangemaakt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
 }

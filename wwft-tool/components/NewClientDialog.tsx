@@ -95,6 +95,9 @@ export function NewClientDialog() {
                   id="kvk"
                   value={kvkNummer}
                   onChange={(e) => setKvkNummer(e.target.value)}
+                  onBlur={() => {
+                    if (/^\d{8}$/.test(kvkNummer.trim())) handleKvkLookup();
+                  }}
                   placeholder="12345678"
                   className="flex-1"
                 />

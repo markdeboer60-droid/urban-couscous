@@ -16,6 +16,8 @@ import { RisicoOordeel } from "@/components/RisicoOordeel";
 import { EddPanel } from "@/components/EddPanel";
 import { useToast } from "@/hooks/use-toast";
 import { getVragenPerCategorie } from "@/lib/wizardQuestions";
+import { berekenRisicoScore } from "@/lib/risicoScore";
+import { RisicoScoreSuggestie } from "@/components/RisicoScoreSuggestie";
 import type { WizardStap, WizardAntwoord, WizardAnswer, UserRole } from "@/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -153,8 +155,16 @@ export function WizardStepper({
 
     if (currentStap.stap === "BEOORDELING") {
       const categories = getVragenPerCategorie("BEOORDELING");
+      const score = berekenRisicoScore(answers);
       return (
         <div className="space-y-6">
+          {/* Risicoscore-suggestie bovenaan de beoordelingsstap */}
+          {!isReadOnly && (
+            <RisicoScoreSuggestie
+              score={score}
+              onOvernemen={(suggestie) => setRisicoOordeel(suggestie)}
+            />
+          )}
           {Object.entries(categories).map(([cat, vragen]) => (
             <div key={cat}>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">{cat}</h3>

@@ -194,6 +194,45 @@ async function screenRechtspraak(naam: string): Promise<string[]> {
   }
 }
 
+// ─── 5. Google News RSS (gratis, geen API-key) ────────────────────────────────
+
+async function screenGoogleNieuws(naam: string): Promise<string[]> {
+  try {
+    const naamWords = naam.trim().toLowerCase().split(/\s+/);
+    const matchWord = naamWords.find((w) => w.length > 3) ?? naamWords[0];
+
+    const query = encodeURIComponent(`"${naam}" fraude OR faillissement OR oplichting OR witwassen`);
+    const url = `https://news.google.com/rss/search?q=${query}&hl=nl&gl=NL&ceid=NL:nl`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "WwftComplianceTool/1.0" },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return [];
+
+    const xml = await res.text();
+    const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+
+    return items
+      .slice(0, 5)
+      .map((m) => {
+        const block = m[1];
+        const title = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
+          ?? block.match(/<title>(.*?)<\/title>/)?.[1]
+          ?? "";
+        const pubDate = block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] ?? "";
+        const dateStr = pubDate ? new Date(pubDate).toLocaleDateString("nl-NL") : "";
+        return { title: title.replace(/&amp;/g, "&").trim(), dateStr };
+      })
+      .filter((h) => {
+        const lower = h.title.toLowerCase();
+        return h.title.length > 10 && lower.includes(matchWord);
+      })
+      .map((h) => `Nieuws${h.dateStr ? ` (${h.dateStr})` : ""}: ${h.title}`);
+  } catch {
+    return [];
+  }
+}
+
 // ─── Helper: deduplicate against existing unresolved alerts ──────────────────
 
 async function getExistingAlertKeys(clientId: string): Promise<Set<string>> {
@@ -259,6 +298,12 @@ export async function screenClient(
   const rbHits = await screenRechtspraak(client.naam);
   for (const hit of rbHits) {
     await persist(hit, "RECHTSZAAK", "RECHTSPRAAK");
+  }
+
+  // 5. Google News RSS
+  const nieuwsHits = await screenGoogleNieuws(client.naam);
+  for (const hit of nieuwsHits) {
+    await persist(hit, "NEGATIEF_NIEUWS", "GOOGLE_NEWS");
   }
 
   // Update lastScreenedOp + KvK snapshot

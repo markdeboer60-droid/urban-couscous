@@ -271,6 +271,15 @@ export interface UboEdge {
   belang?: number | null;
 }
 
+export interface Opmerking {
+  id: string;
+  clientId: string;
+  userId: string;
+  tekst: string;
+  aangemaakt: string;
+  user: { naam: string; rol: string };
+}
+
 // ─── Session extension ────────────────────────────────────────────────────────
 
 /** Extended NextAuth session user */

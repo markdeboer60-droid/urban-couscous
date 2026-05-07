@@ -31,7 +31,7 @@ import {
   type OnConnect,
   Panel,
 } from "@xyflow/react";
-import { Building2, User, Plus, Save, ShieldAlert, Trash2 } from "lucide-react";
+import { Building2, User, Plus, Save, ShieldAlert, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -577,12 +577,71 @@ export function UboStructuurEditor({ clientId, readOnly }: UboStructuurEditorPro
         </ReactFlow>
       </div>
 
+      {/* PEP waarschuwing */}
       {nodes.some((n) => (n.data as NodeData).isPep) && (
         <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
           <ShieldAlert className="h-3.5 w-3.5 flex-shrink-0" />
           Een of meer personen in de structuur zijn gemarkeerd als PEP (art. 8 Wwft). Verscherpt cliëntenonderzoek vereist.
         </div>
       )}
+
+      {/* UBO-drempelwaarschuwingen (art. 10a Wwft — ≥25%) */}
+      <UboWaarschuwingen nodes={nodes} edges={edges} />
+    </div>
+  );
+}
+
+// ─── UBO threshold warnings ───────────────────────────────────────────────────
+
+function UboWaarschuwingen({
+  nodes,
+  edges,
+}: {
+  nodes: Node<NodeData>[];
+  edges: Edge<EdgeData>[];
+}) {
+  if (nodes.length === 0) return null;
+
+  const warnings: string[] = [];
+
+  // Per bedrijfsnode: controleer of eigendom optelt tot ~100%
+  const bedrijfNodes = nodes.filter((n) => (n.data as NodeData).type === "BEDRIJF");
+  for (const node of bedrijfNodes) {
+    const incoming = edges.filter((e) => e.target === node.id && (e.data as EdgeData)?.belang !== undefined);
+    if (incoming.length === 0) continue;
+    const totaal = incoming.reduce((sum, e) => sum + ((e.data as EdgeData).belang ?? 0), 0);
+    if (totaal > 0 && totaal < 95) {
+      warnings.push(
+        `Eigendom van "${(node.data as NodeData).naam || "Bedrijf"}" is slechts ${Math.round(totaal)}% gedocumenteerd — vul het resterende belang aan (art. 10a Wwft).`
+      );
+    }
+  }
+
+  // Controleer of er personen zijn met ≥25% — zo niet: pseudo-UBO risico
+  const persoonNodes = nodes.filter((n) => (n.data as NodeData).type === "PERSOON");
+  if (persoonNodes.length > 0) {
+    const persoonMetVoldoendeAandeel = persoonNodes.some((p) => {
+      const uitgaand = edges.filter((e) => e.source === p.id && (e.data as EdgeData)?.belang !== undefined);
+      const totaal = uitgaand.reduce((sum, e) => sum + ((e.data as EdgeData).belang ?? 0), 0);
+      return totaal >= 25;
+    });
+    if (!persoonMetVoldoendeAandeel) {
+      warnings.push(
+        "Geen enkele persoon heeft ≥25% aandelenbelang geregistreerd. Controleer of er sprake is van een pseudo-UBO (art. 10a Wwft — terugval op statutair bestuur)."
+      );
+    }
+  }
+
+  if (warnings.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5">
+      {warnings.map((w, i) => (
+        <div key={i} className="flex items-start gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded p-2">
+          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+          {w}
+        </div>
+      ))}
     </div>
   );
 }

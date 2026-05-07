@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { Search, LogOut, Users, Shield, UserCircle } from "lucide-react";
+import { Search, LogOut, Users, Shield, UserCircle, FileBarChart } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
@@ -51,9 +51,14 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
             <Badge variant={userRol === "PARTNER" ? "default" : "secondary"}>{userRol}</Badge>
             <span className="text-sm text-gray-600">{userName}</span>
             {userRol === "PARTNER" && (
-              <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-                <Users className="h-4 w-4" /> Beheer
-              </Link>
+              <>
+                <Link href="/rapport" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <FileBarChart className="h-4 w-4" /> Rapport
+                </Link>
+                <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <Users className="h-4 w-4" /> Beheer
+                </Link>
+              </>
             )}
             <Link href="/profiel" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
               <UserCircle className="h-4 w-4" /> Profiel

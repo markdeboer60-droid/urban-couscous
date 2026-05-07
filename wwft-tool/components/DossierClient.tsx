@@ -19,8 +19,11 @@ import { BeeindigingDialog } from "@/components/BeeindigingDialog";
 import { LandRisicoAlert } from "@/components/LandRisicoAlert";
 import { MonitoringPanel } from "@/components/MonitoringPanel";
 import { UboStructuurEditor } from "@/components/UboStructuurEditor";
+import { OpmerkingThread } from "@/components/OpmerkingThread";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit, Melding } from "@/types";
+
+interface NieuwsHit { titel: string; url: string; samenvatting: string; }
 import { cn } from "@/lib/utils";
 
 interface DossierClientProps {
@@ -45,7 +48,9 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
   const [webIsMock, setWebIsMock] = useState(false);
 
   const isReadOnly = client.status === "AFGEROND" || client.status === "BEEINDIGD";
-  const [activeTab, setActiveTab] = useState<"osint" | "ubo" | "monitoring">("osint");
+  const [activeTab, setActiveTab] = useState<"osint" | "nieuws" | "ubo" | "monitoring">("osint");
+  const [nieuwsHits, setNieuwsHits] = useState<NieuwsHit[]>([]);
+  const [nieuwsLoading, setNieuwsLoading] = useState(false);
 
   async function search(source: string) {
     if (!zoekNaam.trim()) return;
@@ -80,6 +85,25 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
   async function searchAll() {
     for (const src of ["opensanctions", "web", "gleif", "icij"]) {
       await search(src);
+    }
+  }
+
+  async function searchNieuws() {
+    if (!zoekNaam.trim()) return;
+    setNieuwsLoading(true);
+    try {
+      const res = await fetch("/api/search/nieuws", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ naam: zoekNaam.trim(), clientId: client.id }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      const data = await res.json();
+      setNieuwsHits(data.hits ?? []);
+    } catch (err: unknown) {
+      toast({ title: "Nieuwszoekopdracht mislukt", description: String(err), variant: "destructive" });
+    } finally {
+      setNieuwsLoading(false);
     }
   }
 
@@ -200,24 +224,74 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
         {/* Section tabs */}
-        <div className="flex gap-1 border-b border-gray-200 pb-0">
-          {(["osint", "ubo", "monitoring"] as const).map((tab) => (
+        <div className="flex gap-1 border-b border-gray-200 pb-0 overflow-x-auto">
+          {(["osint", "nieuws", "ubo", "monitoring"] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab as typeof activeTab);
+                if (tab === "nieuws" && nieuwsHits.length === 0) searchNieuws();
+              }}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-t border-b-2 -mb-px transition-colors",
+                "px-4 py-2 text-sm font-medium rounded-t border-b-2 -mb-px transition-colors whitespace-nowrap",
                 activeTab === tab
                   ? "border-blue-600 text-blue-700 bg-white"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               )}
             >
               {tab === "osint" && "OSINT & Zoeken"}
+              {tab === "nieuws" && (
+                <span className="flex items-center gap-1">
+                  Negatief nieuws
+                  {nieuwsHits.length > 0 && (
+                    <span className="text-xs bg-orange-100 text-orange-700 rounded px-1">{nieuwsHits.length}</span>
+                  )}
+                </span>
+              )}
               {tab === "ubo" && "UBO-structuur"}
               {tab === "monitoring" && "Monitoring"}
             </button>
           ))}
         </div>
+
+        {/* Nieuws tab */}
+        {activeTab === "nieuws" && (
+          <div className="bg-white border rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">Negatief nieuws — Google News</h2>
+              <button
+                onClick={searchNieuws}
+                disabled={nieuwsLoading}
+                className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              >
+                {nieuwsLoading ? "Zoeken…" : "↻ Vernieuwen"}
+              </button>
+            </div>
+            {nieuwsLoading ? (
+              <p className="text-sm text-gray-400">Ophalen…</p>
+            ) : nieuwsHits.length === 0 ? (
+              <p className="text-sm text-gray-400">Geen nieuwsartikelen gevonden voor &quot;{zoekNaam}&quot;.</p>
+            ) : (
+              <div className="space-y-2">
+                {nieuwsHits.map((h, i) => (
+                  <a
+                    key={i}
+                    href={h.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block border rounded p-3 hover:bg-gray-50 transition-colors space-y-0.5"
+                  >
+                    <p className="text-sm font-medium text-gray-900 leading-snug">{h.titel}</p>
+                    {h.samenvatting && (
+                      <p className="text-xs text-gray-500">{h.samenvatting}</p>
+                    )}
+                  </a>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-gray-400">Bron: Google News RSS · Altijd kritisch beoordelen op relevantie.</p>
+          </div>
+        )}
 
         {/* UBO structuur tab */}
         {activeTab === "ubo" && (
@@ -323,6 +397,13 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
 
         {/* Meldingen — always visible */}
         <MeldingenSection clientId={client.id} isReadOnly={isReadOnly} currentUserRol={currentUser.rol} />
+
+        {/* Interne opmerkingen — always visible */}
+        <OpmerkingThread
+          clientId={client.id}
+          currentUserId={currentUser.id}
+          currentUserRol={currentUser.rol}
+        />
       </main>
     </div>
   );
