@@ -70,7 +70,6 @@ export function IdentificatieOnderzoek({ clientId, clientNaam, readOnly }: Ident
     }
 
     setSearching(true);
-    setResults([]);
     const newResults: SubjectResult[] = [];
 
     for (const subject of Array.from(selectedSubjects)) {

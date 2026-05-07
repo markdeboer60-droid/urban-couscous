@@ -6,7 +6,7 @@
  */
 
 import { useTransition } from "react";
-import { Check } from "lucide-react";
+import { Check, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { ClientStatus } from "@/types";
@@ -27,6 +27,15 @@ const STEPS: { status: ClientStatus; label: string }[] = [
 export function StatusStepper({ clientId, current, isReadOnly, onUpdate }: StatusStepperProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+
+  if (current === "BEEINDIGD") {
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded">
+        <XCircle className="h-3.5 w-3.5 flex-shrink-0" />
+        Cliëntrelatie beëindigd
+      </div>
+    );
+  }
 
   const currentIdx = STEPS.findIndex((s) => s.status === current);
 

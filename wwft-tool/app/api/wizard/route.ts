@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
   });
   if (!client) return Response.json({ error: "Niet gevonden" }, { status: 404 });
 
-  // Prevent edits on finalized clients
-  if (client.status === "AFGEROND") {
+  // Prevent edits on finalized or terminated clients
+  if (client.status === "AFGEROND" || client.status === "BEEINDIGD") {
     return Response.json({ error: "Dossier is afgesloten" }, { status: 403 });
   }
 

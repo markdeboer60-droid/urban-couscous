@@ -28,6 +28,7 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "destructive" | "se
 export function ReviewPanel({ clientId }: ReviewPanelProps) {
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [completing, setCompleting] = useState<string | null>(null);
   const [bevindingen, setBevindingen] = useState("");
   const [risicoNa, setRisicoNa] = useState<RisicoOordeel | "">("");
@@ -36,10 +37,14 @@ export function ReviewPanel({ clientId }: ReviewPanelProps) {
   useEffect(() => {
     fetch(`/api/reviews?clientId=${clientId}`)
       .then((r) => r.json())
-      .then(setReviews);
+      .then((data) => { setReviews(data); setLoaded(true); });
   }, [clientId]);
 
   async function handleComplete(reviewId: string) {
+    if (bevindingen.trim().length < 10) {
+      toast({ title: "Voer minimaal 10 tekens bevindingen in", variant: "destructive" });
+      return;
+    }
     if (!risicoNa) { toast({ title: "Selecteer risicoprofiel na review", variant: "destructive" }); return; }
     setSaving(true);
     try {
@@ -66,6 +71,15 @@ export function ReviewPanel({ clientId }: ReviewPanelProps) {
   const next = reviews.find((r) => r.status === "GEPLAND" || r.status === "ACHTERSTALLIG");
   const past = reviews.filter((r) => r.status === "UITGEVOERD");
 
+  if (!loaded) {
+    return (
+      <div className="space-y-3 animate-pulse">
+        <div className="h-24 rounded-md bg-gray-100" />
+        <div className="h-8 w-40 rounded bg-gray-100" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Next scheduled review */}
@@ -83,7 +97,7 @@ export function ReviewPanel({ clientId }: ReviewPanelProps) {
           {completing === next.id ? (
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label>Bevindingen</Label>
+                <Label>Bevindingen <span className="text-gray-400 font-normal">(min. 10 tekens)</span></Label>
                 <Textarea value={bevindingen} onChange={(e) => setBevindingen(e.target.value)} placeholder="Bevindingen van de review…" />
               </div>
               <div className="space-y-1">

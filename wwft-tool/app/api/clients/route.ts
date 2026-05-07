@@ -106,6 +106,12 @@ export async function PATCH(req: NextRequest) {
   if (body.eddBronVermogen !== undefined) updateData.eddBronVermogen = body.eddBronVermogen;
 
   if (body.goedkeuren) {
+    if (!existing.risicoOordeel) {
+      return Response.json(
+        { error: "Stel eerst een risico-oordeel in voordat u het dossier goedkeurt" },
+        { status: 422 }
+      );
+    }
     updateData.goedgekeurdDoor = user.id;
     updateData.goedgekeurdOp = new Date();
     updateData.status = "AFGEROND";

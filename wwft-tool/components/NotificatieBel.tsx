@@ -136,6 +136,9 @@ export function NotificatieBel() {
                       <p className={cn("text-xs font-medium text-gray-800 leading-tight", !n.gelezen && "text-blue-900")}>
                         {n.titel}
                       </p>
+                      {n.bericht && n.bericht !== n.titel && (
+                        <p className="text-[10px] text-gray-600 mt-0.5 line-clamp-2">{n.bericht}</p>
+                      )}
                       {n.client && (
                         <p className="text-[10px] text-gray-500 mt-0.5">{n.client.naam}</p>
                       )}
