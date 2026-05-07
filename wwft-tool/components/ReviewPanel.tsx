@@ -80,6 +80,12 @@ export function ReviewPanel({ clientId }: ReviewPanelProps) {
     );
   }
 
+  if (loaded && !next && past.length === 0) {
+    return (
+      <p className="text-sm text-gray-400">Nog geen reviews gepland.</p>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Next scheduled review */}

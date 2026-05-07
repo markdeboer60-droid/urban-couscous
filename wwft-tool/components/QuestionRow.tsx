@@ -6,7 +6,7 @@
  * Highlights the risky answer value with an orange border.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import type { WizardAntwoord } from "@/types";
 import type { Vraag } from "@/lib/wizardQuestions";
@@ -25,10 +25,15 @@ const OPTIONS: WizardAntwoord[] = ["JA", "NEE", "NVT"];
 export function QuestionRow({ vraag, initial, onChange, readOnly }: QuestionRowProps) {
   const [antwoord, setAntwoord] = useState<WizardAntwoord | "">(initial?.antwoord ?? "");
   const [toelichting, setToelichting] = useState(initial?.toelichting ?? "");
+  const initApplied = useRef(false);
 
   useEffect(() => {
-    if (initial?.antwoord) setAntwoord(initial.antwoord);
-    if (initial?.toelichting) setToelichting(initial.toelichting);
+    if (initApplied.current) return;
+    if (initial?.antwoord) {
+      setAntwoord(initial.antwoord);
+      setToelichting(initial.toelichting ?? "");
+      initApplied.current = true;
+    }
   }, [initial]);
 
   const isRisico = antwoord !== "" && antwoord === vraag.risicoIndicator;

@@ -132,7 +132,9 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
                     </Badge>
                   )}
                   {doc.verloopDatum && (() => {
-                    const days = Math.ceil((new Date(doc.verloopDatum).getTime() - Date.now()) / 86400000);
+                    const ms = new Date(doc.verloopDatum).getTime();
+                    if (isNaN(ms)) return null;
+                    const days = Math.ceil((ms - Date.now()) / 86400000);
                     if (days < 0) return (
                       <Badge variant="destructive" className="text-xs flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" /> Verlopen
@@ -148,7 +150,7 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
                 </div>
                 <p className="text-xs text-gray-500">
                   {doc.naamBetrokkene} · {doc.functie} · {doc.verificatiemethode}
-                  {doc.verloopDatum && ` · Geldig t/m ${new Date(doc.verloopDatum).toLocaleDateString("nl-NL")}`}
+                  {doc.verloopDatum && !isNaN(new Date(doc.verloopDatum).getTime()) && ` · Geldig t/m ${new Date(doc.verloopDatum).toLocaleDateString("nl-NL")}`}
                   {doc.isPep && doc.pepBronVermelding && ` · PEP-bron: ${doc.pepBronVermelding}`}
                 </p>
               </div>

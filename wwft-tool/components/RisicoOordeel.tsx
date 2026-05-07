@@ -64,7 +64,7 @@ export function RisicoOordeel({ value, motivatie, onChange, readOnly }: RisicoOo
       <div className="space-y-1">
         <Label>
           Motivatie risicoprofiel *{" "}
-          <span className="text-xs text-gray-400">({motivatie.length}/50 min)</span>
+          <span className="text-xs text-gray-400">({motivatie.length} tekens, min. 50)</span>
         </Label>
         <Textarea
           placeholder="Onderbouw het risicoprofiel (minimaal 50 tekens)…"

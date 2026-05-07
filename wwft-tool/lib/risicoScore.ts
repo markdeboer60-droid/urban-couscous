@@ -26,7 +26,7 @@ const HOOG_KEYS: Record<string, string> = {
   WWFT_23: "Eerder geweigerd door andere dienstverlener",
 };
 
-// 1 punt elk — MIDDEN bij ≥4 punten totaal
+// 1 punt elk — MIDDEN bij ≥3 punten totaal
 const MIDDEN_KEYS: Record<string, string> = {
   BV_03: "Afwijkende activiteiten voor de branche",
   BV_04: "Actief in meerdere landen of jurisdicties",
