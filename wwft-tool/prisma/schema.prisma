@@ -142,6 +142,7 @@ model User {
   reviews              Review[]
   meldingen            Melding[]
   opmerkingen          Opmerking[]
+  auditLogs            AuditLog[]
 }
 
 model Client {
@@ -188,6 +189,7 @@ model Client {
   uboEdges          UboEdge[]
   notificaties      Notificatie[]
   opmerkingen       Opmerking[]
+  auditLogs         AuditLog[]
 }
 
 model WizardAnswer {
@@ -212,6 +214,7 @@ model Document {
   naamBetrokkene     String?
   functie            String?
   geboortedatum      String?
+  verloopDatum       DateTime?
   verificatiemethode String?
   isPep              Boolean      @default(false)
   pepBronVermelding  String?
@@ -335,6 +338,18 @@ model Opmerking {
   clientId   String
   userId     String
   tekst      String
+  aangemaakt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  clientId   String
+  userId     String
+  actie      String   // STATUS_GEWIJZIGD | RISICO_GEWIJZIGD | GOEDGEKEURD | BEEINDIGD | REVIEW_VOLTOOID | EDD_GOEDGEKEURD
+  details    String?  // JSON with old/new values
   aangemaakt DateTime @default(now())
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)

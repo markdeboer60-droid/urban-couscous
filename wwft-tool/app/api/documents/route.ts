@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
   const naamBetrokkene = formData.get("naamBetrokkene") as string | null;
   const functie = formData.get("functie") as string | null;
   const geboortedatum = formData.get("geboortedatum") as string | null;
+  const verloopDatumRaw = formData.get("verloopDatum") as string | null;
+  const verloopDatum = verloopDatumRaw ? new Date(verloopDatumRaw) : null;
   const verificatiemethode = formData.get("verificatiemethode") as string | null;
   const isPep = formData.get("isPep") === "true";
   const pepBronVermelding = (formData.get("pepBronVermelding") as string | null) || null;
@@ -96,6 +98,7 @@ export async function POST(req: NextRequest) {
       naamBetrokkene,
       functie,
       geboortedatum,
+      verloopDatum,
       verificatiemethode,
       isPep,
       pepBronVermelding,

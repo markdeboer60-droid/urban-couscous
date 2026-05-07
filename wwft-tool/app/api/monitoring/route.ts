@@ -52,7 +52,7 @@ export async function PATCH(req: NextRequest) {
   if (!session?.user) return unauthorized();
 
   const user = session.user as unknown as SessionUser;
-  const { alertId }: { alertId: string } = await req.json();
+  const { alertId, herstel }: { alertId: string; herstel?: boolean } = await req.json();
 
   const alert = await prisma.monitoringAlert.findFirst({
     where: { id: alertId, client: { organizationId: user.organizationId } },
@@ -61,7 +61,9 @@ export async function PATCH(req: NextRequest) {
 
   const updated = await prisma.monitoringAlert.update({
     where: { id: alertId },
-    data: { opgelost: true, opgelostOp: new Date(), opgelostDoor: user.id },
+    data: herstel
+      ? { opgelost: false, opgelostOp: null, opgelostDoor: null }
+      : { opgelost: true, opgelostOp: new Date(), opgelostDoor: user.id },
   });
   return Response.json(updated);
 }

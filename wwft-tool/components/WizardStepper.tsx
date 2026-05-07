@@ -5,9 +5,9 @@
  * Steps: Bedrijfsverkenning → Wwft → Identificatie → Beoordeling
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, CloudOff, Cloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuestionRow } from "@/components/QuestionRow";
 import { DocumentUpload } from "@/components/DocumentUpload";
@@ -63,6 +63,8 @@ export function WizardStepper({
   const [risicoOordeel, setRisicoOordeel] = useState<string>(initialRisicoOordeel);
   const [risicoMotivatie, setRisicoMotivatie] = useState(initialRisicoMotivatie);
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch(`/api/wizard?clientId=${clientId}`)
@@ -78,13 +80,18 @@ export function WizardStepper({
 
   const saveAnswer = useCallback(
     async (stap: WizardStap, key: string, antwoord: WizardAntwoord, toelichting: string) => {
+      setSaveStatus("saving");
       try {
         await fetch("/api/wizard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ clientId, stap, vraagKey: key, antwoord, toelichting }),
         });
+        setSaveStatus("saved");
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => setSaveStatus("idle"), 2500);
       } catch {
+        setSaveStatus("idle");
         toast({ title: "Fout bij opslaan", variant: "destructive" });
       }
     },
@@ -272,7 +279,7 @@ export function WizardStepper({
 
       {/* Navigation */}
       {!isReadOnly && (
-        <div className="flex justify-between pt-2 border-t">
+        <div className="flex justify-between items-center pt-2 border-t">
           <Button
             variant="outline"
             onClick={() => setActiveStep((s) => Math.max(0, s - 1))}
@@ -280,6 +287,17 @@ export function WizardStepper({
           >
             <ChevronLeft className="h-4 w-4" /> Vorige
           </Button>
+          {saveStatus !== "idle" && (
+            <span className={cn(
+              "flex items-center gap-1 text-xs transition-opacity",
+              saveStatus === "saving" ? "text-gray-400" : "text-green-600"
+            )}>
+              {saveStatus === "saving"
+                ? <><CloudOff className="h-3.5 w-3.5 animate-pulse" /> Opslaan…</>
+                : <><Cloud className="h-3.5 w-3.5" /> Opgeslagen</>
+              }
+            </span>
+          )}
           {activeStep < STAP_LABELS.length - 1 ? (
             <Button onClick={() => setActiveStep((s) => s + 1)} title="Volgende stap (Ctrl+Enter)">
               Volgende <ChevronRight className="h-4 w-4" />

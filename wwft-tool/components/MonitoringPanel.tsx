@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, CheckCircle, RefreshCw, ShieldCheck, Building2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, RefreshCw, ShieldCheck, Building2, FileWarning, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -32,12 +32,13 @@ interface MonitoringPanelProps {
 }
 
 const TYPE_CONFIG: Record<string, { label: string; variant: "destructive" | "warning"; icon: React.ReactNode }> = {
-  SANCTIONS_HIT:   { label: "Sanctielijst hit",      variant: "destructive", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-  KVK_FAILLIET:    { label: "Faillissement",          variant: "destructive", icon: <Building2 className="h-3.5 w-3.5" /> },
-  KVK_INACTIEF:    { label: "Uitgeschreven KvK",      variant: "warning",     icon: <Building2 className="h-3.5 w-3.5" /> },
-  KVK_WIJZIGING:   { label: "KvK-wijziging",          variant: "warning",     icon: <Building2 className="h-3.5 w-3.5" /> },
-  RECHTSZAAK:      { label: "Rechtszaak gevonden",    variant: "warning",     icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-  NEGATIEF_NIEUWS: { label: "Negatief nieuws",        variant: "warning",     icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  SANCTIONS_HIT:     { label: "Sanctielijst hit",      variant: "destructive", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  KVK_FAILLIET:      { label: "Faillissement",          variant: "destructive", icon: <Building2 className="h-3.5 w-3.5" /> },
+  KVK_INACTIEF:      { label: "Uitgeschreven KvK",      variant: "warning",     icon: <Building2 className="h-3.5 w-3.5" /> },
+  KVK_WIJZIGING:     { label: "KvK-wijziging",          variant: "warning",     icon: <Building2 className="h-3.5 w-3.5" /> },
+  RECHTSZAAK:        { label: "Rechtszaak gevonden",    variant: "warning",     icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  NEGATIEF_NIEUWS:   { label: "Negatief nieuws",        variant: "warning",     icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  DOCUMENT_VERLOPEN: { label: "Document verloopt",      variant: "warning",     icon: <FileWarning className="h-3.5 w-3.5" /> },
 };
 
 export function MonitoringPanel({ clientId, showRunButton }: MonitoringPanelProps) {
@@ -82,6 +83,20 @@ export function MonitoringPanel({ clientId, showRunButton }: MonitoringPanelProp
       });
       setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, opgelost: true } : a)));
       toast({ title: "Melding opgelost" });
+    } catch {
+      toast({ title: "Fout", variant: "destructive" });
+    }
+  }
+
+  async function herstelAlert(alertId: string) {
+    try {
+      await fetch("/api/monitoring", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ alertId, herstel: true }),
+      });
+      setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, opgelost: false } : a)));
+      toast({ title: "Melding hersteld" });
     } catch {
       toast({ title: "Fout", variant: "destructive" });
     }
@@ -149,9 +164,18 @@ export function MonitoringPanel({ clientId, showRunButton }: MonitoringPanelProp
               <summary className="cursor-pointer text-gray-400 hover:text-gray-600">{resolved.length} opgeloste melding{resolved.length !== 1 ? "en" : ""}</summary>
               <div className="mt-2 space-y-1">
                 {resolved.map((alert) => (
-                  <div key={alert.id} className="border rounded p-2 bg-gray-50 opacity-60 text-xs text-gray-500">
-                    {alert.omschrijving}
-                    {alert.client && <span className="ml-2 font-medium">{alert.client.naam}</span>}
+                  <div key={alert.id} className="border rounded p-2 bg-gray-50 text-xs text-gray-500 flex items-center justify-between gap-2">
+                    <span className="flex-1">
+                      {alert.omschrijving}
+                      {alert.client && <span className="ml-2 font-medium">{alert.client.naam}</span>}
+                    </span>
+                    <button
+                      onClick={() => herstelAlert(alert.id)}
+                      className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 flex-shrink-0"
+                      title="Markeer opnieuw als open"
+                    >
+                      <RotateCcw className="h-3 w-3" /> Herstel
+                    </button>
                   </div>
                 ))}
               </div>

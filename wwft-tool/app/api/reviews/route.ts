@@ -6,6 +6,7 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, berekenVolgendeReview } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/audit";
 import type { SessionUser, CompleteReviewPayload } from "@/types";
 
 function unauthorized() {
@@ -111,6 +112,11 @@ export async function POST(req: NextRequest) {
       data: { risicoOordeel: body.risicoOordeelNa },
     });
   }
+
+  logAudit(review.clientId, user.id, "REVIEW_VOLTOOID", {
+    risicoOordeelNa: body.risicoOordeelNa,
+    bevindingen: body.bevindingen?.slice(0, 120),
+  });
 
   return Response.json(updated);
 }

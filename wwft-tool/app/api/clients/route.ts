@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions, berekenVolgendeReview } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendMail, reviewReminderHtml, highRiskAlertHtml, dossierGoedgekeurdHtml } from "@/lib/email";
+import { logAudit } from "@/lib/audit";
 import type { SessionUser, CreateClientPayload, UpdateClientPayload } from "@/types";
 
 function unauthorized() {
@@ -140,6 +141,22 @@ export async function PATCH(req: NextRequest) {
     where: { id: body.clientId },
     data: updateData,
   });
+
+  // Audit log
+  if (body.beeindigen) {
+    logAudit(body.clientId, user.id, "BEEINDIGD", { reden: body.beeindigdReden });
+  } else if (body.goedkeuren) {
+    logAudit(body.clientId, user.id, "GOEDGEKEURD");
+  } else if (body.eddGoedkeuren) {
+    logAudit(body.clientId, user.id, "EDD_GOEDGEKEURD");
+  } else {
+    if (body.status && body.status !== existing.status) {
+      logAudit(body.clientId, user.id, "STATUS_GEWIJZIGD", { oud: existing.status, nieuw: body.status });
+    }
+    if (body.risicoOordeel && body.risicoOordeel !== existing.risicoOordeel) {
+      logAudit(body.clientId, user.id, "RISICO_GEWIJZIGD", { oud: existing.risicoOordeel, nieuw: body.risicoOordeel });
+    }
+  }
 
   // On finalization: create first review + send notifications
   if (body.goedkeuren && existing.risicoOordeel) {

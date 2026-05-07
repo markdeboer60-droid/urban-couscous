@@ -243,6 +243,32 @@ async function getExistingAlertKeys(clientId: string): Promise<Set<string>> {
   return new Set(existing.map((a) => a.omschrijving));
 }
 
+// ─── 6. Document expiry (60-day warning window) ───────────────────────────────
+
+async function screenDocumentVerloop(
+  clientId: string
+): Promise<string[]> {
+  const now = new Date();
+  const in60Days = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+
+  const docs = await prisma.document.findMany({
+    where: {
+      clientId,
+      verloopDatum: { not: null, lte: in60Days },
+    },
+    select: { naamBetrokkene: true, type: true, verloopDatum: true },
+  });
+
+  return docs.map((d) => {
+    const days = Math.ceil((new Date(d.verloopDatum!).getTime() - now.getTime()) / 86400000);
+    const who = d.naamBetrokkene ?? "onbekend";
+    const type = d.type.toLowerCase().replace("_", " ");
+    return days < 0
+      ? `Document verlopen: ${type} van ${who} — verlopen op ${d.verloopDatum!.toLocaleDateString("nl-NL")}`
+      : `Document verloopt binnenkort: ${type} van ${who} — nog ${days} dag${days !== 1 ? "en" : ""}`;
+  });
+}
+
 // ─── Core: screen one client, persist results ────────────────────────────────
 
 export async function screenClient(
@@ -304,6 +330,12 @@ export async function screenClient(
   const nieuwsHits = await screenGoogleNieuws(client.naam);
   for (const hit of nieuwsHits) {
     await persist(hit, "NEGATIEF_NIEUWS", "GOOGLE_NEWS");
+  }
+
+  // 6. Document verloopdatum
+  const verloopHits = await screenDocumentVerloop(client.id);
+  for (const hit of verloopHits) {
+    await persist(hit, "DOCUMENT_VERLOPEN", "DOCUMENTEN");
   }
 
   // Update lastScreenedOp + KvK snapshot

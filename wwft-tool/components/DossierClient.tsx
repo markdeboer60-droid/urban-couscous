@@ -20,6 +20,7 @@ import { LandRisicoAlert } from "@/components/LandRisicoAlert";
 import { MonitoringPanel } from "@/components/MonitoringPanel";
 import { UboStructuurEditor } from "@/components/UboStructuurEditor";
 import { OpmerkingThread } from "@/components/OpmerkingThread";
+import { AuditLogPanel } from "@/components/AuditLogPanel";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit, Melding } from "@/types";
 import { cn } from "@/lib/utils";
@@ -404,6 +405,9 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
           currentUserId={currentUser.id}
           currentUserRol={currentUser.rol}
         />
+
+        {/* Auditlog — collapsible, always visible */}
+        <AuditLogPanel clientId={client.id} />
       </main>
     </div>
   );

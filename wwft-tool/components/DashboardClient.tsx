@@ -17,6 +17,7 @@ import { NewClientDialog } from "@/components/NewClientDialog";
 import { KpiCards } from "@/components/KpiCards";
 import { MonitoringPanel } from "@/components/MonitoringPanel";
 import { NotificatieBel } from "@/components/NotificatieBel";
+import { GlobalZoek } from "@/components/GlobalZoek";
 import type { Client, Review, ClientStatus, UserRole } from "@/types";
 
 interface DashboardClientProps {
@@ -48,6 +49,7 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
             <span className="font-semibold text-gray-900">Wwft Compliance</span>
           </div>
           <div className="flex items-center gap-3">
+            <GlobalZoek />
             <Badge variant={userRol === "PARTNER" ? "default" : "secondary"}>{userRol}</Badge>
             <span className="text-sm text-gray-600">{userName}</span>
             {userRol === "PARTNER" && (

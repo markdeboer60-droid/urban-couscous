@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Upload, FileText, ShieldAlert, Search } from "lucide-react";
+import { Upload, FileText, ShieldAlert, Search, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,7 @@ const FUNCTIES = ["Bestuurder", "UBO", "Gevolmachtigde", "Overig"];
 
 export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<(Document & { isPep?: boolean; pepBronVermelding?: string | null })[]>([]);
+  const [documents, setDocuments] = useState<(Document & { isPep?: boolean; pepBronVermelding?: string | null; verloopDatum?: string | null })[]>([]);
   const [uploading, setUploading] = useState(false);
   const [docZoek, setDocZoek] = useState("");
   const [form, setForm] = useState({
@@ -47,6 +47,7 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
     naamBetrokkene: "",
     functie: "",
     geboortedatum: "",
+    verloopDatum: "",
     verificatiemethode: "",
     isPep: false,
     pepBronVermelding: "",
@@ -79,6 +80,7 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
       fd.append("naamBetrokkene", form.naamBetrokkene);
       fd.append("functie", form.functie);
       fd.append("geboortedatum", form.geboortedatum);
+      if (form.verloopDatum) fd.append("verloopDatum", form.verloopDatum);
       fd.append("verificatiemethode", form.verificatiemethode);
       fd.append("isPep", String(form.isPep));
       fd.append("pepBronVermelding", form.pepBronVermelding);
@@ -89,7 +91,7 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
       setDocuments((prev) => [doc, ...prev]);
       setForm({
         type: "", naamBetrokkene: "", functie: "", geboortedatum: "",
-        verificatiemethode: "", isPep: false, pepBronVermelding: "", file: null,
+        verloopDatum: "", verificatiemethode: "", isPep: false, pepBronVermelding: "", file: null,
       });
       toast({ title: "Document geüpload" });
     } catch (err: unknown) {
@@ -122,16 +124,31 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
             <div key={doc.id} className="flex items-center gap-3 border rounded p-2 bg-gray-50 text-sm">
               <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-medium truncate">{doc.bestandsnaam}</p>
                   {doc.isPep && (
                     <Badge variant="destructive" className="text-xs flex items-center gap-1">
                       <ShieldAlert className="h-3 w-3" /> PEP
                     </Badge>
                   )}
+                  {doc.verloopDatum && (() => {
+                    const days = Math.ceil((new Date(doc.verloopDatum).getTime() - Date.now()) / 86400000);
+                    if (days < 0) return (
+                      <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Verlopen
+                      </Badge>
+                    );
+                    if (days <= 60) return (
+                      <Badge variant="warning" className="text-xs flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Verloopt over {days}d
+                      </Badge>
+                    );
+                    return null;
+                  })()}
                 </div>
                 <p className="text-xs text-gray-500">
                   {doc.naamBetrokkene} · {doc.functie} · {doc.verificatiemethode}
+                  {doc.verloopDatum && ` · Geldig t/m ${new Date(doc.verloopDatum).toLocaleDateString("nl-NL")}`}
                   {doc.isPep && doc.pepBronVermelding && ` · PEP-bron: ${doc.pepBronVermelding}`}
                 </p>
               </div>
@@ -179,6 +196,10 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
             <div className="space-y-1">
               <Label>Geboortedatum</Label>
               <Input type="date" value={form.geboortedatum} onChange={(e) => setForm((f) => ({ ...f, geboortedatum: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Verloopdatum document</Label>
+              <Input type="date" value={form.verloopDatum} onChange={(e) => setForm((f) => ({ ...f, verloopDatum: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label>Bestand *</Label>
