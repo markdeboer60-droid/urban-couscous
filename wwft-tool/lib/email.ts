@@ -28,7 +28,7 @@ interface MailOptions {
 }
 
 /** Strip CRLF from user-controlled strings to prevent SMTP header injection. */
-function sanitizeHeader(s: string): string {
+export function sanitizeHeader(s: string): string {
   return s.replace(/[\r\n]/g, " ").slice(0, 255);
 }
 

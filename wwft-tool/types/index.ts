@@ -9,6 +9,10 @@
 export type UserRole = "MEDEWERKER" | "PARTNER";
 export type RisicoOordeel = "LAAG" | "MIDDEN" | "HOOG";
 export type ClientStatus = "GESTART" | "IN_BEHANDELING" | "AFGEROND" | "BEEINDIGD";
+
+export const USER_ROLE_VALUES: UserRole[] = ["MEDEWERKER", "PARTNER"];
+export const RISICO_OORDEEL_VALUES: RisicoOordeel[] = ["LAAG", "MIDDEN", "HOOG"];
+export const CLIENT_STATUS_VALUES: ClientStatus[] = ["GESTART", "IN_BEHANDELING", "AFGEROND", "BEEINDIGD"];
 export type WizardStap =
   | "BEDRIJFSVERKENNING"
   | "WWFT"

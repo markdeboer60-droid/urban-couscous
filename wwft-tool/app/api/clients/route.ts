@@ -7,9 +7,10 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, berekenVolgendeReview } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendMail, reviewReminderHtml, highRiskAlertHtml, dossierGoedgekeurdHtml } from "@/lib/email";
+import { sendMail, sanitizeHeader, reviewReminderHtml, highRiskAlertHtml, dossierGoedgekeurdHtml } from "@/lib/email";
 import { logAudit } from "@/lib/audit";
 import type { SessionUser, CreateClientPayload, UpdateClientPayload } from "@/types";
+import { RISICO_OORDEEL_VALUES, CLIENT_STATUS_VALUES } from "@/types";
 
 function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
@@ -97,12 +98,10 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "Alleen partners mogen een cliëntrelatie beëindigen" }, { status: 403 });
   }
 
-  const VALID_STATUSSEN = ["GESTART", "IN_BEHANDELING", "AFGEROND", "BEEINDIGD"];
-  const VALID_RISICO = ["LAAG", "MIDDEN", "HOOG"];
-  if (body.status && !VALID_STATUSSEN.includes(body.status)) {
+  if (body.status && !CLIENT_STATUS_VALUES.includes(body.status)) {
     return Response.json({ error: "Ongeldige status" }, { status: 400 });
   }
-  if (body.risicoOordeel && !VALID_RISICO.includes(body.risicoOordeel)) {
+  if (body.risicoOordeel && !RISICO_OORDEEL_VALUES.includes(body.risicoOordeel)) {
     return Response.json({ error: "Ongeldig risico-oordeel" }, { status: 400 });
   }
 
@@ -180,9 +179,7 @@ export async function PATCH(req: NextRequest) {
 
     const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
     const aanmaker = await prisma.user.findUnique({ where: { id: existing.aangemaaktDoor } });
-
-    // Notify creator: dossier approved
-    const safeNaam = existing.naam.replace(/[\r\n]/g, " ").slice(0, 200);
+    const safeNaam = sanitizeHeader(existing.naam);
 
     if (aanmaker?.email && aanmaker.id !== user.id) {
       await sendMail({
@@ -219,11 +216,11 @@ export async function PATCH(req: NextRequest) {
       where: { organizationId: user.organizationId, rol: "PARTNER" },
     });
     const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-    const safeNaamHoog = existing.naam.replace(/[\r\n]/g, " ").slice(0, 200);
+    const safeNaam = sanitizeHeader(existing.naam);
     for (const partner of partners) {
       await sendMail({
         to: partner.email,
-        subject: `Hoog risico cliënt ter goedkeuring — ${safeNaamHoog}`,
+        subject: `Hoog risico cliënt ter goedkeuring — ${safeNaam}`,
         html: highRiskAlertHtml({
           clientNaam: existing.naam,
           medewerkerNaam: user.naam,

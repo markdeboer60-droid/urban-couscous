@@ -69,8 +69,8 @@ export async function POST(req: NextRequest) {
   if (!await verifyClient(body.clientId, user.organizationId))
     return Response.json({ error: "Niet gevonden" }, { status: 404 });
 
-  // Upsert all nodes — use updateMany (scoped to clientId) to prevent cross-org IDOR
-  for (const node of body.nodes) {
+  // Upsert all nodes — updateMany scoped to clientId prevents cross-org IDOR; batched in parallel
+  await Promise.all(body.nodes.map(async (node) => {
     const nodeData = {
       type: node.type,
       naam: node.naam,
@@ -82,14 +82,14 @@ export async function POST(req: NextRequest) {
       posX: node.posX ?? 0,
       posY: node.posY ?? 0,
     };
-    const updated = await prisma.uboNode.updateMany({
+    const { count } = await prisma.uboNode.updateMany({
       where: { id: node.id, clientId: body.clientId },
       data: nodeData,
     });
-    if (updated.count === 0) {
+    if (count === 0) {
       await prisma.uboNode.create({ data: { id: node.id, clientId: body.clientId, ...nodeData } });
     }
-  }
+  }));
 
   // Delete removed nodes (cascades edges automatically)
   const incomingNodeIds = body.nodes.map((n) => n.id);
@@ -97,19 +97,19 @@ export async function POST(req: NextRequest) {
     where: { clientId: body.clientId, id: { notIn: incomingNodeIds } },
   });
 
-  // Upsert all edges — scoped to clientId to prevent cross-org IDOR
-  for (const edge of body.edges) {
+  // Upsert all edges — scoped to clientId; batched in parallel
+  await Promise.all(body.edges.map(async (edge) => {
     const edgeData = { type: edge.type ?? null, belang: edge.belang ?? null };
-    const updated = await prisma.uboEdge.updateMany({
+    const { count } = await prisma.uboEdge.updateMany({
       where: { id: edge.id, clientId: body.clientId },
       data: edgeData,
     });
-    if (updated.count === 0) {
+    if (count === 0) {
       await prisma.uboEdge.create({
         data: { id: edge.id, clientId: body.clientId, vanId: edge.vanId, naarId: edge.naarId, ...edgeData },
       });
     }
-  }
+  }));
 
   // Delete removed edges
   const incomingEdgeIds = body.edges.map((e) => e.id);

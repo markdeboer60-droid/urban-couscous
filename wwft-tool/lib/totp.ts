@@ -6,15 +6,18 @@ import { generateSecret, generateSync, verifySync, generateURI } from "otplib";
 
 export { generateSecret as generateTotpSecret };
 
-// In-memory used-token store: key = "userId:timeStep", value = timestamp used
-// Prevents replay attacks within the same 30-second window.
-const _usedTokens = new Map<string, number>();
+// Prevents replay attacks: tracks used tokens keyed by userId:timeStep (30s windows).
+// otplib default window=1 accepts ±1 windows; a stolen token within that window
+// would otherwise be accepted a second time.
+const usedTokens = new Map<string, number>();
+let lastCleanup = Date.now();
 
-function _cleanUsedTokens() {
-  const cutoff = Date.now() - 90_000; // keep 3 windows (90s) for safety
-  for (const [k, t] of _usedTokens) {
-    if (t < cutoff) _usedTokens.delete(k);
+function cleanUsedTokens() {
+  const cutoff = Date.now() - 90_000;
+  for (const [k, t] of usedTokens) {
+    if (t < cutoff) usedTokens.delete(k);
   }
+  lastCleanup = Date.now();
 }
 
 export function verifyTotpToken(secret: string, token: string, userId?: string): boolean {
@@ -26,9 +29,9 @@ export function verifyTotpToken(secret: string, token: string, userId?: string):
     if (userId) {
       const timeStep = Math.floor(Date.now() / 30_000);
       const key = `${userId}:${timeStep}`;
-      if (_usedTokens.has(key)) return false; // replay detected
-      _usedTokens.set(key, Date.now());
-      _cleanUsedTokens();
+      if (usedTokens.has(key)) return false;
+      usedTokens.set(key, Date.now());
+      if (Date.now() - lastCleanup > 60_000 || usedTokens.size > 500) cleanUsedTokens();
     }
 
     return true;

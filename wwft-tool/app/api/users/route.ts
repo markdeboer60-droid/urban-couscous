@@ -9,6 +9,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import type { SessionUser, UserRole } from "@/types";
+import { USER_ROLE_VALUES } from "@/types";
 
 function unauthorized(msg = "Niet geautoriseerd") {
   return Response.json({ error: msg }, { status: 401 });
@@ -82,8 +83,7 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "userId verplicht" }, { status: 400 });
   }
 
-  const VALID_ROLES: UserRole[] = ["MEDEWERKER", "PARTNER"];
-  if (body.rol !== undefined && !VALID_ROLES.includes(body.rol)) {
+  if (body.rol !== undefined && !USER_ROLE_VALUES.includes(body.rol)) {
     return Response.json({ error: "Ongeldig roltype" }, { status: 400 });
   }
 

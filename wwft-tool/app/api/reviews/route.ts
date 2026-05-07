@@ -8,6 +8,7 @@ import { authOptions, berekenVolgendeReview } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import type { SessionUser, CompleteReviewPayload } from "@/types";
+import { RISICO_OORDEEL_VALUES } from "@/types";
 
 function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
@@ -69,11 +70,10 @@ export async function POST(req: NextRequest) {
   const user = session.user as unknown as SessionUser;
   const body: CompleteReviewPayload = await req.json();
 
-  const VALID_RISICO = ["LAAG", "MIDDEN", "HOOG"];
   if (!body.reviewId || !body.risicoOordeelNa) {
     return Response.json({ error: "reviewId en risicoOordeelNa verplicht" }, { status: 400 });
   }
-  if (!VALID_RISICO.includes(body.risicoOordeelNa)) {
+  if (!RISICO_OORDEEL_VALUES.includes(body.risicoOordeelNa)) {
     return Response.json({ error: "Ongeldig risico-oordeel" }, { status: 400 });
   }
 
