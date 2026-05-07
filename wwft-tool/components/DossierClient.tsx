@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock, FileCode } from "lucide-react";
+import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock, FileCode, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -177,6 +177,21 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
           )}
         </div>
       </div>
+
+      {/* verwijderDatum banner */}
+      {client.status === "BEEINDIGD" && client.verwijderDatum && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2">
+          <div className="max-w-5xl mx-auto flex items-center gap-2 text-sm text-red-700">
+            <Trash2 className="h-4 w-4 flex-shrink-0" />
+            <span>
+              Cliëntrelatie beëindigd. Dit dossier wordt automatisch verwijderd op{" "}
+              <strong>{new Date(client.verwijderDatum).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}</strong>
+              {" "}(art. 33 Wwft — 5 jaar bewaarplicht).
+              {client.beeindigdReden && <span className="ml-1">Reden: {client.beeindigdReden}.</span>}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Body */}
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">

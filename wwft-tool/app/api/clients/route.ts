@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, berekenVolgendeReview } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendMail, reviewReminderHtml, highRiskAlertHtml } from "@/lib/email";
+import { sendMail, reviewReminderHtml, highRiskAlertHtml, dossierGoedgekeurdHtml } from "@/lib/email";
 import type { SessionUser, CreateClientPayload, UpdateClientPayload } from "@/types";
 
 function unauthorized() {
@@ -146,10 +146,26 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    // Send review reminder email to creator
+    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
     const aanmaker = await prisma.user.findUnique({ where: { id: existing.aangemaaktDoor } });
+
+    // Notify creator: dossier approved
+    if (aanmaker?.email && aanmaker.id !== user.id) {
+      await sendMail({
+        to: aanmaker.email,
+        subject: `Dossier goedgekeurd — ${existing.naam}`,
+        html: dossierGoedgekeurdHtml({
+          clientNaam: existing.naam,
+          medewerkerNaam: aanmaker.naam,
+          partnerNaam: user.naam,
+          risicoOordeel: existing.risicoOordeel ?? "ONBEKEND",
+          dossierUrl: `${baseUrl}/dossier/${body.clientId}`,
+        }),
+      }).catch(() => {/* non-blocking */});
+    }
+
+    // Send review reminder email to creator
     if (aanmaker?.email) {
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
       await sendMail({
         to: aanmaker.email,
         subject: `Review gepland — ${existing.naam}`,

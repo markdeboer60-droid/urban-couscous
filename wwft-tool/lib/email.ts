@@ -71,6 +71,33 @@ export function reviewReminderHtml(params: {
   `;
 }
 
+export function dossierGoedgekeurdHtml(params: {
+  clientNaam: string;
+  medewerkerNaam: string;
+  partnerNaam: string;
+  risicoOordeel: string;
+  dossierUrl: string;
+}): string {
+  const risicoKleur = params.risicoOordeel === "HOOG" ? "#dc2626" : params.risicoOordeel === "MIDDEN" ? "#d97706" : "#16a34a";
+  return `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+      <h2 style="color:#16a34a">Wwft Compliance Tool — Dossier goedgekeurd</h2>
+      <p>Beste ${params.medewerkerNaam},</p>
+      <p>Partner <strong>${params.partnerNaam}</strong> heeft het dossier van cliënt
+         <strong>${params.clientNaam}</strong> goedgekeurd en afgesloten.</p>
+      <p>Vastgesteld risicoprofiel: <strong style="color:${risicoKleur}">${params.risicoOordeel}</strong></p>
+      <p>
+        <a href="${params.dossierUrl}"
+           style="background:#16a34a;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:8px">
+          Dossier bekijken
+        </a>
+      </p>
+      <hr style="margin-top:32px;border:none;border-top:1px solid #e5e7eb"/>
+      <p style="font-size:12px;color:#6b7280">Wwft Compliance Tool — automatisch bericht</p>
+    </div>
+  `;
+}
+
 export function highRiskAlertHtml(params: {
   clientNaam: string;
   medewerkerNaam: string;

@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Upload, FileText, ShieldAlert } from "lucide-react";
+import { Upload, FileText, ShieldAlert, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,7 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
   const { toast } = useToast();
   const [documents, setDocuments] = useState<(Document & { isPep?: boolean; pepBronVermelding?: string | null })[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [docZoek, setDocZoek] = useState("");
   const [form, setForm] = useState({
     type: "" as DocumentType | "",
     naamBetrokkene: "",
@@ -103,7 +104,20 @@ export function DocumentUpload({ clientId, readOnly }: DocumentUploadProps) {
 
       {documents.length > 0 && (
         <div className="space-y-2">
-          {documents.map((doc) => (
+          {documents.length > 3 && (
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+              <Input
+                placeholder="Zoek op naam betrokkene…"
+                value={docZoek}
+                onChange={(e) => setDocZoek(e.target.value)}
+                className="pl-8 h-8 text-sm"
+              />
+            </div>
+          )}
+          {documents
+            .filter((doc) => !docZoek || (doc.naamBetrokkene ?? "").toLowerCase().includes(docZoek.toLowerCase()))
+            .map((doc) => (
             <div key={doc.id} className="flex items-center gap-3 border rounded p-2 bg-gray-50 text-sm">
               <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">

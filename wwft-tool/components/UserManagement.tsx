@@ -28,8 +28,21 @@ export function UserManagement() {
     fetch("/api/users").then((r) => r.json()).then(setUsers);
   }, []);
 
+  function passwordStrength(pw: string): { ok: boolean; message: string } {
+    if (pw.length < 10) return { ok: false, message: "Minimaal 10 tekens" };
+    if (!/[0-9]/.test(pw)) return { ok: false, message: "Minimaal één cijfer" };
+    if (!/[^A-Za-z0-9]/.test(pw)) return { ok: false, message: "Minimaal één speciaal teken (!@#…)" };
+    return { ok: true, message: "" };
+  }
+
+  const pwCheck = form.wachtwoord ? passwordStrength(form.wachtwoord) : null;
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (pwCheck && !pwCheck.ok) {
+      toast({ title: "Wachtwoord te zwak", description: pwCheck.message, variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/users", {
@@ -89,7 +102,20 @@ export function UserManagement() {
             </div>
             <div className="space-y-1">
               <Label>Wachtwoord *</Label>
-              <Input type="password" value={form.wachtwoord} onChange={(e) => setForm((f) => ({ ...f, wachtwoord: e.target.value }))} required />
+              <Input
+                type="password"
+                value={form.wachtwoord}
+                onChange={(e) => setForm((f) => ({ ...f, wachtwoord: e.target.value }))}
+                required
+                className={pwCheck && !pwCheck.ok ? "border-red-400" : pwCheck?.ok ? "border-green-500" : ""}
+              />
+              {pwCheck && !pwCheck.ok && (
+                <p className="text-xs text-red-600">{pwCheck.message}</p>
+              )}
+              {pwCheck?.ok && (
+                <p className="text-xs text-green-600">Wachtwoord voldoet aan de eisen</p>
+              )}
+              <p className="text-xs text-gray-400">Min. 10 tekens, een cijfer en een speciaal teken</p>
             </div>
             <div className="space-y-1">
               <Label>Rol</Label>

@@ -5,7 +5,7 @@
  * Uses /api/auth/2fa for setup, confirmation and disabling.
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Shield, ShieldCheck, ShieldOff, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,14 @@ export function TwoFactorSetup({ totpEnabled: initialEnabled }: TwoFactorSetupPr
   const [uri, setUri] = useState("");
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!uri || !canvasRef.current) return;
+    import("qrcode").then((QRCode) => {
+      QRCode.toCanvas(canvasRef.current!, uri, { width: 180, margin: 1 });
+    });
+  }, [uri]);
 
   async function startSetup() {
     setLoading(true);
@@ -127,14 +135,12 @@ export function TwoFactorSetup({ totpEnabled: initialEnabled }: TwoFactorSetupPr
       {step === "setup" && (
         <div className="space-y-4">
           <div className="rounded border p-3 bg-gray-50 space-y-2">
-            <p className="text-xs font-medium text-gray-700">1. Scan de QR-code of voer de code handmatig in</p>
-            {/* Show OTP URI as text link since we don't render QR images server-side */}
-            <p className="text-xs text-gray-500">Open uw authenticator-app en voeg een nieuw account toe via:</p>
-            <div className="rounded border bg-white p-2">
-              <p className="text-xs font-mono break-all text-blue-700 select-all">{uri}</p>
+            <p className="text-xs font-medium text-gray-700">1. Scan de QR-code met uw authenticator-app</p>
+            <div className="flex justify-center">
+              <canvas ref={canvasRef} className="rounded border bg-white" />
             </div>
-            <p className="text-xs text-gray-500">Of gebruik de handmatige sleutel:</p>
-            <code className="text-xs font-mono bg-gray-100 rounded px-2 py-1 select-all">{secret}</code>
+            <p className="text-xs text-gray-500">Lukt scannen niet? Voer deze sleutel handmatig in:</p>
+            <code className="text-xs font-mono bg-gray-100 rounded px-2 py-1 select-all block text-center tracking-widest">{secret}</code>
           </div>
 
           <form onSubmit={confirmSetup} className="space-y-3">

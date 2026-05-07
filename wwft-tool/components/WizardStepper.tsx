@@ -122,6 +122,24 @@ export function WizardStepper({
 
   const currentStap = STAP_LABELS[activeStep];
 
+  // CTRL+Enter: advance to next step or finalize on last step
+  useEffect(() => {
+    if (isReadOnly) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (activeStep < STAP_LABELS.length - 1) {
+          setActiveStep((s) => s + 1);
+        } else {
+          handleFinalize();
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep, isReadOnly]);
+
   function renderStep() {
     if (currentStap.stap === "IDENTIFICATIE") {
       return (
@@ -248,11 +266,11 @@ export function WizardStepper({
             <ChevronLeft className="h-4 w-4" /> Vorige
           </Button>
           {activeStep < STAP_LABELS.length - 1 ? (
-            <Button onClick={() => setActiveStep((s) => s + 1)}>
+            <Button onClick={() => setActiveStep((s) => s + 1)} title="Volgende stap (Ctrl+Enter)">
               Volgende <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleFinalize} disabled={saving}>
+            <Button onClick={handleFinalize} disabled={saving} title="Beoordeling afronden (Ctrl+Enter)">
               {saving ? "Opslaan…" : "Beoordeling afronden"}
             </Button>
           )}

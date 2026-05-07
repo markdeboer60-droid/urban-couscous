@@ -5,9 +5,10 @@
  */
 
 import Link from "next/link";
-import { Building2, Calendar, AlertTriangle } from "lucide-react";
+import { Building2, Calendar, AlertTriangle, Globe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { checkLandRisico } from "@/lib/fatf";
 import type { Client, Review } from "@/types";
 
 interface ClientCardProps {
@@ -19,12 +20,14 @@ const STATUS_LABEL: Record<string, string> = {
   GESTART: "Gestart",
   IN_BEHANDELING: "In behandeling",
   AFGEROND: "Afgerond",
+  BEEINDIGD: "Beëindigd",
 };
 
-const STATUS_VARIANT: Record<string, "default" | "warning" | "success" | "secondary"> = {
+const STATUS_VARIANT: Record<string, "default" | "warning" | "success" | "secondary" | "destructive"> = {
   GESTART: "secondary",
   IN_BEHANDELING: "warning",
   AFGEROND: "success",
+  BEEINDIGD: "destructive",
 };
 
 const RISICO_VARIANT: Record<string, "laag" | "midden" | "hoog"> = {
@@ -50,8 +53,21 @@ function reviewBadge(reviews: Review[] | undefined) {
   return null;
 }
 
+const LAND_RISICO_VARIANT: Record<string, "destructive" | "warning" | "secondary"> = {
+  ZWART: "destructive",
+  GRIJS: "warning",
+  EU_HOOG: "warning",
+};
+
+const LAND_RISICO_LABEL: Record<string, string> = {
+  ZWART: "FATF zwart",
+  GRIJS: "FATF grijs",
+  EU_HOOG: "EU hoog risico",
+};
+
 export function ClientCard({ client }: ClientCardProps) {
   const badge = reviewBadge(client.reviews);
+  const landRisico = client.land ? checkLandRisico(client.land) : null;
 
   return (
     <Link href={`/dossier/${client.id}`} className="block hover:no-underline">
@@ -68,12 +84,23 @@ export function ClientCard({ client }: ClientCardProps) {
               <Building2 className="h-3 w-3" /> KvK {client.kvkNummer}
             </p>
           )}
+          {client.land && (
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <Globe className="h-3 w-3" /> {client.land}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="pb-2">
           <div className="flex flex-wrap gap-2">
             {client.risicoOordeel && (
               <Badge variant={RISICO_VARIANT[client.risicoOordeel]}>
                 Risico: {client.risicoOordeel}
+              </Badge>
+            )}
+            {landRisico && landRisico.niveau !== "GEEN" && (
+              <Badge variant={LAND_RISICO_VARIANT[landRisico.niveau]} className="flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                {LAND_RISICO_LABEL[landRisico.niveau]}
               </Badge>
             )}
             {badge}
