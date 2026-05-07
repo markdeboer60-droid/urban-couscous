@@ -21,6 +21,7 @@ interface StatusStepperProps {
 const STEPS: { status: ClientStatus; label: string }[] = [
   { status: "GESTART", label: "Gestart" },
   { status: "IN_BEHANDELING", label: "In behandeling" },
+  { status: "TER_BEOORDELING", label: "Ter beoordeling" },
   { status: "AFGEROND", label: "Afgerond" },
 ];
 
@@ -40,6 +41,8 @@ export function StatusStepper({ clientId, current, isReadOnly, onUpdate }: Statu
   const currentIdx = STEPS.findIndex((s) => s.status === current);
 
   function handleClick(status: ClientStatus, idx: number) {
+    // TER_BEOORDELING is managed by InterneReviewPanel, not clicked directly
+    if (status === "TER_BEOORDELING") return;
     if (isReadOnly || isPending || idx <= currentIdx) return;
     startTransition(async () => {
       try {
@@ -49,7 +52,7 @@ export function StatusStepper({ clientId, current, isReadOnly, onUpdate }: Statu
           body: JSON.stringify({ clientId, status }),
         });
         if (!res.ok) throw new Error((await res.json()).error);
-        toast({ title: `Status gewijzigd naar ${status.toLowerCase().replace("_", " ")}` });
+        toast({ title: `Status gewijzigd naar ${status.toLowerCase().replace(/_/g, " ")}` });
         onUpdate?.(status);
       } catch (err: unknown) {
         toast({ title: "Fout", description: String(err), variant: "destructive" });
@@ -62,7 +65,7 @@ export function StatusStepper({ clientId, current, isReadOnly, onUpdate }: Statu
       {STEPS.map((step, i) => {
         const isDone = i < currentIdx;
         const isActive = i === currentIdx;
-        const isClickable = !isReadOnly && i === currentIdx + 1;
+        const isClickable = !isReadOnly && i === currentIdx + 1 && step.status !== "TER_BEOORDELING";
 
         return (
           <div key={step.status} className="flex items-center">

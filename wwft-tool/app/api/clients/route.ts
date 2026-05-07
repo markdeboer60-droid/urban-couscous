@@ -75,6 +75,10 @@ export async function PATCH(req: NextRequest) {
     eddGoedkeuren?: boolean;
     beeindigen?: boolean;
     beeindigdReden?: string;
+    indienen?: boolean;
+    interneReview?: boolean;
+    interneReviewStatus?: "GOEDGEKEURD" | "TERUGGESTUURD";
+    interneReviewNotitie?: string;
   } = await req.json();
 
   if (!body.clientId) {
@@ -97,6 +101,9 @@ export async function PATCH(req: NextRequest) {
   if (body.beeindigen && user.rol !== "PARTNER") {
     return Response.json({ error: "Alleen partners mogen een cliëntrelatie beëindigen" }, { status: 403 });
   }
+  if (body.interneReview && user.rol !== "SENIOR" && user.rol !== "PARTNER") {
+    return Response.json({ error: "Alleen seniors en partners mogen intern beoordelen" }, { status: 403 });
+  }
 
   if (body.status && !CLIENT_STATUS_VALUES.includes(body.status)) {
     return Response.json({ error: "Ongeldige status" }, { status: 400 });
@@ -113,6 +120,36 @@ export async function PATCH(req: NextRequest) {
   if (body.land !== undefined) updateData.land = body.land?.trim() || null;
   if (body.isEdd !== undefined) updateData.isEdd = body.isEdd;
   if (body.eddBronVermogen !== undefined) updateData.eddBronVermogen = body.eddBronVermogen;
+
+  // Medewerker submits dossier for internal review → TER_BEOORDELING
+  if (body.indienen) {
+    if (existing.status !== "IN_BEHANDELING") {
+      return Response.json({ error: "Dossier moet in behandeling zijn om in te dienen" }, { status: 422 });
+    }
+    updateData.status = "TER_BEOORDELING";
+    updateData.terBeoordelingDoor = user.id;
+    updateData.terBeoordelingOp = new Date();
+    updateData.interneReviewStatus = null;
+    updateData.interneReviewNotitie = null;
+  }
+
+  // SENIOR / PARTNER performs internal review → approved or returned
+  if (body.interneReview) {
+    if (existing.status !== "TER_BEOORDELING") {
+      return Response.json({ error: "Dossier staat niet ter beoordeling" }, { status: 422 });
+    }
+    if (!body.interneReviewStatus) {
+      return Response.json({ error: "interneReviewStatus verplicht" }, { status: 400 });
+    }
+    updateData.interneReviewDoor = user.id;
+    updateData.interneReviewOp = new Date();
+    updateData.interneReviewStatus = body.interneReviewStatus;
+    updateData.interneReviewNotitie = body.interneReviewNotitie ?? null;
+    if (body.interneReviewStatus === "TERUGGESTUURD") {
+      updateData.status = "IN_BEHANDELING";
+    }
+    // GOEDGEKEURD keeps TER_BEOORDELING; partner still needs to finalize with goedkeuren
+  }
 
   if (body.goedkeuren) {
     if (!existing.risicoOordeel) {
@@ -157,6 +194,13 @@ export async function PATCH(req: NextRequest) {
     logAudit(body.clientId, user.id, "GOEDGEKEURD");
   } else if (body.eddGoedkeuren) {
     logAudit(body.clientId, user.id, "EDD_GOEDGEKEURD");
+  } else if (body.indienen) {
+    logAudit(body.clientId, user.id, "TER_BEOORDELING_INGEDIEND");
+  } else if (body.interneReview) {
+    logAudit(body.clientId, user.id, "INTERNE_REVIEW", {
+      status: body.interneReviewStatus,
+      notitie: body.interneReviewNotitie?.slice(0, 120),
+    });
   } else {
     if (body.status && body.status !== existing.status) {
       logAudit(body.clientId, user.id, "STATUS_GEWIJZIGD", { oud: existing.status, nieuw: body.status });
@@ -167,8 +211,9 @@ export async function PATCH(req: NextRequest) {
   }
 
   // On finalization: create first review + send notifications
-  if (body.goedkeuren && existing.risicoOordeel) {
-    const volgende = berekenVolgendeReview(existing.risicoOordeel);
+  if (body.goedkeuren && (existing.risicoOordeel || body.risicoOordeel)) {
+    const risicoForReview = (body.risicoOordeel ?? existing.risicoOordeel)!;
+    const volgende = berekenVolgendeReview(risicoForReview);
     const review = await prisma.review.create({
       data: {
         clientId: body.clientId,
@@ -189,7 +234,7 @@ export async function PATCH(req: NextRequest) {
           clientNaam: existing.naam,
           medewerkerNaam: aanmaker.naam,
           partnerNaam: user.naam,
-          risicoOordeel: existing.risicoOordeel ?? "ONBEKEND",
+          risicoOordeel: risicoForReview,
           dossierUrl: `${baseUrl}/dossier/${body.clientId}`,
         }),
       }).catch(() => {/* non-blocking */});

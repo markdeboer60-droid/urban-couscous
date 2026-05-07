@@ -13,6 +13,7 @@ datasource db {
 
 enum UserRole {
   MEDEWERKER
+  SENIOR
   PARTNER
 }
 
@@ -25,6 +26,7 @@ enum RisicoOordeel {
 enum ClientStatus {
   GESTART
   IN_BEHANDELING
+  TER_BEOORDELING
   AFGEROND
   BEEINDIGD
 }
@@ -132,10 +134,12 @@ model User {
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
-  clientsAangemaakt    Client[]             @relation("ClientAangemaakt")
-  clientsGoedgekeurd   Client[]             @relation("ClientGoedgekeurd")
-  clientsEddGoedgekeurd Client[]            @relation("ClientEddGoedgekeurd")
-  clientsBeeindigd     Client[]             @relation("ClientBeeindigd")
+  clientsAangemaakt        Client[]             @relation("ClientAangemaakt")
+  clientsGoedgekeurd       Client[]             @relation("ClientGoedgekeurd")
+  clientsEddGoedgekeurd    Client[]             @relation("ClientEddGoedgekeurd")
+  clientsBeeindigd         Client[]             @relation("ClientBeeindigd")
+  clientsTerBeoordeling    Client[]             @relation("ClientTerBeoordeling")
+  clientsInterneReview     Client[]             @relation("ClientInterneReview")
   searchQueries        SearchQuery[]
   searchActions        SearchResultAction[]
   documenten           Document[]
@@ -169,15 +173,24 @@ model Client {
   beeindigdReden   String?
   beeindigdDoor    String?
   verwijderDatum   DateTime?
+  // Interne review (goedkeuringschain)
+  terBeoordelingDoor   String?
+  terBeoordelingOp     DateTime?
+  interneReviewDoor    String?
+  interneReviewOp      DateTime?
+  interneReviewNotitie String?
+  interneReviewStatus  String?   // GOEDGEKEURD | TERUGGESTUURD
   // Monitoring
   lastScreenedOp   DateTime?
   kvkSnapshot      String?   // JSON snapshot for change detection
 
-  organization         Organization @relation(fields: [organizationId], references: [id])
-  aanmaker             User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
-  goedgekeurdeUser     User?        @relation("ClientGoedgekeurd", fields: [goedgekeurdDoor], references: [id])
-  eddGoedgekeurdeUser  User?        @relation("ClientEddGoedgekeurd", fields: [eddGoedgekeurdDoor], references: [id])
-  beeindigdeUser       User?        @relation("ClientBeeindigd", fields: [beeindigdDoor], references: [id])
+  organization               Organization @relation(fields: [organizationId], references: [id])
+  aanmaker                   User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
+  goedgekeurdeUser           User?        @relation("ClientGoedgekeurd", fields: [goedgekeurdDoor], references: [id])
+  eddGoedgekeurdeUser        User?        @relation("ClientEddGoedgekeurd", fields: [eddGoedgekeurdDoor], references: [id])
+  beeindigdeUser             User?        @relation("ClientBeeindigd", fields: [beeindigdDoor], references: [id])
+  terBeoordelingUser         User?        @relation("ClientTerBeoordeling", fields: [terBeoordelingDoor], references: [id])
+  interneReviewUser          User?        @relation("ClientInterneReview", fields: [interneReviewDoor], references: [id])
 
   wizardAnswers     WizardAnswer[]
   documents         Document[]
@@ -190,6 +203,7 @@ model Client {
   notificaties      Notificatie[]
   opmerkingen       Opmerking[]
   auditLogs         AuditLog[]
+  portaalTokens     ClientPortaalToken[]
 }
 
 model WizardAnswer {
@@ -354,4 +368,15 @@ model AuditLog {
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id])
+}
+
+model ClientPortaalToken {
+  id         String    @id @default(cuid())
+  token      String    @unique @default(cuid())
+  clientId   String
+  expiresAt  DateTime
+  gebruiktOp DateTime?
+  aangemaakt DateTime  @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }

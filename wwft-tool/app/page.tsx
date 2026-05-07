@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { SessionUser } from "@/types";
+import type { SessionUser, InterneReviewStatus } from "@/types";
 import { DashboardClient } from "@/components/DashboardClient";
 
 export default async function DashboardPage() {
@@ -36,6 +36,9 @@ export default async function DashboardPage() {
     eddGoedgekeurdOp: c.eddGoedgekeurdOp?.toISOString() ?? null,
     beeindigd: c.beeindigd?.toISOString() ?? null,
     verwijderDatum: c.verwijderDatum?.toISOString() ?? null,
+    terBeoordelingOp: c.terBeoordelingOp?.toISOString() ?? null,
+    interneReviewOp: c.interneReviewOp?.toISOString() ?? null,
+    interneReviewStatus: (c.interneReviewStatus ?? null) as InterneReviewStatus | null,
     reviews: c.reviews.map((r) => ({
       ...r,
       volgendeReviewOp: r.volgendeReviewOp.toISOString(),

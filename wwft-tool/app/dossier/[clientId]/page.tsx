@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { SessionUser } from "@/types";
+import type { SessionUser, InterneReviewStatus } from "@/types";
 import { DossierClient } from "@/components/DossierClient";
 
 interface Props {
@@ -25,6 +25,8 @@ export default async function DossierPage({ params }: Props) {
     include: {
       aanmaker: { select: { naam: true } },
       goedgekeurdeUser: { select: { naam: true } },
+      terBeoordelingUser: { select: { naam: true } },
+      interneReviewUser: { select: { naam: true } },
     },
   });
 
@@ -37,6 +39,9 @@ export default async function DossierPage({ params }: Props) {
     eddGoedgekeurdOp: client.eddGoedgekeurdOp?.toISOString() ?? null,
     beeindigd: client.beeindigd?.toISOString() ?? null,
     verwijderDatum: client.verwijderDatum?.toISOString() ?? null,
+    terBeoordelingOp: client.terBeoordelingOp?.toISOString() ?? null,
+    interneReviewOp: client.interneReviewOp?.toISOString() ?? null,
+    interneReviewStatus: (client.interneReviewStatus ?? null) as InterneReviewStatus | null,
   };
 
   return (

@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock, FileCode, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Download, FileWarning, Shield, CheckCircle, Clock, FileCode, Trash2, Link2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import { MonitoringPanel } from "@/components/MonitoringPanel";
 import { UboStructuurEditor } from "@/components/UboStructuurEditor";
 import { OpmerkingThread } from "@/components/OpmerkingThread";
 import { AuditLogPanel } from "@/components/AuditLogPanel";
+import { InterneReviewPanel } from "@/components/InterneReviewPanel";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit, Melding } from "@/types";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,9 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
 
   const isReadOnly = client.status === "AFGEROND" || client.status === "BEEINDIGD";
   const [activeTab, setActiveTab] = useState<"osint" | "nieuws" | "ubo" | "monitoring">("osint");
+  const [generatingPortaal, setGeneratingPortaal] = useState(false);
+  const [portaalLink, setPortaalLink] = useState<string | null>(null);
+  const [portaalCopied, setPortaalCopied] = useState(false);
   const [nieuwsHits, setNieuwsHits] = useState<NieuwsHit[]>([]);
   const [nieuwsLoading, setNieuwsLoading] = useState(false);
 
@@ -106,6 +110,32 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
     } finally {
       setNieuwsLoading(false);
     }
+  }
+
+  async function handleGenereerPortaal() {
+    setGeneratingPortaal(true);
+    try {
+      const res = await fetch("/api/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: client.id }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      const data = await res.json();
+      const baseUrl = window.location.origin;
+      setPortaalLink(`${baseUrl}/portal/${data.token}`);
+    } catch (err: unknown) {
+      toast({ title: "Fout", description: String(err), variant: "destructive" });
+    } finally {
+      setGeneratingPortaal(false);
+    }
+  }
+
+  async function handleCopyPortaal() {
+    if (!portaalLink) return;
+    await navigator.clipboard.writeText(portaalLink);
+    setPortaalCopied(true);
+    setTimeout(() => setPortaalCopied(false), 2000);
   }
 
   async function handleApprove() {
@@ -176,7 +206,33 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
                   <Download className="h-3.5 w-3.5" /> PDF
                 </Button>
               </a>
-              {currentUser.rol === "PARTNER" && !isReadOnly && client.status === "IN_BEHANDELING" && (
+              {!isReadOnly && (
+                <>
+                  {portaalLink ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCopyPortaal}
+                      className="flex items-center gap-1"
+                    >
+                      {portaalCopied ? <CheckCircle className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                      {portaalCopied ? "Gekopieerd" : "Portaallink"}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleGenereerPortaal}
+                      disabled={generatingPortaal}
+                      className="flex items-center gap-1"
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                      {generatingPortaal ? "…" : "Cliëntenportaal"}
+                    </Button>
+                  )}
+                </>
+              )}
+              {currentUser.rol === "PARTNER" && !isReadOnly && (client.status === "IN_BEHANDELING" || client.status === "TER_BEOORDELING") && (
                 <Button size="sm" onClick={handleApprove} className="flex items-center gap-1">
                   <Shield className="h-3.5 w-3.5" /> Goedkeuren
                 </Button>
@@ -388,6 +444,15 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
             </TabsContent>
           </Tabs>
         </div>
+        )}
+
+        {/* Interne review / goedkeuringschain */}
+        {client.status !== "AFGEROND" && client.status !== "BEEINDIGD" && (
+          <InterneReviewPanel
+            client={client}
+            currentUserRol={currentUser.rol}
+            onUpdate={(patch) => setClient((c) => ({ ...c, ...patch }))}
+          />
         )}
 
         {/* Review panel — always visible */}

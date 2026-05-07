@@ -6,13 +6,14 @@
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserRole = "MEDEWERKER" | "PARTNER";
+export type UserRole = "MEDEWERKER" | "SENIOR" | "PARTNER";
 export type RisicoOordeel = "LAAG" | "MIDDEN" | "HOOG";
-export type ClientStatus = "GESTART" | "IN_BEHANDELING" | "AFGEROND" | "BEEINDIGD";
+export type ClientStatus = "GESTART" | "IN_BEHANDELING" | "TER_BEOORDELING" | "AFGEROND" | "BEEINDIGD";
+export type InterneReviewStatus = "GOEDGEKEURD" | "TERUGGESTUURD";
 
-export const USER_ROLE_VALUES: UserRole[] = ["MEDEWERKER", "PARTNER"];
+export const USER_ROLE_VALUES: UserRole[] = ["MEDEWERKER", "SENIOR", "PARTNER"];
 export const RISICO_OORDEEL_VALUES: RisicoOordeel[] = ["LAAG", "MIDDEN", "HOOG"];
-export const CLIENT_STATUS_VALUES: ClientStatus[] = ["GESTART", "IN_BEHANDELING", "AFGEROND", "BEEINDIGD"];
+export const CLIENT_STATUS_VALUES: ClientStatus[] = ["GESTART", "IN_BEHANDELING", "TER_BEOORDELING", "AFGEROND", "BEEINDIGD"];
 export type WizardStap =
   | "BEDRIJFSVERKENNING"
   | "WWFT"
@@ -67,9 +68,27 @@ export interface Client {
   beeindigdReden?: string | null;
   beeindigdDoor?: string | null;
   verwijderDatum?: string | null;
+  // Interne review
+  terBeoordelingDoor?: string | null;
+  terBeoordelingOp?: string | null;
+  interneReviewDoor?: string | null;
+  interneReviewOp?: string | null;
+  interneReviewNotitie?: string | null;
+  interneReviewStatus?: InterneReviewStatus | null;
   /** Populated in list queries */
   aanmaker?: Pick<User, "naam">;
   reviews?: Review[];
+  terBeoordelingUser?: Pick<User, "naam"> | null;
+  interneReviewUser?: Pick<User, "naam"> | null;
+}
+
+export interface ClientPortaalToken {
+  id: string;
+  token: string;
+  clientId: string;
+  expiresAt: string;
+  gebruiktOp?: string | null;
+  aangemaakt: string;
 }
 
 export interface WizardAnswer {
