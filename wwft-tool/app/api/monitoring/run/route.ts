@@ -17,6 +17,10 @@ export async function POST(_req: NextRequest) {
 
   const user = session.user as unknown as SessionUser;
 
+  if (user.rol !== "PARTNER") {
+    return Response.json({ error: "Alleen partners mogen een screening starten" }, { status: 403 });
+  }
+
   const result = await screenOrganization(user.organizationId);
 
   // Recalculate next scheduled run if settings exist

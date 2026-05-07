@@ -82,6 +82,11 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "userId verplicht" }, { status: 400 });
   }
 
+  const VALID_ROLES: UserRole[] = ["MEDEWERKER", "PARTNER"];
+  if (body.rol !== undefined && !VALID_ROLES.includes(body.rol)) {
+    return Response.json({ error: "Ongeldig roltype" }, { status: 400 });
+  }
+
   const target = await prisma.user.findFirst({
     where: { id: body.userId, organizationId: user.organizationId },
   });

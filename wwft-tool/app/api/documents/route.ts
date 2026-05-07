@@ -32,7 +32,22 @@ export async function GET(req: NextRequest) {
 
   const docs = await prisma.document.findMany({
     where: { clientId },
-    include: { uploader: { select: { naam: true } } },
+    select: {
+      id: true,
+      clientId: true,
+      type: true,
+      bestandsnaam: true,
+      naamBetrokkene: true,
+      functie: true,
+      geboortedatum: true,
+      verloopDatum: true,
+      verificatiemethode: true,
+      isPep: true,
+      pepBronVermelding: true,
+      uploadOp: true,
+      uploadDoor: true,
+      uploader: { select: { naam: true } },
+    },
     orderBy: { uploadOp: "desc" },
   });
 
@@ -66,6 +81,11 @@ export async function POST(req: NextRequest) {
   const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
   if (file.size > MAX_BYTES) {
     return Response.json({ error: "Bestand is te groot (max 10 MB)" }, { status: 413 });
+  }
+
+  const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png"];
+  if (!ALLOWED_MIME.includes(file.type)) {
+    return Response.json({ error: "Alleen PDF, JPG en PNG zijn toegestaan" }, { status: 415 });
   }
 
   // Verify ownership
