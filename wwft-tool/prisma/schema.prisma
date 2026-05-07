@@ -86,8 +86,38 @@ model Organization {
   kvkNummer  String?
   aangemaakt DateTime @default(now())
 
-  users   User[]
-  clients Client[]
+  users    User[]
+  clients  Client[]
+  settings OrganizationSettings?
+  notificaties Notificatie[]
+}
+
+model OrganizationSettings {
+  id                   String    @id @default(cuid())
+  organizationId       String    @unique
+  monitoringFrequentie String    @default("WEKELIJKS") // DAGELIJKS | WEKELIJKS
+  monitoringTijdstip   String    @default("08:00")     // HH:MM UTC
+  monitoringDagVanWeek Int       @default(1)            // 1=ma…7=zo
+  volgendeMonitoringRun DateTime?
+  emailNotificaties    Boolean   @default(true)
+  appNotificaties      Boolean   @default(true)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Notificatie {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String   // MONITORING_ALERT | REVIEW_DUE | HOOG_RISICO
+  titel          String
+  bericht        String
+  clientId       String?
+  gelezen        Boolean  @default(false)
+  gelezenOp      DateTime?
+  aangemaakt     DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  client       Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
 }
 
 model User {
@@ -139,6 +169,7 @@ model Client {
   verwijderDatum   DateTime?
   // Monitoring
   lastScreenedOp   DateTime?
+  kvkSnapshot      String?   // JSON snapshot for change detection
 
   organization         Organization @relation(fields: [organizationId], references: [id])
   aanmaker             User         @relation("ClientAangemaakt", fields: [aangemaaktDoor], references: [id])
@@ -154,6 +185,7 @@ model Client {
   monitoringAlerts  MonitoringAlert[]
   uboNodes          UboNode[]
   uboEdges          UboEdge[]
+  notificaties      Notificatie[]
 }
 
 model WizardAnswer {

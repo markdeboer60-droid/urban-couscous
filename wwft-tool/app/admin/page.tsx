@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/types";
 import { UserManagement } from "@/components/UserManagement";
+import { MonitoringSettings } from "@/components/MonitoringSettings";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -27,8 +28,11 @@ export default async function AdminPage() {
           <h1 className="font-semibold text-gray-900">Beheer</h1>
         </div>
       </div>
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-8">
         <UserManagement />
+        <div className="border rounded-lg p-4 bg-white space-y-4">
+          <MonitoringSettings />
+        </div>
       </main>
     </div>
   );

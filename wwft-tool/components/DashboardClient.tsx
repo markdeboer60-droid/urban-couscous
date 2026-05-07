@@ -16,6 +16,7 @@ import { ClientCard } from "@/components/ClientCard";
 import { NewClientDialog } from "@/components/NewClientDialog";
 import { KpiCards } from "@/components/KpiCards";
 import { MonitoringPanel } from "@/components/MonitoringPanel";
+import { NotificatieBel } from "@/components/NotificatieBel";
 import type { Client, Review, ClientStatus, UserRole } from "@/types";
 
 interface DashboardClientProps {
@@ -57,6 +58,7 @@ export function DashboardClient({ clients, userName, userRol }: DashboardClientP
             <Link href="/profiel" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
               <UserCircle className="h-4 w-4" /> Profiel
             </Link>
+            <NotificatieBel />
             <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/login" })} className="flex items-center gap-1">
               <LogOut className="h-4 w-4" /> Uitloggen
             </Button>
