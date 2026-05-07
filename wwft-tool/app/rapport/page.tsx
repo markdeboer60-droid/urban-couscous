@@ -10,7 +10,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/types";
 import Link from "next/link";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { PrintKnop } from "@/components/PrintKnop";
 
 export default async function RapportPage() {
   const session = await getServerSession(authOptions);
@@ -127,13 +128,7 @@ export default async function RapportPage() {
             </Link>
             <h1 className="font-semibold text-gray-900">Managementrapport</h1>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 border rounded px-3 py-1.5"
-          >
-            <Printer className="h-4 w-4" />
-            Afdrukken / PDF
-          </button>
+          <PrintKnop />
         </div>
       </div>
 

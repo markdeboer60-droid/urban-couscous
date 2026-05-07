@@ -22,9 +22,9 @@ import { UboStructuurEditor } from "@/components/UboStructuurEditor";
 import { OpmerkingThread } from "@/components/OpmerkingThread";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientStatus, UserRole, OpenSanctionsHit, WebSearchHit, GleifHit, IcijHit, Melding } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface NieuwsHit { titel: string; url: string; samenvatting: string; }
-import { cn } from "@/lib/utils";
 
 interface DossierClientProps {
   client: Client & {

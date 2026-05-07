@@ -32,9 +32,12 @@ interface MonitoringPanelProps {
 }
 
 const TYPE_CONFIG: Record<string, { label: string; variant: "destructive" | "warning"; icon: React.ReactNode }> = {
-  SANCTIONS_HIT: { label: "Sanctielijst hit", variant: "destructive", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-  KVK_FAILLIET: { label: "Faillissement", variant: "destructive", icon: <Building2 className="h-3.5 w-3.5" /> },
-  KVK_INACTIEF: { label: "Uitgeschreven KvK", variant: "warning", icon: <Building2 className="h-3.5 w-3.5" /> },
+  SANCTIONS_HIT:   { label: "Sanctielijst hit",      variant: "destructive", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  KVK_FAILLIET:    { label: "Faillissement",          variant: "destructive", icon: <Building2 className="h-3.5 w-3.5" /> },
+  KVK_INACTIEF:    { label: "Uitgeschreven KvK",      variant: "warning",     icon: <Building2 className="h-3.5 w-3.5" /> },
+  KVK_WIJZIGING:   { label: "KvK-wijziging",          variant: "warning",     icon: <Building2 className="h-3.5 w-3.5" /> },
+  RECHTSZAAK:      { label: "Rechtszaak gevonden",    variant: "warning",     icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  NEGATIEF_NIEUWS: { label: "Negatief nieuws",        variant: "warning",     icon: <AlertTriangle className="h-3.5 w-3.5" /> },
 };
 
 export function MonitoringPanel({ clientId, showRunButton }: MonitoringPanelProps) {
