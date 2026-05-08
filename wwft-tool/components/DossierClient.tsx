@@ -170,6 +170,7 @@ export function DossierClient({ client: initialClient, currentUser }: DossierCli
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="text-lg font-bold text-gray-900">{client.naam}</h1>
+            {client.rechtsvorm && <span className="text-xs text-gray-400">{client.rechtsvorm}</span>}
             {client.kvkNummer && <span className="text-sm text-gray-500">KvK {client.kvkNummer}</span>}
             {(client as Client & { land?: string }).land && (
               <span className="text-sm text-gray-500">{(client as Client & { land?: string }).land}</span>

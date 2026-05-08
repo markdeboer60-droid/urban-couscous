@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Search, X, FileText, MessageSquare, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SearchClient { id: string; naam: string; kvkNummer: string | null; status: string; risicoOordeel: string | null; }
+interface SearchClient { id: string; naam: string; kvkNummer: string | null; status: string; risicoOordeel: string | null; clientType?: string | null; }
 interface SearchDoc { id: string; bestandsnaam: string; naamBetrokkene: string | null; functie: string | null; clientId: string; client: { naam: string }; }
 interface SearchOpmerking { id: string; tekst: string; clientId: string; aangemaakt: string; client: { naam: string }; user: { naam: string }; }
 
@@ -66,7 +66,7 @@ export function GlobalZoek() {
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder="Zoek cliënten, documenten…"
-          className="h-9 pl-8 pr-7 text-sm border rounded-md bg-white w-56 focus:w-72 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="h-9 pl-8 pr-7 text-sm border rounded-md bg-white w-64 focus:w-80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {query && (
           <button onClick={() => { setQuery(""); setResults(null); }} className="absolute right-2 top-2.5">

@@ -42,7 +42,13 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return unauthorized();
 
   const user = session.user as unknown as SessionUser;
-  const body: CreateClientPayload & { land?: string } = await req.json();
+  const body: CreateClientPayload & {
+    land?: string;
+    clientType?: string;
+    rechtsvorm?: string;
+    sbiCode?: string;
+    sbiOmschrijving?: string;
+  } = await req.json();
 
   if (!body.naam?.trim()) {
     return Response.json({ error: "Naam verplicht" }, { status: 400 });
@@ -53,6 +59,10 @@ export async function POST(req: NextRequest) {
       naam: body.naam.trim(),
       kvkNummer: body.kvkNummer?.trim() || null,
       land: body.land?.trim() || null,
+      clientType: body.clientType ?? "RECHTSPERSOON",
+      rechtsvorm: body.rechtsvorm?.trim() || null,
+      sbiCode: body.sbiCode?.trim() || null,
+      sbiOmschrijving: body.sbiOmschrijving?.trim() || null,
       organizationId: user.organizationId,
       aangemaaktDoor: user.id,
       status: "GESTART",
@@ -118,6 +128,8 @@ export async function PATCH(req: NextRequest) {
   if (body.risicoMotivatie !== undefined) updateData.risicoMotivatie = body.risicoMotivatie;
   if (body.eindOpmerkingen !== undefined) updateData.eindOpmerkingen = body.eindOpmerkingen;
   if (body.land !== undefined) updateData.land = body.land?.trim() || null;
+  if ((body as { rechtsvorm?: string }).rechtsvorm !== undefined)
+    updateData.rechtsvorm = (body as { rechtsvorm?: string }).rechtsvorm?.trim() || null;
   if (body.isEdd !== undefined) updateData.isEdd = body.isEdd;
   if (body.eddBronVermogen !== undefined) updateData.eddBronVermogen = body.eddBronVermogen;
 

@@ -26,9 +26,12 @@ export async function GET(req: NextRequest) {
         OR: [
           { naam: { contains: q } },
           { kvkNummer: { contains: q } },
+          { risicoMotivatie: { contains: q } },
+          { rechtsvorm: { contains: q } },
+          { sbiOmschrijving: { contains: q } },
         ],
       },
-      select: { id: true, naam: true, kvkNummer: true, status: true, risicoOordeel: true },
+      select: { id: true, naam: true, kvkNummer: true, status: true, risicoOordeel: true, clientType: true },
       take: 8,
     }),
 

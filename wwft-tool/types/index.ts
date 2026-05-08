@@ -10,6 +10,14 @@ export type UserRole = "MEDEWERKER" | "SENIOR" | "PARTNER";
 export type RisicoOordeel = "LAAG" | "MIDDEN" | "HOOG";
 export type ClientStatus = "GESTART" | "IN_BEHANDELING" | "TER_BEOORDELING" | "AFGEROND" | "BEEINDIGD";
 export type InterneReviewStatus = "GOEDGEKEURD" | "TERUGGESTUURD";
+export type ClientType = "RECHTSPERSOON" | "PRIVEPERSOON" | "TRUST" | "STICHTING";
+
+export const CLIENT_TYPE_LABELS: Record<ClientType, string> = {
+  RECHTSPERSOON: "Rechtspersoon",
+  PRIVEPERSOON: "Privépersoon",
+  TRUST: "Trust / buitenlandse stichting",
+  STICHTING: "Stichting / vereniging",
+};
 
 export const USER_ROLE_VALUES: UserRole[] = ["MEDEWERKER", "SENIOR", "PARTNER"];
 export const RISICO_OORDEEL_VALUES: RisicoOordeel[] = ["LAAG", "MIDDEN", "HOOG"];
@@ -50,6 +58,10 @@ export interface Client {
   naam: string;
   kvkNummer?: string | null;
   land?: string | null;
+  clientType?: ClientType;
+  rechtsvorm?: string | null;
+  sbiCode?: string | null;
+  sbiOmschrijving?: string | null;
   risicoOordeel?: RisicoOordeel | null;
   risicoMotivatie?: string | null;
   status: ClientStatus;

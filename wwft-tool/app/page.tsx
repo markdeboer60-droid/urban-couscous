@@ -39,6 +39,7 @@ export default async function DashboardPage() {
     terBeoordelingOp: c.terBeoordelingOp?.toISOString() ?? null,
     interneReviewOp: c.interneReviewOp?.toISOString() ?? null,
     interneReviewStatus: (c.interneReviewStatus ?? null) as InterneReviewStatus | null,
+    clientType: (c.clientType ?? "RECHTSPERSOON") as import("@/types").ClientType,
     reviews: c.reviews.map((r) => ({
       ...r,
       volgendeReviewOp: r.volgendeReviewOp.toISOString(),
@@ -46,5 +47,5 @@ export default async function DashboardPage() {
     })),
   }));
 
-  return <DashboardClient clients={serialized} userName={user.naam} userRol={user.rol} />;
+  return <DashboardClient clients={serialized} userName={user.naam} userRol={user.rol} userId={user.id} />;
 }

@@ -50,6 +50,7 @@ export default async function WizardPage({ params }: Props) {
         <WizardStepper
           clientId={clientId}
           clientNaam={client.naam}
+          clientType={client.clientType}
           isReadOnly={isReadOnly}
           userRol={user.rol as UserRole}
           eddData={{

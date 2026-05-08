@@ -42,6 +42,11 @@ export default async function DossierPage({ params }: Props) {
     terBeoordelingOp: client.terBeoordelingOp?.toISOString() ?? null,
     interneReviewOp: client.interneReviewOp?.toISOString() ?? null,
     interneReviewStatus: (client.interneReviewStatus ?? null) as InterneReviewStatus | null,
+    // New fields from clientType migration
+    clientType: (client.clientType ?? "RECHTSPERSOON") as import("@/types").ClientType,
+    rechtsvorm: client.rechtsvorm ?? null,
+    sbiCode: client.sbiCode ?? null,
+    sbiOmschrijving: client.sbiOmschrijving ?? null,
   };
 
   return (

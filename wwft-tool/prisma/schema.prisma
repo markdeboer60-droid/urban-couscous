@@ -155,6 +155,10 @@ model Client {
   naam             String
   kvkNummer        String?
   land             String?
+  clientType       String         @default("RECHTSPERSOON") // RECHTSPERSOON | PRIVEPERSOON | TRUST | STICHTING
+  rechtsvorm       String?
+  sbiCode          String?
+  sbiOmschrijving  String?
   risicoOordeel    RisicoOordeel?
   risicoMotivatie  String?
   status           ClientStatus   @default(GESTART)

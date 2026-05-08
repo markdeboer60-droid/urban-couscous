@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 interface WizardStepperProps {
   clientId: string;
   clientNaam: string;
+  clientType?: string;
   isReadOnly?: boolean;
   userRol?: UserRole;
   eddData?: {
@@ -48,6 +49,7 @@ const STAP_LABELS: { stap: WizardStap | "IDENTIFICATIE"; label: string }[] = [
 export function WizardStepper({
   clientId,
   clientNaam,
+  clientType,
   isReadOnly,
   userRol = "MEDEWERKER",
   eddData,
@@ -167,7 +169,7 @@ export function WizardStepper({
     }
 
     if (currentStap.stap === "BEOORDELING") {
-      const categories = getVragenPerCategorie("BEOORDELING");
+      const categories = getVragenPerCategorie("BEOORDELING", clientType);
       const score = berekenRisicoScore(answers);
       return (
         <div className="space-y-6">
@@ -227,7 +229,7 @@ export function WizardStepper({
     }
 
     const stap = currentStap.stap as WizardStap;
-    const categories = getVragenPerCategorie(stap);
+    const categories = getVragenPerCategorie(stap, clientType);
 
     return (
       <div className="space-y-6">

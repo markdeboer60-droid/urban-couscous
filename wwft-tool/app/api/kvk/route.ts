@@ -16,6 +16,10 @@ interface KvkResult {
   land: string;
   sbiCode?: string;
   sbiOmschrijving?: string;
+  isActief?: boolean;
+  isOpgeheven?: boolean;
+  isFailliet?: boolean;
+  isMock?: boolean;
 }
 
 const MOCK_RESULTS: Record<string, KvkResult> = {
@@ -27,6 +31,9 @@ const MOCK_RESULTS: Record<string, KvkResult> = {
     land: "Nederland",
     sbiCode: "6920",
     sbiOmschrijving: "Administratiekantoren en belastingadviseurs",
+    isActief: true,
+    isOpgeheven: false,
+    isFailliet: false,
   },
   "87654321": {
     naam: "Test Holding NV",
@@ -36,6 +43,9 @@ const MOCK_RESULTS: Record<string, KvkResult> = {
     land: "Nederland",
     sbiCode: "6420",
     sbiOmschrijving: "Financiële holdings",
+    isActief: true,
+    isOpgeheven: false,
+    isFailliet: false,
   },
 };
 
@@ -68,6 +78,8 @@ export async function GET(req: NextRequest) {
       const item = data.resultaten?.[0];
       if (!item) return Response.json({ error: "Niet gevonden in KvK-register" }, { status: 404 });
 
+      const dossierType = (item.dossierType ?? item.type ?? "").toUpperCase();
+      const indEntType = (item.indEntType ?? "").toUpperCase();
       return Response.json({
         naam: item.naam ?? item.handelsnaam ?? "",
         kvkNummer: kvk,
@@ -78,6 +90,9 @@ export async function GET(req: NextRequest) {
         land: item.land ?? "Nederland",
         sbiCode: item.sbiActiviteiten?.[0]?.sbiCode ?? null,
         sbiOmschrijving: item.sbiActiviteiten?.[0]?.sbiOmschrijving ?? null,
+        isActief: item.indActief === "Ja" || item.actief === true,
+        isOpgeheven: dossierType.includes("OPGEHEVEN") || indEntType.includes("OPGEHEVEN") || item.indOpgeheven === "Ja",
+        isFailliet: item.indFaillissement === "Ja" || item.faillissement === true,
       } satisfies KvkResult);
     } catch (err: unknown) {
       return Response.json({ error: String(err) }, { status: 502 });
