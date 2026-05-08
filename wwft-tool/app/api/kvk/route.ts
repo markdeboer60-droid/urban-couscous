@@ -1,7 +1,15 @@
 /**
- * /api/kvk?kvk=12345678 — KvK company lookup.
- * Uses KVK_API_KEY env var to call the official KvK API.
- * Falls back to a realistic mock when no API key is set.
+ * /api/kvk?kvk=12345678 — KvK bedrijfsopzoeking.
+ *
+ * Bronnen (in volgorde geprobeerd):
+ * 1. overheid.io OpenKVK — gratis na registratie op overheid.io/register
+ *    Instellen: OVERHEID_IO_API_KEY in .env.local
+ *    Retourneert: handelsnaam, adres, actief-status
+ *
+ * 2. KvK officieel open dataset (opendata.kvk.nl) — altijd gratis, geen sleutel nodig
+ *    Retourneert: naam, rechtsvorm, SBI-activiteit, faillissement, uitschrijving
+ *
+ * 3. Mock-fallback voor ontwikkeling (als beide bronnen niet beschikbaar zijn)
  */
 
 import { NextRequest } from "next/server";
@@ -11,17 +19,81 @@ import { authOptions } from "@/lib/auth";
 interface KvkResult {
   naam: string;
   kvkNummer: string;
-  rechtsvorm?: string;
-  adres?: string;
+  rechtsvorm?: string | null;
+  adres?: string | null;
   land: string;
-  sbiCode?: string;
-  sbiOmschrijving?: string;
+  sbiCode?: string | null;
+  sbiOmschrijving?: string | null;
   isActief?: boolean;
   isOpgeheven?: boolean;
   isFailliet?: boolean;
   isMock?: boolean;
 }
 
+// ─── 1. overheid.io OpenKVK ───────────────────────────────────────────────────
+// Gratis API-sleutel: https://overheid.io/register
+// Retourneert: handelsnaam, adres, actief-status
+async function fetchOverheidIo(kvk: string): Promise<Partial<KvkResult> | null> {
+  const apiKey = process.env.OVERHEID_IO_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(`https://overheid.io/api/kvk/${kvk}`, {
+      headers: { "ovio-api-key": apiKey, Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const c = data._embedded?.rechtspersoon?.[0];
+    if (!c) return null;
+
+    return {
+      naam: c.handelsnaam ?? c.statutairehandelsnaam ?? c.bestaandehandelsnaam ?? "",
+      kvkNummer: kvk,
+      adres: [c.straat, c.huisnummer, c.huisnummertoevoeging, c.postcode, c.plaats]
+        .filter(Boolean)
+        .join(" ") || null,
+      land: "Nederland",
+      isActief: c.actief === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── 2. KvK officieel open dataset ───────────────────────────────────────────
+// Altijd gratis, geen sleutel. Beperkte data: naam, rechtsvorm, SBI, faillissement.
+async function fetchKvkOpenData(kvk: string): Promise<Partial<KvkResult>> {
+  try {
+    const res = await fetch(
+      `https://opendata.kvk.nl/api/v1/hvds/basisbedrijfsgegevens/kvknummer/${kvk}`,
+      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return {};
+
+    const data = await res.json();
+
+    // sbiActiviteit is een string zoals "6920 Administratiekantoren en belastingadviseurs"
+    const sbiRaw: string | undefined = data.sbiActiviteit;
+    const sbiMatch = sbiRaw?.match(/^(\d{3,5})\s+(.*)/);
+    const sbiCode = sbiMatch?.[1] ?? null;
+    const sbiOmschrijving = sbiMatch?.[2] ?? sbiRaw ?? null;
+
+    return {
+      naam: data.naam ?? undefined,
+      rechtsvorm: data.rechtsvorm ?? null,
+      sbiCode,
+      sbiOmschrijving,
+      isOpgeheven: Boolean(data.datumUitschrijving),
+      isFailliet: data.indicatieFaillissement === "Ja" || data.indicatieInsolventie === "Ja",
+    };
+  } catch {
+    return {};
+  }
+}
+
+// ─── Mock-fallback ────────────────────────────────────────────────────────────
 const MOCK_RESULTS: Record<string, KvkResult> = {
   "12345678": {
     naam: "Voorbeeld BV",
@@ -51,55 +123,38 @@ const MOCK_RESULTS: Record<string, KvkResult> = {
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
-  }
+  if (!session?.user) return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
 
   const kvk = new URL(req.url).searchParams.get("kvk")?.replace(/\s/g, "");
   if (!kvk || !/^\d{8}$/.test(kvk)) {
     return Response.json({ error: "Ongeldig KvK-nummer (8 cijfers verwacht)" }, { status: 400 });
   }
 
-  const apiKey = process.env.KVK_API_KEY;
+  // Haal beide bronnen parallel op — open dataset werkt altijd, overheid.io alleen met sleutel
+  const [overheidData, openData] = await Promise.all([
+    fetchOverheidIo(kvk),
+    fetchKvkOpenData(kvk),
+  ]);
 
-  if (apiKey) {
-    try {
-      const res = await fetch(
-        `https://api.kvk.nl/api/v1/zoeken?kvkNummer=${kvk}`,
-        {
-          headers: {
-            apikey: apiKey,
-            Accept: "application/json",
-          },
-        }
-      );
-      if (!res.ok) throw new Error(`KvK API: ${res.status}`);
-      const data = await res.json();
-      const item = data.resultaten?.[0];
-      if (!item) return Response.json({ error: "Niet gevonden in KvK-register" }, { status: 404 });
-
-      const dossierType = (item.dossierType ?? item.type ?? "").toUpperCase();
-      const indEntType = (item.indEntType ?? "").toUpperCase();
-      return Response.json({
-        naam: item.naam ?? item.handelsnaam ?? "",
-        kvkNummer: kvk,
-        rechtsvorm: item.rechtsvorm ?? null,
-        adres: [item.straatnaam, item.huisnummer, item.postcode, item.plaats]
-          .filter(Boolean)
-          .join(" "),
-        land: item.land ?? "Nederland",
-        sbiCode: item.sbiActiviteiten?.[0]?.sbiCode ?? null,
-        sbiOmschrijving: item.sbiActiviteiten?.[0]?.sbiOmschrijving ?? null,
-        isActief: item.indActief === "Ja" || item.actief === true,
-        isOpgeheven: dossierType.includes("OPGEHEVEN") || indEntType.includes("OPGEHEVEN") || item.indOpgeheven === "Ja",
-        isFailliet: item.indFaillissement === "Ja" || item.faillissement === true,
-      } satisfies KvkResult);
-    } catch (err: unknown) {
-      return Response.json({ error: String(err) }, { status: 502 });
-    }
+  // Als één van beide echte data heeft, combineer en retourneer
+  if (overheidData || openData.naam) {
+    const result: KvkResult = {
+      naam: overheidData?.naam ?? openData.naam ?? `Bedrijf ${kvk}`,
+      kvkNummer: kvk,
+      land: "Nederland",
+      adres: overheidData?.adres ?? null,
+      rechtsvorm: openData.rechtsvorm ?? null,
+      sbiCode: openData.sbiCode ?? null,
+      sbiOmschrijving: openData.sbiOmschrijving ?? null,
+      // Actief: overheid.io is betrouwbaarder; open dataset gebruikt uitschrijfdatum als proxy
+      isActief: overheidData?.isActief ?? !openData.isOpgeheven,
+      isOpgeheven: openData.isOpgeheven ?? (overheidData ? !overheidData.isActief : false),
+      isFailliet: openData.isFailliet ?? false,
+    };
+    return Response.json(result);
   }
 
-  // Mock fallback
+  // Geen van beide bronnen beschikbaar — mock-fallback
   const mock = MOCK_RESULTS[kvk] ?? {
     naam: `Bedrijf ${kvk} BV (voorbeeld)`,
     kvkNummer: kvk,
@@ -108,7 +163,9 @@ export async function GET(req: NextRequest) {
     land: "Nederland",
     sbiCode: null,
     sbiOmschrijving: null,
+    isActief: true,
+    isOpgeheven: false,
+    isFailliet: false,
   };
-
   return Response.json({ ...mock, isMock: true });
 }
