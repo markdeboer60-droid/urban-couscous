@@ -37,6 +37,12 @@ function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
+      if (!res.ok) {
+        setError("Inloggen mislukt. Probeer het opnieuw.");
+        return;
+      }
+
       const data = await res.json();
 
       if (!data.valid) {
@@ -49,6 +55,8 @@ function LoginForm() {
       } else {
         await finalizeLogin("");
       }
+    } catch {
+      setError("Kan geen verbinding maken met de server.");
     } finally {
       setLoading(false);
     }
