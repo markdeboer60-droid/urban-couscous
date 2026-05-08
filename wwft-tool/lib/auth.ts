@@ -14,7 +14,7 @@ import type { SessionUser } from "@/types";
 const isProduction = process.env.NODE_ENV === "production";
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",

@@ -37,20 +37,26 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "Alleen partners mogen afsluiten of beëindigen" }, { status: 403 });
   }
 
-  // Scope to user's org
-  const updated = await prisma.client.updateMany({
-    where: {
-      id: { in: body.clientIds },
-      organizationId: user.organizationId,
-      status: { notIn: ["AFGEROND", "BEEINDIGD"] },
-    },
-    data: { status: body.status },
+  // Run in transaction to get the exact IDs that were updated for audit logging
+  const updatedIds = await prisma.$transaction(async (tx) => {
+    const updatable = await tx.client.findMany({
+      where: {
+        id: { in: body.clientIds },
+        organizationId: user.organizationId,
+        status: { notIn: ["AFGEROND", "BEEINDIGD"] },
+      },
+      select: { id: true },
+    });
+    const ids = updatable.map((c) => c.id);
+    if (ids.length > 0) {
+      await tx.client.updateMany({ where: { id: { in: ids } }, data: { status: body.status } });
+    }
+    return ids;
   });
 
-  // Audit each
-  for (const clientId of body.clientIds) {
+  for (const clientId of updatedIds) {
     logAudit(clientId, user.id, "STATUS_GEWIJZIGD", { bulk: true, nieuw: body.status });
   }
 
-  return Response.json({ updated: updated.count });
+  return Response.json({ updated: updatedIds.length });
 }

@@ -32,14 +32,24 @@ export function sanitizeHeader(s: string): string {
   return s.replace(/[\r\n]/g, " ").slice(0, 255);
 }
 
+/** Escape HTML special characters to prevent XSS in email templates. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function sendMail(opts: MailOptions): Promise<void> {
   const from = process.env.SMTP_FROM ?? "Wwft Compliance <noreply@wwft.local>";
   const transporter = getTransporter();
 
   if (!transporter) {
-    // No SMTP configured — log to console for development
     console.log("[EMAIL] No SMTP configured. Would have sent:");
-    console.log(`  To: ${opts.to}`);
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`  To: ${opts.to}`);
+    }
     console.log(`  Subject: ${opts.subject}`);
     return;
   }
@@ -61,11 +71,11 @@ export function reviewReminderHtml(params: {
   return `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
       <h2 style="color:#1d4ed8">Wwft Compliance Tool — Periodieke review</h2>
-      <p>Beste ${params.medewerkerNaam},</p>
-      <p>Er is een periodieke review gepland voor cliënt <strong>${params.clientNaam}</strong>.</p>
-      <p><strong>Uiterste reviewdatum:</strong> ${datum}</p>
+      <p>Beste ${esc(params.medewerkerNaam)},</p>
+      <p>Er is een periodieke review gepland voor cliënt <strong>${esc(params.clientNaam)}</strong>.</p>
+      <p><strong>Uiterste reviewdatum:</strong> ${esc(datum)}</p>
       <p>
-        <a href="${params.dossierUrl}"
+        <a href="${esc(params.dossierUrl)}"
            style="background:#1d4ed8;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:8px">
           Open dossier
         </a>
@@ -87,12 +97,12 @@ export function dossierGoedgekeurdHtml(params: {
   return `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
       <h2 style="color:#16a34a">Wwft Compliance Tool — Dossier goedgekeurd</h2>
-      <p>Beste ${params.medewerkerNaam},</p>
-      <p>Partner <strong>${params.partnerNaam}</strong> heeft het dossier van cliënt
-         <strong>${params.clientNaam}</strong> goedgekeurd en afgesloten.</p>
-      <p>Vastgesteld risicoprofiel: <strong style="color:${risicoKleur}">${params.risicoOordeel}</strong></p>
+      <p>Beste ${esc(params.medewerkerNaam)},</p>
+      <p>Partner <strong>${esc(params.partnerNaam)}</strong> heeft het dossier van cliënt
+         <strong>${esc(params.clientNaam)}</strong> goedgekeurd en afgesloten.</p>
+      <p>Vastgesteld risicoprofiel: <strong style="color:${risicoKleur}">${esc(params.risicoOordeel)}</strong></p>
       <p>
-        <a href="${params.dossierUrl}"
+        <a href="${esc(params.dossierUrl)}"
            style="background:#16a34a;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:8px">
           Dossier bekijken
         </a>
@@ -112,11 +122,11 @@ export function highRiskAlertHtml(params: {
   return `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
       <h2 style="color:#dc2626">Wwft Compliance Tool — Hoog risico cliënt ter goedkeuring</h2>
-      <p>Beste ${params.partnerNaam},</p>
-      <p>Medewerker <strong>${params.medewerkerNaam}</strong> heeft cliënt <strong>${params.clientNaam}</strong>
+      <p>Beste ${esc(params.partnerNaam)},</p>
+      <p>Medewerker <strong>${esc(params.medewerkerNaam)}</strong> heeft cliënt <strong>${esc(params.clientNaam)}</strong>
          beoordeeld als <strong>HOOG risico</strong>. Uw goedkeuring is vereist.</p>
       <p>
-        <a href="${params.dossierUrl}"
+        <a href="${esc(params.dossierUrl)}"
            style="background:#dc2626;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:8px">
           Beoordelen en goedkeuren
         </a>

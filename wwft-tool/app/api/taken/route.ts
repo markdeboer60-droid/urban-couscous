@@ -25,6 +25,7 @@ export async function GET() {
     prisma.client.findMany({
       where: {
         aangemaaktDoor: user.id,
+        organizationId: user.organizationId,
         status: { in: ["GESTART", "IN_BEHANDELING"] },
       },
       select: { id: true, naam: true, status: true, risicoOordeel: true, aangemaakt: true },
@@ -36,6 +37,7 @@ export async function GET() {
     prisma.client.findMany({
       where: {
         aangemaaktDoor: user.id,
+        organizationId: user.organizationId,
         interneReviewStatus: "TERUGGESTUURD",
         status: "IN_BEHANDELING",
       },

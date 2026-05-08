@@ -1,6 +1,6 @@
 /**
  * /api/documents — document upload (multipart) and listing.
- * Files are stored at /uploads/{organizationId}/{clientId}/
+ * Files are stored at uploads/{organizationId}/{clientId}/
  */
 
 import { NextRequest } from "next/server";
@@ -10,6 +10,10 @@ import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/types";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { isAllowedMime, validateMagicBytes, MIME_ERROR, SIZE_ERROR, MAX_BYTES } from "@/lib/fileValidation";
+
+const ALLOWED_DOC_TYPES = ["ID", "UBO", "KVK", "UBO_REGISTER", "OVERIG"] as const;
+type AllowedDocType = (typeof ALLOWED_DOC_TYPES)[number];
 
 function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
@@ -78,43 +82,44 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "clientId, type en file verplicht" }, { status: 400 });
   }
 
-  const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+  if (!ALLOWED_DOC_TYPES.includes(type as AllowedDocType)) {
+    return Response.json({ error: "Ongeldig documenttype" }, { status: 400 });
+  }
+
   if (file.size > MAX_BYTES) {
-    return Response.json({ error: "Bestand is te groot (max 10 MB)" }, { status: 413 });
+    return Response.json({ error: SIZE_ERROR }, { status: 413 });
   }
 
-  const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png"];
-  if (!ALLOWED_MIME.includes(file.type)) {
-    return Response.json({ error: "Alleen PDF, JPG en PNG zijn toegestaan" }, { status: 415 });
+  if (!isAllowedMime(file.type)) {
+    return Response.json({ error: MIME_ERROR }, { status: 415 });
   }
 
-  // Verify ownership
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  if (!validateMagicBytes(buffer, file.type)) {
+    return Response.json({ error: MIME_ERROR }, { status: 415 });
+  }
+
   const client = await prisma.client.findFirst({
     where: { id: clientId, organizationId: user.organizationId },
   });
   if (!client) return Response.json({ error: "Niet gevonden" }, { status: 404 });
 
-  // Store the file
-  const uploadDir = path.join(
-    process.cwd(),
-    "uploads",
-    user.organizationId,
-    clientId
-  );
-  await mkdir(uploadDir, { recursive: true });
-
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
   const safeFilename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const filePath = path.join(uploadDir, safeFilename);
-  await writeFile(filePath, buffer);
+  // Store relative path to avoid exposing filesystem layout
+  const relPath = path.join("uploads", user.organizationId, clientId, safeFilename);
+  const absPath = path.join(process.cwd(), relPath);
+
+  await mkdir(path.dirname(absPath), { recursive: true });
+  await writeFile(absPath, buffer);
 
   const doc = await prisma.document.create({
     data: {
       clientId,
       type: type as import("@prisma/client").DocumentType,
       bestandsnaam: file.name,
-      bestandspad: filePath,
+      bestandspad: relPath,
       naamBetrokkene,
       functie,
       geboortedatum,
@@ -123,6 +128,21 @@ export async function POST(req: NextRequest) {
       isPep,
       pepBronVermelding,
       uploadDoor: user.id,
+    },
+    select: {
+      id: true,
+      clientId: true,
+      type: true,
+      bestandsnaam: true,
+      naamBetrokkene: true,
+      functie: true,
+      geboortedatum: true,
+      verloopDatum: true,
+      verificatiemethode: true,
+      isPep: true,
+      pepBronVermelding: true,
+      uploadOp: true,
+      uploadDoor: true,
     },
   });
 

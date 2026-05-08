@@ -69,6 +69,14 @@ export async function POST(req: NextRequest) {
   if (!await verifyClient(body.clientId, user.organizationId))
     return Response.json({ error: "Niet gevonden" }, { status: 404 });
 
+  const CUID_RE = /^c[a-z0-9]{24}$/;
+  const invalidId =
+    body.nodes.some((n) => !CUID_RE.test(n.id)) ||
+    body.edges.some((e) => !CUID_RE.test(e.id) || !CUID_RE.test(e.vanId) || !CUID_RE.test(e.naarId));
+  if (invalidId) {
+    return Response.json({ error: "Ongeldige node of edge ID" }, { status: 400 });
+  }
+
   // Upsert all nodes — updateMany scoped to clientId prevents cross-org IDOR; batched in parallel
   await Promise.all(body.nodes.map(async (node) => {
     const nodeData = {

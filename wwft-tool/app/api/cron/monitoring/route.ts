@@ -8,14 +8,21 @@
  */
 
 import { NextRequest } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { screenOrganization, berekenVolgendeRun } from "@/lib/monitoring";
 
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
-  const provided = req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
+  // Accept secret only via header to prevent it from appearing in server logs
+  const provided = req.headers.get("x-cron-secret") ?? "";
 
-  if (!cronSecret || provided !== cronSecret) {
+  const secretMissing = !cronSecret || !provided;
+  const secretMismatch =
+    !secretMissing &&
+    !timingSafeEqual(Buffer.from(cronSecret!), Buffer.from(provided));
+
+  if (secretMissing || secretMismatch) {
     return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
   }
 

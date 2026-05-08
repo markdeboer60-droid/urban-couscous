@@ -2,15 +2,18 @@
  * /api/portal — client portal token management.
  * POST  — generate a portal token for a client (requires auth)
  * GET   ?token=xxx — fetch portal info by token (public, token-gated)
+ * PATCH — submit a message or file via the portal (public, token-gated)
  */
 
 import { NextRequest } from "next/server";
+import { randomBytes } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/types";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { isAllowedMime, validateMagicBytes, MIME_ERROR, SIZE_ERROR, MAX_BYTES } from "@/lib/fileValidation";
 
 function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
@@ -34,8 +37,12 @@ export async function POST(req: NextRequest) {
   const days = Math.min(Math.max(body.geldigDagen ?? 14, 1), 90);
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
+  // Use cryptographically random token instead of cuid to prevent guessing attacks
+  const token = randomBytes(32).toString("hex");
+
   const portaalToken = await prisma.clientPortaalToken.create({
-    data: { clientId: body.clientId, expiresAt },
+    data: { clientId: body.clientId, expiresAt, token },
+    select: { id: true, token: true, clientId: true, expiresAt: true, aangemaakt: true },
   });
 
   return Response.json(portaalToken, { status: 201 });
@@ -82,15 +89,20 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "Dossier is gesloten" }, { status: 409 });
   }
 
-  // Find a system user in the client's org to attribute the upload to
-  const systemUser = await prisma.user.findFirst({
-    where: { organizationId: record.client.organizationId },
-    orderBy: { rol: "desc" },
-  });
+  // Find a PARTNER user to attribute the portal upload to (predictable, not derived from a mutable sort).
+  // Fall back to any user in the org if no PARTNER exists.
+  const systemUser =
+    (await prisma.user.findFirst({
+      where: { organizationId: record.client.organizationId, rol: "PARTNER" },
+      orderBy: { id: "asc" },
+    })) ??
+    (await prisma.user.findFirst({
+      where: { organizationId: record.client.organizationId },
+      orderBy: { id: "asc" },
+    }));
   if (!systemUser) return Response.json({ error: "Organisatie niet gevonden" }, { status: 500 });
 
   if (!file) {
-    // bericht-only submission — stored as an opmerking by the portal
     if (!bericht?.trim()) return Response.json({ error: "Bericht of bestand verplicht" }, { status: 400 });
 
     const opmerking = await prisma.opmerking.create({
@@ -107,32 +119,37 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ ok: true, opmerkingId: opmerking.id });
   }
 
-  const MAX_BYTES = 10 * 1024 * 1024;
-  if (file.size > MAX_BYTES) return Response.json({ error: "Bestand te groot (max 10 MB)" }, { status: 413 });
+  if (file.size > MAX_BYTES) return Response.json({ error: SIZE_ERROR }, { status: 413 });
 
-  const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png"];
-  if (!ALLOWED_MIME.includes(file.type)) {
-    return Response.json({ error: "Alleen PDF, JPG en PNG zijn toegestaan" }, { status: 415 });
+  if (!isAllowedMime(file.type)) {
+    return Response.json({ error: MIME_ERROR }, { status: 415 });
   }
-
-  const uploadDir = path.join(process.cwd(), "uploads", record.client.organizationId, record.clientId, "portaal");
-  await mkdir(uploadDir, { recursive: true });
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
+
+  if (!validateMagicBytes(buffer, file.type)) {
+    return Response.json({ error: MIME_ERROR }, { status: 415 });
+  }
+
   const safeFilename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const filePath = path.join(uploadDir, safeFilename);
-  await writeFile(filePath, buffer);
+  // Store relative path to avoid exposing filesystem layout
+  const relPath = path.join("uploads", record.client.organizationId, record.clientId, "portaal", safeFilename);
+  const absPath = path.join(process.cwd(), relPath);
+
+  await mkdir(path.dirname(absPath), { recursive: true });
+  await writeFile(absPath, buffer);
 
   const doc = await prisma.document.create({
     data: {
       clientId: record.clientId,
       type: "OVERIG",
       bestandsnaam: file.name,
-      bestandspad: filePath,
+      bestandspad: relPath,
       naamBetrokkene: bericht?.trim() || null,
       uploadDoor: systemUser.id,
     },
+    select: { id: true },
   });
 
   await prisma.clientPortaalToken.update({

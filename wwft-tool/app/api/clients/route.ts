@@ -16,6 +16,17 @@ function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
 }
 
+function getBaseUrl(): string {
+  const url = process.env.NEXTAUTH_URL;
+  if (!url) return "http://localhost:3000";
+  // In production only accept https:// to prevent insecure email links
+  if (process.env.NODE_ENV === "production" && !url.startsWith("https://")) {
+    console.error("[config] NEXTAUTH_URL must use https:// in production");
+    return "http://localhost:3000";
+  }
+  return url;
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return unauthorized();
@@ -234,7 +245,7 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     const aanmaker = await prisma.user.findUnique({ where: { id: existing.aangemaaktDoor } });
     const safeNaam = sanitizeHeader(existing.naam);
 
@@ -272,7 +283,7 @@ export async function PATCH(req: NextRequest) {
     const partners = await prisma.user.findMany({
       where: { organizationId: user.organizationId, rol: "PARTNER" },
     });
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     const safeNaam = sanitizeHeader(existing.naam);
     for (const partner of partners) {
       await sendMail({

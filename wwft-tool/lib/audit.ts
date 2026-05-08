@@ -16,5 +16,5 @@ export async function logAudit(
         details: details ? JSON.stringify(details) : null,
       },
     })
-    .catch(() => {});
+    .catch((err) => console.error("[audit] Failed to write audit log:", err));
 }

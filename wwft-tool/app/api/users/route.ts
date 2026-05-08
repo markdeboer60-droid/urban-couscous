@@ -50,6 +50,9 @@ export async function POST(req: NextRequest) {
   if (!body.naam || !body.email || !body.wachtwoord) {
     return Response.json({ error: "naam, email en wachtwoord verplicht" }, { status: 400 });
   }
+  if (body.wachtwoord.length < 12) {
+    return Response.json({ error: "Wachtwoord moet minimaal 12 tekens bevatten" }, { status: 400 });
+  }
 
   const existing = await prisma.user.findUnique({ where: { email: body.email } });
   if (existing) {

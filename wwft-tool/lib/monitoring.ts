@@ -397,7 +397,11 @@ export async function screenOrganization(
       const partners = await prisma.user.findMany({
         where: { organizationId, rol: "PARTNER" },
       });
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+      const rawBaseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+      const baseUrl =
+        process.env.NODE_ENV === "production" && !rawBaseUrl.startsWith("https://")
+          ? "http://localhost:3000"
+          : rawBaseUrl;
       for (const partner of partners) {
         await sendMail({
           to: partner.email,
