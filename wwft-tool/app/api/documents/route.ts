@@ -11,9 +11,7 @@ import type { SessionUser } from "@/types";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { isAllowedMime, validateMagicBytes, MIME_ERROR, SIZE_ERROR, MAX_BYTES } from "@/lib/fileValidation";
-
-const ALLOWED_DOC_TYPES = ["ID", "UBO", "KVK", "UBO_REGISTER", "OVERIG"] as const;
-type AllowedDocType = (typeof ALLOWED_DOC_TYPES)[number];
+import { DOCUMENT_TYPE_VALUES } from "@/types";
 
 function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
@@ -82,7 +80,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "clientId, type en file verplicht" }, { status: 400 });
   }
 
-  if (!ALLOWED_DOC_TYPES.includes(type as AllowedDocType)) {
+  if (!DOCUMENT_TYPE_VALUES.includes(type as import("@/types").DocumentType)) {
     return Response.json({ error: "Ongeldig documenttype" }, { status: 400 });
   }
 
@@ -94,17 +92,18 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: MIME_ERROR }, { status: 415 });
   }
 
+  // Verify ownership before reading the full file body to fail fast on unauthorized requests.
+  const client = await prisma.client.findFirst({
+    where: { id: clientId, organizationId: user.organizationId },
+  });
+  if (!client) return Response.json({ error: "Niet gevonden" }, { status: 404 });
+
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
   if (!validateMagicBytes(buffer, file.type)) {
     return Response.json({ error: MIME_ERROR }, { status: 415 });
   }
-
-  const client = await prisma.client.findFirst({
-    where: { id: clientId, organizationId: user.organizationId },
-  });
-  if (!client) return Response.json({ error: "Niet gevonden" }, { status: 404 });
 
   const safeFilename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
   // Store relative path to avoid exposing filesystem layout

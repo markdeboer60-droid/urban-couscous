@@ -9,6 +9,7 @@ import { authOptions, berekenVolgendeReview } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendMail, sanitizeHeader, reviewReminderHtml, highRiskAlertHtml, dossierGoedgekeurdHtml } from "@/lib/email";
 import { logAudit } from "@/lib/audit";
+import { getBaseUrl } from "@/lib/config";
 import type { SessionUser, CreateClientPayload, UpdateClientPayload } from "@/types";
 import { RISICO_OORDEEL_VALUES, CLIENT_STATUS_VALUES } from "@/types";
 
@@ -16,16 +17,6 @@ function unauthorized() {
   return Response.json({ error: "Niet geautoriseerd" }, { status: 401 });
 }
 
-function getBaseUrl(): string {
-  const url = process.env.NEXTAUTH_URL;
-  if (!url) return "http://localhost:3000";
-  // In production only accept https:// to prevent insecure email links
-  if (process.env.NODE_ENV === "production" && !url.startsWith("https://")) {
-    console.error("[config] NEXTAUTH_URL must use https:// in production");
-    return "http://localhost:3000";
-  }
-  return url;
-}
 
 export async function GET() {
   const session = await getServerSession(authOptions);

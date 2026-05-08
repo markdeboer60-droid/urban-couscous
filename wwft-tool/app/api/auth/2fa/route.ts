@@ -16,8 +16,13 @@ import type { SessionUser } from "@/types";
 // In-memory rate limiter: max 5 TOTP attempts per user per minute.
 // Process-local; resets on restart. Sufficient to slow brute-force on a single instance.
 const rl = new Map<string, { count: number; resetAt: number }>();
+let rlLastCleanup = Date.now();
 function isRateLimited(userId: string): boolean {
   const now = Date.now();
+  if (now - rlLastCleanup > 60_000 || rl.size > 1000) {
+    for (const [k, v] of rl) if (v.resetAt < now) rl.delete(k);
+    rlLastCleanup = now;
+  }
   const entry = rl.get(userId);
   if (!entry || entry.resetAt < now) {
     rl.set(userId, { count: 1, resetAt: now + 60_000 });

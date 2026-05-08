@@ -22,6 +22,7 @@ export const CLIENT_TYPE_LABELS: Record<ClientType, string> = {
 export const USER_ROLE_VALUES: UserRole[] = ["MEDEWERKER", "SENIOR", "PARTNER"];
 export const RISICO_OORDEEL_VALUES: RisicoOordeel[] = ["LAAG", "MIDDEN", "HOOG"];
 export const CLIENT_STATUS_VALUES: ClientStatus[] = ["GESTART", "IN_BEHANDELING", "TER_BEOORDELING", "AFGEROND", "BEEINDIGD"];
+export const DOCUMENT_TYPE_VALUES: DocumentType[] = ["ID", "UBO", "KVK", "UBO_REGISTER", "OVERIG"];
 export type WizardStap =
   | "BEDRIJFSVERKENNING"
   | "WWFT"

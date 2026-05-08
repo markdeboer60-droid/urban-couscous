@@ -4,11 +4,13 @@
  * 'unsafe-inline' / 'unsafe-eval' from script-src in production.
  */
 
+import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export function proxy(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const isDev = process.env.NODE_ENV === "development";
+  const nonce = randomBytes(16).toString("base64");
 
   const csp = [
     "default-src 'self'",

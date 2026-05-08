@@ -13,7 +13,7 @@ export function isAllowedMime(mime: string): mime is AllowedMime {
 
 export function validateMagicBytes(buffer: Buffer, mimeType: AllowedMime): boolean {
   if (mimeType === "application/pdf") {
-    return buffer.length >= 4 && buffer.slice(0, 4).toString("ascii") === "%PDF";
+    return buffer.length >= 4 && buffer.subarray(0, 4).toString("ascii") === "%PDF";
   }
   if (mimeType === "image/jpeg") {
     return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
