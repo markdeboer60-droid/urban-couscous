@@ -13,6 +13,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma", "@react-pdf/renderer"],
+  // Explicitly set root so Turbopack doesn't pick up a stray package-lock.json
+  // higher up in the filesystem and resolve node_modules from the wrong directory.
+  turbopack: {
+    root: __dirname,
+  },
   async headers() {
     return [
       {
